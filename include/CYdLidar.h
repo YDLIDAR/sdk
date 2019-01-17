@@ -89,6 +89,9 @@ class YDLIDAR_API CYdLidar {
   /** Retruns true if the scan frequency is set to user's frequency is successful, If it's not*/
   bool checkScanFrequency();
 
+  /** returns true if the lidar data is normal, If it's not*/
+  bool checkLidarAbnormal();
+
  private:
   bool    isScanning;
   int     node_counts ;

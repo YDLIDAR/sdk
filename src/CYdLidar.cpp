@@ -262,6 +262,12 @@ bool  CYdLidar::turnOn() {
       return false;
     }
   }
+  if (checkLidarAbnormal()) {
+      lidarPtr->stop();
+      fprintf(stderr, "[CYdLidar] Failed to turn on the Lidar, because the lidar is blocked or the lidar hardware is faulty.\n");
+      isScanning = false;
+      return false;
+  }
   isScanning = true;
   lidarPtr->setAutoReconnect(m_AutoReconnect);
   printf("[YDLIDAR INFO] Now YDLIDAR is scanning ......\n");
@@ -276,9 +282,22 @@ bool  CYdLidar::turnOff() {
   if (lidarPtr) {
     lidarPtr->stop();
   }
+  if(isScanning) {
+    printf("[YDLIDAR INFO] Now YDLIDAR Scanning has stopped ......\n");
+  }
   isScanning = false;
-  printf("[YDLIDAR INFO] Now YDLIDAR Scanning has stopped ......\n");
   return true;
+}
+
+bool CYdLidar::checkLidarAbnormal() {
+  node_info nodes[2048];
+  size_t   count = _countof(nodes);
+  result_t op_result =  lidarPtr->grabScanData(nodes, count);
+  if (IS_OK(op_result)) {
+    return false;
+  }
+  op_result =  lidarPtr->grabScanData(nodes, count);
+  return !IS_OK(op_result);
 }
 
 /** Returns true if the device is connected & operative */
