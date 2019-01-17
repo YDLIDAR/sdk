@@ -15,10 +15,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.0.1 |   2019-01-15  |
+| SDK     |  2.0.2 |   2019-01-17  |
 
 
-- [new feature] support G4 Lidar.
+- [new feature] check lidar abnormality when turn on lidar.
 
 
 
@@ -207,6 +207,14 @@ Coordinate System
 
 Upgrade Log
 ---------------
+
+2019-01-17 version:2.0.2
+
+   1.check lidar abnormality when turn on lidar.
+
+2019-01-15 version:2.0.1
+
+   1.support G4 lidar
 
 2019-01-03 version:2.0.0
 
