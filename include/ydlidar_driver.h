@@ -460,6 +460,8 @@ class YDlidarDriver {
   uint64_t m_node_last_time_ns;       ///< 时间戳
   uint32_t m_pointTime;				///< 激光点直接时间间隔
   uint32_t trans_delay;				///< 串口传输一个byte时间
+  int m_sampling_rate;					///< 采样频率
+  int model; ///< 雷达型号
 
   node_package package;
   node_packages packages;

@@ -63,6 +63,8 @@ YDlidarDriver::YDlidarDriver():
   m_node_time_ns      = 0;
   m_node_last_time_ns = 0;
   scan_frequence      = 0;
+  m_sampling_rate     = -1;
+  model               = -1;
 
   //解析参数
   PackageSampleBytes  = 2;
@@ -960,6 +962,7 @@ result_t YDlidarDriver::getDeviceInfo(device_info &info, uint32_t timeout) {
     }
 
     getData(reinterpret_cast<uint8_t *>(&info), sizeof(info));
+    model = info.model;
   }
 
   return RESULT_OK;
@@ -992,6 +995,30 @@ void YDlidarDriver::checkTransDelay() {
   //calc stamp
   trans_delay = _serial->getByteTime();
   m_pointTime = 1e9 / 5000;
+  switch (model) {
+  case YDLIDAR_G4://g4
+    if (m_sampling_rate == -1) {
+      sampling_rate _rate;
+      getSamplingRate(_rate);
+      m_sampling_rate = _rate.rate;
+    }
+
+    switch (m_sampling_rate) {
+    case 0:
+      m_pointTime = 1e9 / 4000;
+    break;
+    case 1:
+      m_pointTime = 1e9 / 8000;
+    break;
+    case 2:
+      m_pointTime = 1e9 / 9000;
+    break;
+    }
+    trans_delay = _serial->getByteTime();
+  break;
+  default:
+  break;
+  }
 }
 
 /************************************************************************/
@@ -1310,6 +1337,7 @@ result_t YDlidarDriver::getSamplingRate(sampling_rate &rate, uint32_t timeout) {
       return RESULT_FAIL;
     }
     getData(reinterpret_cast<uint8_t *>(&rate), sizeof(rate));
+    m_sampling_rate = rate.rate;
   }
   return RESULT_OK;
 }

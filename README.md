@@ -15,10 +15,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.0.2 |   2019-01-17  |
+| SDK     |  2.0.3 |   2019-01-23  |
 
 
-- [new feature] check lidar abnormality when turn on lidar.
+- [new feature] Change the Lidar coordinate system to clockwise, ranging from 0 to 360 degrees.
 
 
 
@@ -207,6 +207,10 @@ Coordinate System
 
 Upgrade Log
 ---------------
+
+2019-01-23 version:2.0.3
+
+   1.Change the Lidar coordinate system to clockwise, ranging from 0 to 360 degrees.
 
 2019-01-17 version:2.0.2
 
