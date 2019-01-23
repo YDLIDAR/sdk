@@ -3,7 +3,6 @@
 #include "utils.h"
 #include "ydlidar_driver.h"
 #include <math.h>
-#include <SimpleIni.h>
 
 using namespace ydlidar;
 
@@ -14,20 +13,14 @@ class YDLIDAR_API CYdLidar {
                         private) ///< 设置和获取激光最大角度, 最大值180度(度)
   PropertyBuilderByName(float, MinAngle,
                         private) ///< 设置和获取激光最小角度, 最小值-180度(度)
-  PropertyBuilderByName(float, ScanFrequency,
-                        private) ///< 设置和获取激光扫描频率(范围5HZ~12HZ)(HZ)
-
   PropertyBuilderByName(bool, Intensities,
                         private) ///< 设置和获取激光带信号质量(只有S4B雷达支持)
   PropertyBuilderByName(bool, FixedResolution,
                         private) ///< 设置和获取激光是否是固定角度分辨率
-  PropertyBuilderByName(bool, Reversion, private) ///< 设置和获取是否旋转激光180度
   PropertyBuilderByName(bool, AutoReconnect, private) ///< 设置异常是否开启重新连接
   PropertyBuilderByName(bool, GlassNoise, private) ///< 设置是否关闭玻璃噪声干扰
   PropertyBuilderByName(bool, SunNoise, private) ///< 设置是否关闭太阳干扰
   PropertyBuilderByName(int, SerialBaudrate, private) ///< 设置和获取激光通讯波特率
-  PropertyBuilderByName(int, SampleRate, private) ///< 设置和获取激光采样频率(KHz)
-  PropertyBuilderByName(std::string, CalibrationFileName, private) ///< 角度校准文件名
   PropertyBuilderByName(std::string, SerialPort, private) ///< 设置和获取激光端口号
   PropertyBuilderByName(std::vector<float>, IgnoreArray, private) ///< 设置和获取激光剔除点
 
@@ -70,24 +63,9 @@ class YDLIDAR_API CYdLidar {
     */
   bool checkHardware();
 
-  /**
-   * @brief checkSampleRate
-   */
-  void checkSampleRate();
-
-  /**
-   * @brief checkCalibrationAngle
-   */
-  void checkCalibrationAngle(const std::string &serialNumber);
-
-  /** Returns true if the device is in good health, If it's not*/
-  bool getDeviceHealth();
-
   /** Returns true if the device information is correct, If it's not*/
   bool getDeviceInfo();
 
-  /** Retruns true if the scan frequency is set to user's frequency is successful, If it's not*/
-  bool checkScanFrequency();
 
   /** returns true if the lidar data is normal, If it's not*/
   bool checkLidarAbnormal();
@@ -96,11 +74,6 @@ class YDLIDAR_API CYdLidar {
   bool    isScanning;
   int     node_counts ;
   double  each_angle;
-  float   frequencyOffset;
-  float   m_AngleOffset;
-  uint8_t Major;
-  uint8_t Minjor;
-  CSimpleIniA ini;
   YDlidarDriver *lidarPtr;
 
 };	// End of class

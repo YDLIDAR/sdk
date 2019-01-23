@@ -10,22 +10,17 @@ using namespace ydlidar;
 #endif
 
 int main(int argc, char *argv[]) {
-  printf("__   ______  _     ___ ____    _    ____      ____ ____  \n");
-  printf("\\ \\ / /  _ \\| |   |_ _|  _ \\  / \\  |  _ \\    / ___/ ___| \n");
-  printf(" \\ V /| | | | |    | || | | |/ _ \\ | |_) |___\\___ \\___ \\ \n");
-  printf("  | | | |_| | |___ | || |_| / ___ \\|  _ <_____|__) |__) | \n");
-  printf("  |_| |____/|_____|___|____/_/   \\_\\_| \\_\\   |____/____/  \n");
+  printf("__   ______  _     ___ ____    _    ____     _____ _____ __  __ ___  \n");
+  printf("\\ \\ / /  _ \\| |   |_ _|  _ \\  / \\  |  _ \\   |_   _| ____|  \\/  |_ _| \n");
+  printf(" \\ V /| | | | |    | || | | |/ _ \\ | |_) |____| | |  _| | |\\/| || |  \n");
+  printf("  | | | |_| | |___ | || |_| / ___ \\|  _ <_____| | | |___| |  | || |  \n");
+  printf("  |_| |____/|_____|___|____/_/   \\_\\_| \\_\\    |_| |_____|_|  |_|___| \n");
   printf("\n");
   fflush(stdout);
   std::string port;
-  std::string calibration_filename = "LidarAngleCalibration.ini";
 
-  if (argc > 1) {
-    calibration_filename = (std::string)argv[1];
-  }
   ydlidar::init(argc, argv);
 
-  printf("lidar angle calibration file: %s\n", calibration_filename.c_str());
   std::map<std::string, std::string> ports =  ydlidar::YDlidarDriver::lidarPortList();
   std::map<std::string, std::string>::iterator it;
 
@@ -98,10 +93,9 @@ int main(int argc, char *argv[]) {
   }
   CYdLidar laser;
   laser.setSerialPort(port);
-  laser.setSerialBaudrate(230400);
-  laser.setIntensities(false);//intensity
+  laser.setSerialBaudrate(214285);
+  laser.setIntensities(true);//intensity
   laser.setFixedResolution(false);
-  laser.setReversion(false); //
   laser.setAutoReconnect(true);//hot plug
 
   //unit: °
@@ -112,23 +106,11 @@ int main(int argc, char *argv[]) {
   laser.setMinRange(0.1);
   laser.setMaxRange(16.0);
 
-  //unit: K
-  laser.setSampleRate(5);
-
-  //unit: Hz
-  laser.setScanFrequency(frequency);
-
-  laser.setCalibrationFileName(calibration_filename);//Zero angle offset filename
-
   std::vector<float> ignore_array;
   ignore_array.clear();
   laser.setIgnoreArray(ignore_array);
 
   bool ret = laser.initialize();
-  if(ret) {
-    ret = laser.turnOn();
-  }
-
   while (ret && ydlidar::ok()) {
     bool hardError;
     LaserScan scan;

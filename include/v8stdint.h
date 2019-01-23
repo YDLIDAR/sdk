@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
+#include <algorithm>
 #include <string.h>
 #include <signal.h>
 #include <cerrno>
@@ -241,6 +242,38 @@ inline bool fileExists(const std::string filename) {
 #endif
   return (ret == 0);
   /*return 0 == _access(filename.c_str(), 0x00 ); // 0x00 = Check for existence only!*/
+}
+
+template <class Container>
+void split(const std::string& str, Container& cont,
+           const std::string delim = ' ')
+{
+    std::size_t current, previous = 0;
+    current = str.find(delim);
+    while (current != std::string::npos) {
+        cont.push_back(str.substr(previous, current - previous));
+        previous = current + delim.size();
+        current = str.find(delim, previous);
+    }
+    cont.push_back(str.substr(previous, current - previous));
+}
+
+// trim from start
+inline std::string &ltrim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+    return s;
+}
+
+// trim from end
+inline std::string &rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+    return s;
+}
+
+// trim from both ends
+inline std::string &trim(std::string &s) // GB works!
+{
+    return ltrim(rtrim(s));
 }
 
 

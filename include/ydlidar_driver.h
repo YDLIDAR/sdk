@@ -105,14 +105,6 @@ class YDlidarDriver {
   void setAutoReconnect(const bool &enable);
 
   /**
-  * @brief 获取雷达设备健康状态 \n
-  * @return 返回执行结果
-  * @retval RESULT_OK       获取成功
-  * @retval RESULT_FAILE or RESULT_TIMEOUT   获取失败
-  */
-  result_t getHealth(device_health &health, uint32_t timeout = DEFAULT_TIMEOUT);
-
-  /**
   * @brief 获取雷达设备信息 \n
   * @param[in] info     设备信息
   * @param[in] timeout  超时时间
@@ -120,7 +112,7 @@ class YDlidarDriver {
   * @retval RESULT_OK       获取成功
   * @retval RESULT_FAILE or RESULT_TIMEOUT   获取失败
   */
-  result_t getDeviceInfo(device_info &info, uint32_t timeout = DEFAULT_TIMEOUT);
+  result_t getDeviceInfo(std::string &buffer, size_t& size, uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
   * @brief 开启扫描 \n
@@ -176,94 +168,6 @@ class YDlidarDriver {
   * @note 停止扫描后再执行当前操作, 如果在扫描中调用::stop函数停止扫描
   */
   result_t reset(uint32_t timeout = DEFAULT_TIMEOUT);
-
-  /**
-  * @brief 获取激光雷达当前扫描频率 \n
-  * @param[in] frequency    扫描频率
-  * @param[in] timeout      超时时间
-  * @return 返回执行结果
-  * @retval RESULT_OK       成功
-  * @retval RESULT_FAILE    失败
-  * @note 停止扫描后再执行当前操作
-  */
-  result_t getScanFrequency(scan_frequency &frequency, uint32_t timeout = DEFAULT_TIMEOUT);
-
-  /**
-  * @brief 设置增加扫描频率1HZ \n
-  * @param[in] frequency    扫描频率
-  * @param[in] timeout      超时时间
-  * @return 返回执行结果
-  * @retval RESULT_OK       成功
-  * @retval RESULT_FAILE    失败
-  * @note 停止扫描后再执行当前操作
-  */
-  result_t setScanFrequencyAdd(scan_frequency &frequency, uint32_t timeout = DEFAULT_TIMEOUT);
-
-  /**
-  * @brief 设置减小扫描频率1HZ \n
-  * @param[in] frequency    扫描频率
-  * @param[in] timeout      超时时间
-  * @return 返回执行结果
-  * @retval RESULT_OK       成功
-  * @retval RESULT_FAILE    失败
-  * @note 停止扫描后再执行当前操作
-  */
-  result_t setScanFrequencyDis(scan_frequency &frequency, uint32_t timeout = DEFAULT_TIMEOUT);
-
-  /**
-  * @brief 设置增加扫描频率0.1HZ \n
-  * @param[in] frequency    扫描频率
-  * @param[in] timeout      超时时间
-  * @return 返回执行结果
-  * @retval RESULT_OK       成功
-  * @retval RESULT_FAILE    失败
-  * @note 停止扫描后再执行当前操作
-  */
-  result_t setScanFrequencyAddMic(scan_frequency &frequency, uint32_t timeout = DEFAULT_TIMEOUT);
-
-  /**
-  * @brief 设置减小扫描频率0.1HZ \n
-  * @param[in] frequency    扫描频率
-  * @param[in] timeout      超时时间
-  * @return 返回执行结果
-  * @retval RESULT_OK       成功
-  * @retval RESULT_FAILE    失败
-  * @note 停止扫描后再执行当前操作
-  */
-  result_t setScanFrequencyDisMic(scan_frequency &frequency, uint32_t timeout = DEFAULT_TIMEOUT);
-
-  /**
-  * @brief 获取激光雷达当前采样频率 \n
-  * @param[in] frequency    采样频率
-  * @param[in] timeout      超时时间
-  * @return 返回执行结果
-  * @retval RESULT_OK       成功
-  * @retval RESULT_FAILE    失败
-  * @note 停止扫描后再执行当前操作
-  */
-  result_t getSamplingRate(sampling_rate &rate, uint32_t timeout = DEFAULT_TIMEOUT);
-
-  /**
-  * @brief 设置激光雷达当前采样频率 \n
-  * @param[in] rate    　　　采样频率
-  * @param[in] timeout      超时时间
-  * @return 返回执行结果
-  * @retval RESULT_OK       成功
-  * @retval RESULT_FAILE    失败
-  * @note 停止扫描后再执行当前操作
-  */
-  result_t setSamplingRate(sampling_rate &rate, uint32_t timeout = DEFAULT_TIMEOUT);
-
-  /**
-  * @brief 获取激光雷达当前零位角 \n
-  * @param[in] angle　　　   零位偏移角
-  * @param[in] timeout      超时时间
-  * @return 返回执行结果
-  * @retval RESULT_OK       成功
-  * @retval RESULT_FAILE    失败
-  * @note 停止扫描后再执行当前操作
-  */
-  result_t getZeroOffsetAngle(offset_angle& angle, uint32_t timeout = DEFAULT_TIMEOUT);
 
  protected:
 
@@ -338,6 +242,16 @@ class YDlidarDriver {
   * @note 当timeout = -1 时, 将一直等待
   */
   result_t waitResponseHeader(lidar_ans_header *header, uint32_t timeout = DEFAULT_TIMEOUT);
+
+
+  /**
+   * @brief waitResponseStartHeader
+   * @param buffer
+   * @param size
+   * @param timeout
+   * @return
+   */
+  result_t waitResponseStartHeader(std::string &buffer, size_t& size, uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
   * @brief 等待固定数量串口数据 \n
