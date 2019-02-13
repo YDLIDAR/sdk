@@ -15,7 +15,7 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.0.3 |   2019-01-23  |
+| SDK     |  2.0.4 |   2019-02-13  |
 
 
 - [new feature] Change the Lidar coordinate system to clockwise, ranging from 0 to 360 degrees.
@@ -207,6 +207,10 @@ Coordinate System
 
 Upgrade Log
 ---------------
+
+2019-02-13 version:2.0.4
+
+   1.fix ascendScanData timestamp issues.
 
 2019-01-23 version:2.0.3
 
