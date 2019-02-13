@@ -80,7 +80,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
   if (IS_OK(op_result)) {
     op_result = lidarPtr->ascendScanData(nodes, count);
     tim_scan_start = nodes[0].stamp;
-    tim_scan_end   = nodes[0].stamp;
+    tim_scan_end   = nodes[count - 1].stamp;;
 
     double scan_time = tim_scan_end - tim_scan_start;
 
@@ -149,7 +149,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
           if (m_IgnoreArray.size() != 0) {
             for (uint16_t j = 0; j < m_IgnoreArray.size(); j = j + 2) {
-              if ((m_IgnoreArray[j] < angle) && (angle <= m_IgnoreArray[j + 1])) {
+              if ((m_IgnoreArray[j] <= angle) && (angle <= m_IgnoreArray[j + 1])) {
                 range = 0.0;
                 break;
               }
