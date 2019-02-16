@@ -37,7 +37,7 @@ namespace ydlidar
         vsnprintf (out, sizeof(out), message_, args);
         va_end(args);
         printf (COLOR_GREEN);
-        printf (out);
+        printf ("%s", out);
         printf (COLOR_NONE);
     }
     void
@@ -50,7 +50,7 @@ namespace ydlidar
       va_end(args);
       printf (COLOR_GREEN);
       printf ("[YDLidar]: ");
-      printf (out);
+      printf ("%s", out);
       printf (COLOR_NONE);
       printf ("\r\n");
     }
@@ -66,7 +66,7 @@ namespace ydlidar
       va_end(args);
       printf (COLOR_YELLOW);
       printf ("Warning: ");
-      printf (out);
+      printf ("%s", out);
       printf (COLOR_NONE);
       printf ("\r\n");
     }
@@ -82,7 +82,7 @@ namespace ydlidar
       va_end(args);
       printf (COLOR_RED);
       printf ("Error: ");
-      printf (out);
+      printf ("%s", out);
       printf (COLOR_NONE);
       printf ("\r\n");
     }
@@ -101,7 +101,7 @@ namespace ydlidar
         va_end(args);
         printf (COLOR_CYAN);
         printf (">>>   ");
-        printf (out);
+        printf ("%s", out);
         printf (COLOR_NONE);
         printf ("\r\n");
       }

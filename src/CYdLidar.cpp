@@ -166,7 +166,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError){
                     }
 
                     for (uint16_t j = 0; j < m_IgnoreArray.size();j = j+2) {
-                        if ((m_IgnoreArray[j] < angle) && (angle <= m_IgnoreArray[j+1])) {
+                        if ((m_IgnoreArray[j] <= angle) && (angle <= m_IgnoreArray[j+1])) {
                            range = 0.0;
                            break;
                         }
