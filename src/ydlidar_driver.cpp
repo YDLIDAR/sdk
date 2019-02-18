@@ -78,6 +78,10 @@ YDlidarDriver::YDlidarDriver():
 
   package_Sample_Index = 0;
   IntervalSampleAngle_LastPackage = 0.0;
+
+  m_odom.clear();
+  memset(&last_odom, 0, sizeof(last_odom));
+  memset(&current_odom, 0, sizeof(current_odom));
 }
 
 YDlidarDriver::~YDlidarDriver() {
@@ -455,6 +459,7 @@ int YDlidarDriver::cacheScanData() {
           ans = checkAutoConnecting();
           if (IS_OK(ans)) {
             timeout_count = 0;
+            local_scan[0].sync_flag = Node_NotSync;
           } else {
             isScanning = false;
             return RESULT_FAIL;
@@ -462,6 +467,7 @@ int YDlidarDriver::cacheScanData() {
         }
       } else {
         timeout_count++;
+        local_scan[0].sync_flag = Node_NotSync;
         fprintf(stderr, "timout count: %d\n", timeout_count);
         fflush(stderr);
       }
@@ -765,6 +771,9 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     m_node_last_time_ns = m_node_time_ns;
     m_node_time_ns = getTime() - (nowPackageNum * 3 + 10) * trans_delay -
                      (nowPackageNum - 1) * m_pointTime;
+    (*node).dx = 0;
+    (*node).dy = 0;
+    (*node).dth = 0;
 
     if (m_node_time_ns < m_node_last_time_ns) {
       m_node_time_ns = m_node_last_time_ns;
@@ -774,6 +783,36 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
   (*node).scan_frequence  = scan_frequence;
   (*node).stamp = m_node_time_ns + package_Sample_Index * m_pointTime;
+
+  if (package_Sample_Index % 8 == 0) {
+    std::list<odom_t> temp;
+    temp.clear();
+    {
+      ScopedLocker l(_odom_lock);
+      temp = m_odom;
+    }
+
+    if (!temp.empty()) {
+      int min = 1000000;
+      for (std::list<odom_t>::const_iterator it = temp.begin(); it != temp.end();
+           ++it) {
+        int diff = (*node).stamp - (*it).time_now;
+        if (abs(diff) < min) {
+          min = diff;
+          last_odom = *it;
+        }
+      }
+    }
+  }
+
+  if ((*node).sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
+    current_odom = last_odom;
+  }
+
+  (*node).dx = last_odom.x - current_odom.x;
+  (*node).dy = last_odom.y - current_odom.y;
+  (*node).dth = last_odom.theta - current_odom.theta;
+
   package_Sample_Index++;
 
   if (package_Sample_Index >= nowPackageNum) {
@@ -912,10 +951,14 @@ result_t YDlidarDriver::ascendScanData(node_info *nodebuffer, size_t count) {
 
   for (i = (int)zero_pos; i < (int)count; i++) {
     tmpbuffer[i - zero_pos] = nodebuffer[i];
+    tmpbuffer[i - zero_pos].stamp = nodebuffer[i - zero_pos].stamp;
+
   }
 
   for (i = 0; i < (int)zero_pos; i++) {
     tmpbuffer[i + (int)count - zero_pos] = nodebuffer[i];
+    tmpbuffer[i + (int)count - zero_pos].stamp = nodebuffer[i + (int)count - zero_pos].stamp;
+
   }
 
   memcpy(nodebuffer, tmpbuffer, count * sizeof(node_info));
@@ -957,6 +1000,18 @@ void YDlidarDriver::setAutoReconnect(const bool &enable) {
   isAutoReconnect = enable;
 }
 
+
+/**
+ * @brief YDlidarDriver::setOdometry
+ * @param odom
+ */
+void YDlidarDriver::setOdometry(const odom_t &odom) {
+  ScopedLocker l(_odom_lock);
+  if (m_odom.size() >= MAXIMUQUEUE) {
+    m_odom.pop_front();
+  }
+  m_odom.push_back(odom);
+}
 
 void YDlidarDriver::checkTransDelay() {
   //calc stamp

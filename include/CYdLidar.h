@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "ydlidar_driver.h"
 #include <math.h>
+#include "matrix/math.hpp"
 
 using namespace ydlidar;
 
@@ -33,6 +34,18 @@ class YDLIDAR_API CYdLidar {
    * @return
    */
   bool initialize();  //!< Attempts to connect and turns the laser on. Raises an exception on error.
+
+  /**
+   * @brief 设置同步的里程计数据，只需输入imu原始数据yaw
+   * @param odom
+   */
+  void setOdometry(const odom_t &odom);
+
+  /**
+   * @brief 设置雷达安装位置相对于机器人中心
+   * @param pose
+   */
+  void setLidarPose(const pose2D_t &pose);
 
   // Return true if laser data acquistion succeeds, If it's not
   bool doProcessSimple(LaserScan &outscan, bool &hardwareError);
@@ -75,6 +88,16 @@ class YDLIDAR_API CYdLidar {
   int     node_counts ;
   double  each_angle;
   YDlidarDriver *lidarPtr;
+
+  matrix::SquareMatrix<double, 3> sensor_matrix;
+  matrix::SquareMatrix<double, 3> sensor_matrix_inv;
+  matrix::SquareMatrix<double, 3> robot_matrix;
+  matrix::SquareMatrix<double, 3> current_global_pose_matrix;
+  matrix::Vector<double, 3> sensor_vector;
+  matrix::Vector<double, 3> center_sensor_vector;
+  matrix::Vector<double, 3> lidar_sensor_vector;
+  matrix::Vector<double, 3> current_sensor_vector;
+
 
 };	// End of class
 

@@ -90,9 +90,24 @@ typedef enum {
 #define PackagePaidBytes 10
 #define PH 0x55AA
 
+#define MAXIMUQUEUE 20
+
 #if defined(_WIN32)
 #pragma pack(1)
 #endif
+
+struct odom_t {
+  uint64_t time_now;//系统时间戳
+  float x;
+  float y;
+  float theta;
+};
+
+struct pose2D_t {
+  float x;
+  float y;
+  float theta;
+};
 
 struct node_info {
   uint8_t    sync_flag;  //sync flag
@@ -101,6 +116,9 @@ struct node_info {
   uint16_t   distance_q; //! 当前测距点距离
   uint64_t   stamp; //! 时间戳
   uint8_t    scan_frequence;//! 特定版本此值才有效,无效值是0
+  float dx;
+  float dy;
+  float dth;
 } __attribute__((packed)) ;
 
 struct PackageNode {

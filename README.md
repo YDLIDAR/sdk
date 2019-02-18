@@ -15,10 +15,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.0.2 |   2019-01-17  |
+| SDK     |  2.0.3 |   2019-02-18  |
 
 
-- [new feature] check lidar abnormality when turn on lidar.
+- [new feature] add sync imu.
 
 
 
@@ -196,6 +196,11 @@ Coordinate System
 
 Upgrade Log
 ---------------
+
+2019-02-18 version:2.0.3
+
+   1.sync imu.
+
 
 2019-01-17 version:2.0.2
 

@@ -2,6 +2,7 @@
 #define YDLIDAR_DRIVER_H
 #include <stdlib.h>
 #include <atomic>
+#include <list>
 #include <map>
 #include "serial.h"
 #include "locker.h"
@@ -103,6 +104,12 @@ class YDlidarDriver {
   *	  false 关闭
   */
   void setAutoReconnect(const bool &enable);
+
+  /**
+   * @brief setOdometry
+   * @param odom
+   */
+  void setOdometry(const odom_t &odom);
 
   /**
   * @brief 获取雷达设备信息 \n
@@ -362,6 +369,7 @@ class YDlidarDriver {
   Event          _dataEvent;			 ///< 数据同步事件
   Locker         _lock;				///< 线程锁
   Locker         _serial_lock;		///< 串口锁
+  Locker         _odom_lock;          ///< 里程计锁
   Thread 	       _thread;				///< 线程id
 
  private:
@@ -395,6 +403,10 @@ class YDlidarDriver {
   uint16_t Valu8Tou16;
 
   std::string serial_port;///< 雷达端口
+
+  std::list<odom_t> m_odom;
+  odom_t last_odom;
+  odom_t current_odom;
 
 };
 }
