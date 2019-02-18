@@ -28,11 +28,9 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_IgnoreArray.clear();
 
   sensor_matrix.setIdentity();
+  sensor_matrix_inv.setIdentity();
   robot_matrix.setIdentity();
-  current_global_pose_matrix.setIdentity();
   current_sensor_vector.setOne();
-  sensor_vector.setOne();
-  center_sensor_vector.setOne();
   lidar_sensor_vector.setOne();
 
 }

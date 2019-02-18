@@ -92,9 +92,6 @@ class YDLIDAR_API CYdLidar {
   matrix::SquareMatrix<double, 3> sensor_matrix;
   matrix::SquareMatrix<double, 3> sensor_matrix_inv;
   matrix::SquareMatrix<double, 3> robot_matrix;
-  matrix::SquareMatrix<double, 3> current_global_pose_matrix;
-  matrix::Vector<double, 3> sensor_vector;
-  matrix::Vector<double, 3> center_sensor_vector;
   matrix::Vector<double, 3> lidar_sensor_vector;
   matrix::Vector<double, 3> current_sensor_vector;
 
