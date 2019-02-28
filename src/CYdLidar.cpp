@@ -275,6 +275,7 @@ bool CYdLidar::checkLidarAbnormal() {
   if (IS_OK(op_result)) {
     return false;
   }
+  delay(2000);
   op_result =  lidarPtr->grabScanData(nodes, count);
   return !IS_OK(op_result);
 }
