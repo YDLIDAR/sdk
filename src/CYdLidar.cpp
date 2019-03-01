@@ -31,6 +31,7 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   each_angle          = 0.5;
   frequencyOffset     = 0.4;
   m_CalibrationFileName = "";
+  m_AbnormalCheckCount  = 2;
   Major               = 0;
   Minjor              = 0;
   m_IgnoreArray.clear();
@@ -261,7 +262,7 @@ bool  CYdLidar::turnOff() {
   if (lidarPtr) {
     lidarPtr->stop();
   }
-  if(isScanning) {
+  if (isScanning) {
     printf("[YDLIDAR INFO] Now YDLIDAR Scanning has stopped ......\n");
   }
   isScanning = false;
@@ -271,12 +272,22 @@ bool  CYdLidar::turnOff() {
 bool CYdLidar::checkLidarAbnormal() {
   node_info nodes[2048];
   size_t   count = _countof(nodes);
-  result_t op_result =  lidarPtr->grabScanData(nodes, count);
-  if (IS_OK(op_result)) {
-    return false;
+  int check_abnormal_count = 0;
+  if (m_AbnormalCheckCount < 2) {
+    m_AbnormalCheckCount = 2;
   }
-  delay(2000);
-  op_result =  lidarPtr->grabScanData(nodes, count);
+  result_t op_result = RESULT_FAIL;
+  while (check_abnormal_count < m_AbnormalCheckCount) {
+    //Ensure that the voltage is insufficient or the motor resistance is high, causing an abnormality.
+    if (check_abnormal_count > 0) {
+      delay(check_abnormal_count*1000);
+    }
+    op_result =  lidarPtr->grabScanData(nodes, count);
+    if (IS_OK(op_result)) {
+      return false;
+    }
+    check_abnormal_count++;
+  }
   return !IS_OK(op_result);
 }
 

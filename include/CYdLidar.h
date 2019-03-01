@@ -27,6 +27,7 @@ class YDLIDAR_API CYdLidar {
   PropertyBuilderByName(bool, SunNoise, private) ///< 设置是否关闭太阳干扰
   PropertyBuilderByName(int, SerialBaudrate, private) ///< 设置和获取激光通讯波特率
   PropertyBuilderByName(int, SampleRate, private) ///< 设置和获取激光采样频率(KHz)
+  PropertyBuilderByName(int, AbnormalCheckCount, private) ///< Maximum number of abnormal checks
   PropertyBuilderByName(std::string, CalibrationFileName, private) ///< 角度校准文件名
   PropertyBuilderByName(std::string, SerialPort, private) ///< 设置和获取激光端口号
   PropertyBuilderByName(std::vector<float>, IgnoreArray, private) ///< 设置和获取激光剔除点

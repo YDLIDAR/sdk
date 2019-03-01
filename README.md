@@ -15,10 +15,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.0.4 |   2019-02-13  |
+| SDK     |  2.0.5 |   2019-03-01  |
 
 
-- [new feature] Change the Lidar coordinate system to clockwise, ranging from 0 to 360 degrees.
+- [new feature] User can set the maximum number of abnormal checks.
 
 
 
@@ -207,6 +207,10 @@ Coordinate System
 
 Upgrade Log
 ---------------
+
+2019-03-01 version:2.0.5
+
+   1.fix Large motor resistance at startup issues.
 
 2019-02-13 version:2.0.4
 
