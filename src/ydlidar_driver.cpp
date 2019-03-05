@@ -728,7 +728,8 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
                      (nowPackageNum - 1) * m_pointTime;
 
     if (m_node_time_ns < m_node_last_time_ns) {
-      m_node_time_ns = m_node_last_time_ns;
+      if ((m_node_last_time_ns - m_node_time_ns) < 1e9/15)
+        m_node_time_ns = m_node_last_time_ns;
     }
 
   }
