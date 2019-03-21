@@ -9,6 +9,7 @@
 #include "ydlidar_driver.h"
 #include "common.h"
 #include <math.h>
+#include "angles.h"
 using namespace impl;
 
 namespace ydlidar {
@@ -42,6 +43,10 @@ YDlidarDriver::YDlidarDriver():
   LastSampleAngleCal  = 0;
   CheckSunResult      = true;
   Valu8Tou16          = 0;
+
+  odom_queue.clear();
+  memset(&last_odom, 0, sizeof(last_odom));
+  memset(&current_odom, 0, sizeof(current_odom));
 
 }
 
@@ -713,9 +718,43 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     if ( m_last_node_time -  m_node_time < 1e9/15) {
       m_node_time = m_last_node_time;
     }
+    (*node).odom.dx = 0;
+    (*node).odom.dy = 0;
+    (*node).odom.dth = 0;
+
   }
 
   (*node).stamp = m_node_time + package_Sample_Index * m_signalpointTime;
+
+  if (package_Sample_Index % 4 == 0) {
+    std::list<pose_info> temp;
+    temp.clear();
+    {
+      ScopedLocker l(_sync_lock);
+      temp = odom_queue;
+
+    }
+
+    if (!temp.empty()) {
+      int min_durtion = 1e9;
+      for (std::list<pose_info>::const_iterator it = temp.begin(); it != temp.end();
+           ++it) {
+        int diff = (*node).stamp - (*it).stamp;
+        if (abs(diff) < min_durtion) {
+          min_durtion = diff;
+          last_odom = *it;
+        }
+      }
+
+    }
+  }
+  if((*node).sync_flag&LIDAR_RESP_MEASUREMENT_SYNCBIT ) {
+      current_odom = last_odom;
+  }
+
+  (*node).odom.dx = last_odom.x - current_odom.x;
+  (*node).odom.dy = last_odom.y - current_odom.y;
+  (*node).odom.dth = angles::normalize_angle(last_odom.phi - current_odom.phi);
 
   package_Sample_Index++;
 
@@ -894,6 +933,14 @@ result_t YDlidarDriver::ascendScanData(node_info *nodebuffer, size_t count) {
 */
 void YDlidarDriver::setAutoReconnect(const bool &enable) {
   isAutoReconnect = enable;
+}
+
+void YDlidarDriver::setSyncOdometry(const pose_info &odom) {
+  ScopedLocker l(_sync_lock);
+  if( odom_queue.size() > MAX_QUEUE_SIZE)
+      odom_queue.pop_front();
+  odom_queue.push_back(odom);
+
 }
 
 /************************************************************************/

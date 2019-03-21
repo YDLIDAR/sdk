@@ -5,6 +5,23 @@
 #include <vector>
 #include <ydlidar_cmd.h>
 
+#define MAX_QUEUE_SIZE 25
+
+struct pose_info
+{
+    uint64_t   stamp;
+    double x;
+    double y;
+    double phi;
+};
+
+struct odom_info
+{
+    double dx;
+    double dy;
+    double dth;
+};
+
 #if defined(_WIN32)
 #pragma pack(1)
 #endif
@@ -16,6 +33,8 @@ struct node_info {
     uint16_t   distance_q2; //! 当前测距点距离
     uint64_t   stamp; //! 时间戳
     uint8_t    scan_frequence;//! 特定版本此值才有效,无效值是0
+    pose_info  pose;
+    odom_info  odom;
 } __attribute__((packed)) ;
 
 struct PackageNode {

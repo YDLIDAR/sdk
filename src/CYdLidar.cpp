@@ -27,6 +27,12 @@ CYdLidar::CYdLidar(): lidarPtr(0) {
   node_counts         = 720;
   each_angle          = 0.5;
   m_IgnoreArray.clear();
+
+  sensor_matrix.setIdentity();
+  sensor_matrix_inv.setIdentity();
+  robot_matrix.setIdentity();
+  current_sensor_vector.setOne();
+  lidar_sensor_vector.setOne();
 }
 
 /*-------------------------------------------------------------
@@ -41,8 +47,30 @@ void CYdLidar::disconnecting() {
     lidarPtr->disconnect();
     delete lidarPtr;
     lidarPtr    = 0;
-    isConnected = false;
   }
+  isConnected = false;
+}
+
+void CYdLidar::setSensorPose(const pose_info &pose) {
+  sensor_matrix(0, 0) = cos(pose.phi);
+  sensor_matrix(0, 1) = -sin(pose.phi);
+  sensor_matrix(0, 2) = pose.x;
+
+  sensor_matrix(1, 0) = sin(pose.phi);
+  sensor_matrix(1, 1) = cos(pose.phi);
+  sensor_matrix(1, 2) = pose.y;
+
+  sensor_matrix(2, 0) = 0;
+  sensor_matrix(2, 1) = 0;
+  sensor_matrix(2, 2) = 1;
+  sensor_matrix_inv = matrix::inv(sensor_matrix);
+
+}
+
+void CYdLidar::setSyncOdometry(const pose_info &odom) {
+	if(!isScanning)
+		return;
+	lidarPtr->setSyncOdometry(odom);
 }
 
 /*-------------------------------------------------------------
@@ -53,6 +81,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
   // Bound?
   if (!checkHardware()) {
+    delay(80);
     hardwareError = true;
     return false;
   }
@@ -137,12 +166,29 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
       int angle_start = 180 + m_MinAngle;
       int node_start = all_nodes_counts * (angle_start / 360.0f);
 
-      scan_msg.ranges.resize(counts);
-      scan_msg.intensities.resize(counts);
+      scan_msg.system_time_stamp = tim_scan_start;
+      scan_msg.self_time_stamp = tim_scan_start;
+      scan_msg.config.min_angle = angles::from_degrees(m_MinAngle);
+      scan_msg.config.max_angle = angles::from_degrees(m_MaxAngle);
+      if (scan_msg.config.max_angle - scan_msg.config.min_angle == 2*M_PI) {
+        scan_msg.config.ang_increment = (scan_msg.config.max_angle - scan_msg.config.min_angle) /
+                                        (double)counts;
+        scan_msg.config.time_increment = scan_time / (double)counts;
+      } else {
+        scan_msg.config.ang_increment = (scan_msg.config.max_angle - scan_msg.config.min_angle) /
+                                        (double)(counts - 1);
+        scan_msg.config.time_increment = scan_time / (double)(counts - 1);
+      }
+      scan_msg.config.time_increment /= 1e9;
+      scan_msg.config.scan_time = scan_time/1e9;
+      scan_msg.config.min_range = m_MinRange;
+      scan_msg.config.max_range = m_MaxRange;
+
+      scan_msg.ranges.resize(counts, 0);
+      scan_msg.intensities.resize(count, 0);
       float range = 0.0;
       float intensity = 0.0;
       int index = 0;
-
 
       for (size_t i = 0; i < all_nodes_counts; i++) {
         range = (float)angle_compensate_nodes[i].distance_q2 / 4000.f;
@@ -178,29 +224,40 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
         int pos = index - node_start ;
 
-        if (0 <= pos && pos < counts) {
-          scan_msg.ranges[pos] =  range;
-          scan_msg.intensities[pos] = intensity;
+        if (0 <= pos && pos < counts&& range >= scan_msg.config.min_range) {
+
+          current_sensor_vector(0) = range*cos(scan_msg.config.min_angle + scan_msg.config.ang_increment*pos);
+          current_sensor_vector(1) = range*sin(scan_msg.config.min_angle + scan_msg.config.ang_increment*pos);
+          current_sensor_vector(2) = 1;
+
+          double dth = angle_compensate_nodes[i].odom.dth;
+          double dx  = angle_compensate_nodes[i].odom.dx;
+          double dy  = angle_compensate_nodes[i].odom.dy;
+
+          robot_matrix.setIdentity();
+          robot_matrix(0, 0) = cos(dth);
+          robot_matrix(0, 1) = sin(dth);
+          robot_matrix(0, 2) = dx;
+          robot_matrix(1, 0) = -sin(dth);
+          robot_matrix(1, 1) = cos(dth);
+          robot_matrix(1, 2) = dy;
+
+          lidar_sensor_vector = sensor_matrix_inv*robot_matrix*sensor_matrix*current_sensor_vector;
+
+          double lx = lidar_sensor_vector(0);
+          double ly = lidar_sensor_vector(1);
+          double newrange = hypot(lx, ly);
+          double new_angle = atan2(ly, lx);
+          int newindex = std::round((new_angle - scan_msg.config.min_angle) / scan_msg.config.ang_increment);
+          if( 0 <= newindex && newindex < counts) {
+            if( newrange < scan_msg.config.min_angle)
+                newrange = 0.0;
+            scan_msg.ranges[newindex] = newrange;
+            scan_msg.intensities[newindex] = intensity;
+          }
+
         }
       }
-
-      scan_msg.system_time_stamp = tim_scan_start;
-      scan_msg.self_time_stamp = tim_scan_start;
-      scan_msg.config.min_angle = DEG2RAD(m_MinAngle);
-      scan_msg.config.max_angle = DEG2RAD(m_MaxAngle);
-      if (scan_msg.config.max_angle - scan_msg.config.min_angle == 2*M_PI) {
-        scan_msg.config.ang_increment = (scan_msg.config.max_angle - scan_msg.config.min_angle) /
-                                        (double)counts;
-        scan_msg.config.time_increment = scan_time / (double)counts;
-      } else {
-        scan_msg.config.ang_increment = (scan_msg.config.max_angle - scan_msg.config.min_angle) /
-                                        (double)(counts - 1);
-        scan_msg.config.time_increment = scan_time / (double)(counts - 1);
-      }
-      scan_msg.config.time_increment /= 1e9;
-      scan_msg.config.scan_time = scan_time/1e9;
-      scan_msg.config.min_range = m_MinRange;
-      scan_msg.config.max_range = m_MaxRange;
       outscan = scan_msg;
       delete[] angle_compensate_nodes;
       return true;

@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "ydlidar_driver.h"
 #include <math.h>
+#include "matrix/math.hpp"
 
 
 #define PropertyBuilderByName(type, name, access_permission)\
@@ -66,6 +67,18 @@ public:
     //Turn off lidar connection
     void disconnecting(); //!< Closes the comms with the laser. Shouldn't have to be directly needed by the user
 
+    /**
+     * @brief setSyncOdometry
+     * @param odom
+     */
+    void setSyncOdometry(const pose_info& odom);
+
+    /**
+     * @brief setSensorPose
+     * @param pose
+     */
+    void setSensorPose(const pose_info& pose);
+
 protected:
     /** Returns true if communication has been established with the device. If it's not,
       *  try to create a comms channel.
@@ -94,6 +107,13 @@ private:
     int node_counts ;
     double each_angle;
     YDlidarDriver *lidarPtr;
+
+    matrix::SquareMatrix<double, 3> sensor_matrix;
+    matrix::SquareMatrix<double, 3> sensor_matrix_inv;
+    matrix::SquareMatrix<double, 3> robot_matrix;
+    matrix::Vector<double, 3> lidar_sensor_vector;
+    matrix::Vector<double, 3> current_sensor_vector;
+
 
 };	// End of class
 

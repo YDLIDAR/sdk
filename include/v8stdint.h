@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <csignal>
 #include <sstream>
+#include "angles.h"
 
 
 #define UNUSED(x) (void)x
@@ -82,13 +83,6 @@ enum {
 #if !defined(_countof)
 #define _countof(_Array) (int)(sizeof(_Array) / sizeof(_Array[0]))
 #endif
-
-#ifndef M_PI
-#define M_PI 3.1415926
-#endif
-
-#define DEG2RAD(x) ((x)*M_PI/180.)
-
 
 // Determine if sigaction is available
 #if __APPLE__ || _POSIX_C_SOURCE >= 1 || _XOPEN_SOURCE || _POSIX_SOURCE

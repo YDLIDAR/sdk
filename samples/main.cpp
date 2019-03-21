@@ -13,6 +13,7 @@ using namespace ydlidar;
 int main(int argc, char * argv[])
 {
 
+    ydlidar::init(argc, argv);
     std::string port;
     std::string baudrate;
     int baud = 115200;
@@ -23,6 +24,7 @@ int main(int argc, char * argv[])
     printf("  |_| |____/|_____|___|____/_/   \\_\\_| \\_\\ \n");
     printf("\n");
     fflush(stdout);
+
 
     std::map<std::string, std::string> lidars = YDlidarDriver::lidarPortList();
     if(lidars.size()==1) {
@@ -36,11 +38,10 @@ int main(int argc, char * argv[])
         baud = atoi(baudrate.c_str());
 
     }
+    if(!ydlidar::ok()) {
+      return 0;
+    }
 
-
-
-
-    ydlidar::init(argc, argv);
     CYdLidar laser;
     laser.setSerialPort(port);
     laser.setSerialBaudrate(baud);

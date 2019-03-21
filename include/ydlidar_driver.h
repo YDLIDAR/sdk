@@ -2,6 +2,7 @@
 #define YDLIDAR_DRIVER_H
 #include <stdlib.h>
 #include <map>
+#include <list>
 #include "serial.h"
 #include "locker.h"
 #include "thread.h"
@@ -90,6 +91,12 @@ namespace ydlidar{
         *	  false 关闭
         */
         void setAutoReconnect(const bool& enable);
+
+        /**
+         * @brief setSyncOdometry
+         * @param odom
+         */
+        void setSyncOdometry(const pose_info& odom);
 
 
 		/**
@@ -302,8 +309,9 @@ namespace ydlidar{
 		node_info      scan_node_buf[2048];  ///< 激光点信息
 		size_t         scan_node_count;      ///< 激光点数
 		Event          _dataEvent;			 ///< 数据同步事件
-		Locker         _lock;				///< 线程锁
-        Locker         _serial_lock;		///< 串口锁
+		Locker         _lock;				///< 线程锁  
+		Locker         _serial_lock;		///< 串口锁
+		Locker         _sync_lock;        ///< imu同步锁
 		Thread 	       _thread;				///< 线程id
 
 	private:
@@ -329,7 +337,13 @@ namespace ydlidar{
         uint16_t    LastSampleAngleCal;
         uint16_t    Valu8Tou16;
 
-        std::string serial_port;///< 雷达端口      
+        std::string serial_port;///< 雷达端口
+
+        std::list< pose_info> odom_queue;
+        pose_info   last_odom; //! 当前里程计同步坐标
+        pose_info   current_odom;
+
+
 
 	};
 }
