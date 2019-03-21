@@ -50,8 +50,8 @@ glob(const vector<string>& patterns)
 {
     vector<string> paths_found;
 
-    if(patterns.size() == 0)
-        return paths_found;
+	if(patterns.size() == 0)
+	    return paths_found;
 
     glob_t glob_results;
 
@@ -330,8 +330,7 @@ serial::list_ports()
 
         std::size_t found = hardware_id.find("10c4:ea60");
 
-        if(found != std::string::npos)
-        {
+        if(found != std::string::npos) {
             PortInfo device_entry;
             device_entry.port = device;
             device_entry.description = friendly_name;

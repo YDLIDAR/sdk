@@ -39,20 +39,18 @@ int lfs_lock( const char *filename, int pid )
     char *buffer = malloc(size);
     struct sockaddr_in addr;
 
-    if ( !( s = socket( AF_INET, SOCK_STREAM, 0 ) ) > 0 )
-    {
-        free(buffer);
+    if ( !( s = socket( AF_INET, SOCK_STREAM, 0 ) ) > 0 ) {
+		free(buffer);
         return 1;
-    }
+	}
     addr.sin_family = AF_INET;
     addr.sin_port = htons( 50001 );
     addr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
 
-    if ( !connect( s, ( struct sockaddr * ) &addr, sizeof( addr ) ) == 0 )
-    {
-        free(buffer);
+    if ( !connect( s, ( struct sockaddr * ) &addr, sizeof( addr ) ) == 0 ) {
+		free(buffer);
         return 1;
-    }
+	}
     ret=recv( s, buffer, size, 0 );
     sprintf( buffer, "lock %s %i\n", filename, pid );
     /* printf( "%s", buffer ); */
@@ -67,7 +65,7 @@ int lfs_lock( const char *filename, int pid )
     close(s);
     /* printf("%s\n", buffer); */
     if( buffer[0] == '2' ) return 0;
-    free(buffer);
+	free(buffer);
     return 1;
 }
 
@@ -87,21 +85,19 @@ int lfs_unlock( const char *filename, int pid )
     int size = 1024;
     char *buffer = malloc(size);
     struct sockaddr_in addr;
-
-    if ( !( s = socket( AF_INET, SOCK_STREAM, 0 ) ) > 0 )
-    {
-        free(buffer);
+ 
+    if ( !( s = socket( AF_INET, SOCK_STREAM, 0 ) ) > 0 ) {
+		free(buffer);
         return 1;
-    }
+	}
     addr.sin_family = AF_INET;
     addr.sin_port = htons( 50001 );
     addr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
 
-    if ( !connect( s, ( struct sockaddr * ) &addr, sizeof( addr ) ) == 0 )
-    {
-        free(buffer);
+    if ( !connect( s, ( struct sockaddr * ) &addr, sizeof( addr ) ) == 0 ) {
+		free(buffer);
         return 1;
-    }
+	}
     sprintf( buffer, "unlock %s %i\n", filename, pid );
     /* printf( "%s", buffer ); */
     send( s, buffer, strlen(buffer), 0 );
@@ -114,7 +110,7 @@ int lfs_unlock( const char *filename, int pid )
     send( s, "quit\n", strlen( "quit\n" ), 0 );
     close(s);
     if( buffer[0] == '2' ) return 0;
-    free(buffer);
+		free(buffer);
     return 1;
 }
 #endif /* LFS */
@@ -168,9 +164,9 @@ int lib_lock_dev_lock( const char *filename, int pid )
     if ( dev_lock( filename ) )
     {
         sprintf( message,
-                 "RXTX fhs_lock() Error: creating lock file for: %s: %s\n",
-                 filename, strerror(errno) );
-        // report_error( message );
+            "RXTX fhs_lock() Error: creating lock file for: %s: %s\n",
+            filename, strerror(errno) );
+       // report_error( message );
         return 1;
     }
     return( 0 );
@@ -295,16 +291,16 @@ int uucp_lock( const char *filename, int pid )
         return 1;
     }
     sprintf( lockfilename, "%s/LK.%03d.%03d.%03d",
-             LOCKDIR,
-             (int) major( buf.st_dev ),
-             (int) major( buf.st_rdev ),
-             (int) minor( buf.st_rdev )
-           );
+        LOCKDIR,
+        (int) major( buf.st_dev ),
+        (int) major( buf.st_rdev ),
+        (int) minor( buf.st_rdev )
+    );
     sprintf( lockinfo, "%10d\n", (int) getpid() );
     if ( stat( lockfilename, &buf ) == 0 )
     {
         printf( "RXTX uucp_lock() %s is there\n",
-                lockfilename );
+            lockfilename );
         return 1;
     }
     fd = open( lockfilename, O_CREAT | O_WRONLY | O_EXCL, 0444 );
@@ -413,10 +409,10 @@ void uucp_unlock( const char *filename, int openpid )
         return;
     }
     sprintf( file, LOCKDIR"/LK.%03d.%03d.%03d",
-             (int) major( buf.st_dev ),
-             (int) major( buf.st_rdev ),
-             (int) minor( buf.st_rdev )
-           );
+        (int) major( buf.st_dev ),
+        (int) major( buf.st_rdev ),
+        (int) minor( buf.st_rdev )
+    );
     if ( stat( file, &buf ) != 0 )
     {
         /* hmm the file is not there? */
@@ -464,7 +460,7 @@ int check_lock_pid( const char *file, int openpid )
     if ( lockpid != getpid() && lockpid != getppid() && lockpid != openpid )
     {
         printf("check_lock_pid: lock = %s pid = %i gpid=%i openpid=%i\n",
-               pid_buffer, (int) getpid(), (int) getppid(), openpid );
+            pid_buffer, (int) getpid(), (int) getppid(), openpid );
         return( 1 );
     }
     return( 0 );
@@ -494,8 +490,7 @@ int check_lock_pid( const char *file, int openpid )
         I tried and seems to work.
         Villa Valerio <valerio.villa@siemens.com>
 ----------------------------------------------------------*/
-int check_group_uucp()
-{
+int check_group_uucp() {
 
 #ifndef USER_LOCK_DIRECTORY
     FILE *testLockFile ;
@@ -504,7 +499,7 @@ int check_group_uucp()
     char *testLockAbsFileName;
 
     testLockAbsFileName = calloc(strlen(testLockFileDirName)
-                                 + strlen(testLockFileName) + 2, sizeof(char));
+            + strlen(testLockFileName) + 2, sizeof(char));
     if ( NULL == testLockAbsFileName )
     {
         printf("check_group_uucp(): Insufficient memory");
@@ -525,7 +520,7 @@ int check_group_uucp()
     if (NULL == testLockFile)
     {
         printf("check_group_uucp(): error testing lock file "
-               "creation Error details:");
+            "creation Error details:");
         printf("%s\n",strerror(errno));
         free(testLockAbsFileName);
         return 1;
@@ -540,8 +535,7 @@ int check_group_uucp()
 }
 
 #ifdef USE_OLD_CHECK_GROUP_UUCP
-int check_group_uucp()
-{
+int check_group_uucp() {
 #ifndef USER_LOCK_DIRECTORY
     int group_count;
     struct passwd *user = getpwuid( geteuid() );
@@ -563,43 +557,42 @@ int check_group_uucp()
     {
         printf( "Not able to get user groups.\n" );
         return 1;
-    }
-    else
-        /* JJO changes stop */
+    } else
+    /* JJO changes stop */
 
 
-        if( user->pw_gid )
+    if( user->pw_gid )
+    {
+        while( group_count >= 0 && buf.st_gid != list[ group_count ] )
         {
-            while( group_count >= 0 && buf.st_gid != list[ group_count ] )
+            group_count--;
+        }
+        if( buf.st_gid == list[ group_count ] )
+            return 0;
+        sprintf( msg, "%i %i\n", buf.st_gid, list[ group_count ] );
+        printf( msg );
+        printf( UUCP_ERROR );
+        return 1;
+    }
+    return 0;
+/*
+    if( strcmp( user->pw_name, "root" ) )
+    {
+        while( *g->gr_mem )
+        {
+            if( !strcmp( *g->gr_mem, user->pw_name ) )
             {
-                group_count--;
+                break;
             }
-            if( buf.st_gid == list[ group_count ] )
-                return 0;
-            sprintf( msg, "%i %i\n", buf.st_gid, list[ group_count ] );
-            printf( msg );
+            (void) *g->gr_mem++;
+        }
+        if( !*g->gr_mem )
+        {
             printf( UUCP_ERROR );
             return 1;
         }
-    return 0;
-    /*
-        if( strcmp( user->pw_name, "root" ) )
-        {
-            while( *g->gr_mem )
-            {
-                if( !strcmp( *g->gr_mem, user->pw_name ) )
-                {
-                    break;
-                }
-                (void) *g->gr_mem++;
-            }
-            if( !*g->gr_mem )
-            {
-                printf( UUCP_ERROR );
-                return 1;
-            }
-        }
-    */
+    }
+*/
 #endif /* USER_LOCK_DIRECTORY */
     return 0;
 }
@@ -643,14 +636,14 @@ int different_from_LOCKDIR(const char* ld)
 int is_device_locked( const char *port_filename )
 {
     const char *lockdirs[] = { "/etc/locks", "/usr/spool/kermit",
-                               "/usr/spool/locks", "/usr/spool/uucp", "/usr/spool/uucp/",
-                               "/usr/spool/uucp/LCK", "/var/lock", "/var/lock/modem",
-                               "/var/spool/lock", "/var/spool/locks", "/var/spool/uucp",
-                               LOCKDIR, NULL
-                             };
+        "/usr/spool/locks", "/usr/spool/uucp", "/usr/spool/uucp/",
+        "/usr/spool/uucp/LCK", "/var/lock", "/var/lock/modem",
+        "/var/spool/lock", "/var/spool/locks", "/var/spool/uucp",
+        LOCKDIR, NULL
+    };
     const char *lockprefixes[] = { "LCK..", "lk..", "LK.", NULL };
     char *p, file[80], pid_buffer[20];
-    int i = 0, j, k, fd, pid;
+    int i = 0, j, k, fd , pid;
     struct stat buf, buf2, lockbuf;
 
     j = strlen( port_filename );
@@ -669,15 +662,15 @@ int is_device_locked( const char *port_filename )
            if it is there is it not the expected lock dir?
         */
         if( !stat( lockdirs[i], &buf2 ) &&
-                buf2.st_ino != lockbuf.st_ino &&
-                strncmp( lockdirs[i], LOCKDIR, strlen( lockdirs[i] ) ) )
+            buf2.st_ino != lockbuf.st_ino &&
+            strncmp( lockdirs[i], LOCKDIR, strlen( lockdirs[i] ) ) )
         {
             j = strlen( port_filename );
             p = ( char *  ) port_filename + j;
-            /*
-               SCO Unix use lowercase all the time
-                taj
-            */
+        /*
+           SCO Unix use lowercase all the time
+            taj
+        */
             while( *( p - 1 ) != '/' && j-- != 1 )
             {
 #if defined ( __unixware__ )
@@ -690,7 +683,7 @@ int is_device_locked( const char *port_filename )
             {
                 /* FHS style */
                 sprintf( file, "%s/%s%s", lockdirs[i],
-                         lockprefixes[k], p );
+                    lockprefixes[k], p );
                 if( stat( file, &buf ) == 0 )
                 {
 //                    sprintf( message, UNEXPECTED_LOCK_FILE,
@@ -700,14 +693,14 @@ int is_device_locked( const char *port_filename )
                 }
 
                 /* UUCP style */
-                stat(port_filename, &buf );
+                stat(port_filename , &buf );
                 sprintf( file, "%s/%s%03d.%03d.%03d",
-                         lockdirs[i],
-                         lockprefixes[k],
-                         (int) major( buf.st_dev ),
-                         (int) major( buf.st_rdev ),
-                         (int) minor( buf.st_rdev )
-                       );
+                    lockdirs[i],
+                    lockprefixes[k],
+                    (int) major( buf.st_dev ),
+                    (int) major( buf.st_rdev ),
+                    (int) minor( buf.st_rdev )
+                );
                 if( stat( file, &buf ) == 0 )
                 {
 //                    sprintf( message, UNEXPECTED_LOCK_FILE,
@@ -744,14 +737,14 @@ int is_device_locked( const char *port_filename )
     if ( stat( port_filename, &buf ) != 0 )
     {
         printf( "RXTX is_device_locked() could not find device.\n" );
-        return 1;
+            return 1;
     }
     sprintf( file, "%s/LK.%03d.%03d.%03d",
-             LOCKDIR,
-             (int) major( buf.st_dev ),
-             (int) major( buf.st_rdev ),
-             (int) minor( buf.st_rdev )
-           );
+        LOCKDIR,
+        (int) major( buf.st_dev ),
+        (int) major( buf.st_rdev ),
+        (int) minor( buf.st_rdev )
+    );
 
 #endif /* FHS */
 
@@ -774,8 +767,8 @@ int is_device_locked( const char *port_filename )
             {
                 printf( "RXTX Error:  Unable to \
                     remove stale lock file: %s\n",
-                        file
-                      );
+                    file
+                );
                 return 1;
             }
         }

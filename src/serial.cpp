@@ -11,326 +11,393 @@
 #include "serial.h"
 #include "common.h"
 
-namespace serial {
+namespace serial
+{
 
-	using std::min;
-	using std::numeric_limits;
-	using std::vector;
-	using std::size_t;
-	using std::string;
+using std::min;
+using std::numeric_limits;
+using std::vector;
+using std::size_t;
+using std::string;
 
-	using serial::Serial;
-	using serial::bytesize_t;
-	using serial::parity_t;
-	using serial::stopbits_t;
-	using serial::flowcontrol_t;
+using serial::Serial;
+using serial::bytesize_t;
+using serial::parity_t;
+using serial::stopbits_t;
+using serial::flowcontrol_t;
 
-	class Serial::ScopedReadLock {
-	public:
-        explicit ScopedReadLock(Serial::SerialImpl *pimpl) : pimpl_(pimpl) {
-			this->pimpl_->readLock();
-		}
-		~ScopedReadLock() {
-			this->pimpl_->readUnlock();
-		}
-	private:
-		// Disable copy constructors
-		ScopedReadLock(const ScopedReadLock&);
-		const ScopedReadLock& operator=(ScopedReadLock);
-
-        Serial::SerialImpl *pimpl_;
-	};
-
-	class Serial::ScopedWriteLock {
-	public:
-        explicit ScopedWriteLock(Serial::SerialImpl *pimpl) : pimpl_(pimpl) {
-			this->pimpl_->writeLock();
-		}
-		~ScopedWriteLock() {
-			this->pimpl_->writeUnlock();
-		}
-	private:
-		// Disable copy constructors
-		ScopedWriteLock(const ScopedWriteLock&);
-		const ScopedWriteLock& operator=(ScopedWriteLock);
-        Serial::SerialImpl *pimpl_;
-	};
-
-	Serial::Serial (const string &port, uint32_t baudrate, serial::Timeout timeout,
-		bytesize_t bytesize, parity_t parity, stopbits_t stopbits,
-		flowcontrol_t flowcontrol)
-		: pimpl_(new SerialImpl (port, baudrate, bytesize, parity,
-		stopbits, flowcontrol)) {
-		pimpl_->setTimeout(timeout);
-	}
-
-	Serial::~Serial () {
-		delete pimpl_;
-	}
-
-	bool Serial::open () {
-		return pimpl_->open ();
-	}
-
-    void Serial::closePort () {
-		pimpl_->close ();
-	}
-
-    bool Serial::isOpen () {
-		return pimpl_->isOpen ();
-	}
-
-	size_t Serial::available () {
-		return pimpl_->available ();
-	}
-
-	bool Serial::waitReadable () {
-		serial::Timeout timeout(pimpl_->getTimeout ());
-		return pimpl_->waitReadable(timeout.read_timeout_constant);
-	}
-
-	void Serial::waitByteTimes (size_t count) {
-		pimpl_->waitByteTimes(count);
-	}
-
-	int Serial::waitfordata(size_t data_count, uint32_t timeout, size_t * returned_size) {
-		return pimpl_->waitfordata(data_count, timeout, returned_size);
-	}
-
-    size_t Serial::writeData(const uint8_t * data, size_t size) {
-        return write(data, size);
+class Serial::ScopedReadLock
+{
+public:
+    explicit ScopedReadLock(Serial::SerialImpl *pimpl) : pimpl_(pimpl)
+    {
+        this->pimpl_->readLock();
     }
-
-    size_t Serial::readData(uint8_t * data, size_t size) {
-        return read(data, size);
+    ~ScopedReadLock()
+    {
+        this->pimpl_->readUnlock();
     }
+private:
+    // Disable copy constructors
+    ScopedReadLock(const ScopedReadLock&);
+    const ScopedReadLock& operator=(ScopedReadLock);
 
-	size_t Serial::read_ (uint8_t *buffer, size_t size) {
-		return this->pimpl_->read (buffer, size);
-	}
+    Serial::SerialImpl *pimpl_;
+};
 
-	size_t Serial::read (uint8_t *buffer, size_t size) {
-		ScopedReadLock lock(this->pimpl_);
-		return this->pimpl_->read (buffer, size);
-	}
+class Serial::ScopedWriteLock
+{
+public:
+    explicit ScopedWriteLock(Serial::SerialImpl *pimpl) : pimpl_(pimpl)
+    {
+        this->pimpl_->writeLock();
+    }
+    ~ScopedWriteLock()
+    {
+        this->pimpl_->writeUnlock();
+    }
+private:
+    // Disable copy constructors
+    ScopedWriteLock(const ScopedWriteLock&);
+    const ScopedWriteLock& operator=(ScopedWriteLock);
+    Serial::SerialImpl *pimpl_;
+};
 
-	size_t Serial::read (std::vector<uint8_t> &buffer, size_t size) {
-		ScopedReadLock lock(this->pimpl_);
-		uint8_t *buffer_ = new uint8_t[size];
-		size_t bytes_read = this->pimpl_->read (buffer_, size);
-		buffer.insert (buffer.end (), buffer_, buffer_+bytes_read);
-		delete[] buffer_;
-		return bytes_read;
-	}
+Serial::Serial (const string &port, uint32_t baudrate, serial::Timeout timeout,
+                bytesize_t bytesize, parity_t parity, stopbits_t stopbits,
+                flowcontrol_t flowcontrol)
+    : pimpl_(new SerialImpl (port, baudrate, bytesize, parity,
+                             stopbits, flowcontrol))
+{
+    pimpl_->setTimeout(timeout);
+}
 
-	size_t Serial::read (std::string &buffer, size_t size) {
-		ScopedReadLock lock(this->pimpl_);
-		uint8_t *buffer_ = new uint8_t[size];
-		size_t bytes_read = this->pimpl_->read (buffer_, size);
-		buffer.append (reinterpret_cast<const char*>(buffer_), bytes_read);
-		delete[] buffer_;
-		return bytes_read;
-	}
+Serial::~Serial ()
+{
+    delete pimpl_;
+}
 
-	string Serial::read (size_t size) {
-		std::string buffer;
-		this->read (buffer, size);
-		return buffer;
-	}
+bool Serial::open ()
+{
+    return pimpl_->open ();
+}
 
-	size_t Serial::readline (string &buffer, size_t size, string eol) {
-		ScopedReadLock lock(this->pimpl_);
-		size_t eol_len = eol.length ();
-		uint8_t *buffer_ = static_cast<uint8_t*> (alloca (size * sizeof (uint8_t)));
-		size_t read_so_far = 0;
-		while (true) {
-			size_t bytes_read = this->read_ (buffer_ + read_so_far, 1);
-			read_so_far += bytes_read;
-			if (bytes_read == 0) {
-				break; // Timeout occured on reading 1 byte
-			}
-			if (string (reinterpret_cast<const char*> (buffer_ + read_so_far - eol_len), eol_len) == eol) {
-					break; // EOL found
-			}
-			if (read_so_far == size) {
-				break; // Reached the maximum read length
-			}
-		}
-		buffer.append(reinterpret_cast<const char*> (buffer_), read_so_far);
-		return read_so_far;
-	}
+void Serial::closePort ()
+{
+    pimpl_->close ();
+}
 
-	string Serial::readline (size_t size, string eol) {
-		std::string buffer;
-		this->readline (buffer, size, eol);
-		return buffer;
-	}
+bool Serial::isOpen ()
+{
+    return pimpl_->isOpen ();
+}
 
-	vector<string> Serial::readlines (size_t size, string eol) {
-		ScopedReadLock lock(this->pimpl_);
-		std::vector<std::string> lines;
-		size_t eol_len = eol.length ();
-		uint8_t *buffer_ = static_cast<uint8_t*> (alloca (size * sizeof (uint8_t)));
-		size_t read_so_far = 0;
-		size_t start_of_line = 0;
-		while (read_so_far < size) {
-			size_t bytes_read = this->read_ (buffer_+read_so_far, 1);
-			read_so_far += bytes_read;
-			if (bytes_read == 0) {
-				if (start_of_line != read_so_far) {
-					lines.push_back ( string (reinterpret_cast<const char*> (buffer_ + start_of_line), read_so_far - start_of_line));
-				}
-				break; // Timeout occured on reading 1 byte
-			}
-			if (string (reinterpret_cast<const char*>
-				(buffer_ + read_so_far - eol_len), eol_len) == eol) {
-					// EOL found
-					lines.push_back( string(reinterpret_cast<const char*> (buffer_ + start_of_line), read_so_far - start_of_line));
-					start_of_line = read_so_far;
-			}
-			if (read_so_far == size) {
-				if (start_of_line != read_so_far) {
-					lines.push_back( string(reinterpret_cast<const char*> (buffer_ + start_of_line), read_so_far - start_of_line));
-				}
-				break; // Reached the maximum read length
-			}
-		}
-		return lines;
-	}
+size_t Serial::available ()
+{
+    return pimpl_->available ();
+}
 
-	size_t Serial::write (const string &data) {
-		ScopedWriteLock lock(this->pimpl_);
-		return this->write_ (reinterpret_cast<const uint8_t*>(data.c_str()), data.length());
-	}
+bool Serial::waitReadable ()
+{
+    serial::Timeout timeout(pimpl_->getTimeout ());
+    return pimpl_->waitReadable(timeout.read_timeout_constant);
+}
 
-	size_t Serial::write (const std::vector<uint8_t> &data) {
-		ScopedWriteLock lock(this->pimpl_);
-		return this->write_ (&data[0], data.size());
-	}
+void Serial::waitByteTimes (size_t count)
+{
+    pimpl_->waitByteTimes(count);
+}
 
-	size_t Serial::write (const uint8_t *data, size_t size) {
-		ScopedWriteLock lock(this->pimpl_);
-		return this->write_(data, size);
-	}
+int Serial::waitfordata(size_t data_count, uint32_t timeout, size_t * returned_size)
+{
+    return pimpl_->waitfordata(data_count, timeout, returned_size);
+}
 
-	size_t Serial::write_ (const uint8_t *data, size_t length) {
-		return pimpl_->write (data, length);
-	}
+size_t Serial::writeData(const uint8_t * data, size_t size)
+{
+    return write(data, size);
+}
 
-	void Serial::setPort (const string &port) {
-		ScopedReadLock rlock(this->pimpl_);
-		ScopedWriteLock wlock(this->pimpl_);
-		bool was_open = pimpl_->isOpen ();
-        if (was_open) closePort();
-		pimpl_->setPort (port);
-		if (was_open) open ();
-	}
+size_t Serial::readData(uint8_t * data, size_t size)
+{
+    return read(data, size);
+}
 
-	string Serial::getPort () const {
-		return pimpl_->getPort ();
-	}
+size_t Serial::read_ (uint8_t *buffer, size_t size)
+{
+    return this->pimpl_->read (buffer, size);
+}
 
-	void Serial::setTimeout (serial::Timeout &timeout) {
-		pimpl_->setTimeout (timeout);
-	}
+size_t Serial::read (uint8_t *buffer, size_t size)
+{
+    ScopedReadLock lock(this->pimpl_);
+    return this->pimpl_->read (buffer, size);
+}
 
-	serial::Timeout Serial::getTimeout () const {
-			return pimpl_->getTimeout ();
-	}
+size_t Serial::read (std::vector<uint8_t> &buffer, size_t size)
+{
+    ScopedReadLock lock(this->pimpl_);
+    uint8_t *buffer_ = new uint8_t[size];
+    size_t bytes_read = this->pimpl_->read (buffer_, size);
+    buffer.insert (buffer.end (), buffer_, buffer_+bytes_read);
+    delete[] buffer_;
+    return bytes_read;
+}
 
-	bool Serial::setBaudrate (uint32_t baudrate) {
-		return pimpl_->setBaudrate (baudrate);
-	}
+size_t Serial::read (std::string &buffer, size_t size)
+{
+    ScopedReadLock lock(this->pimpl_);
+    uint8_t *buffer_ = new uint8_t[size];
+    size_t bytes_read = this->pimpl_->read (buffer_, size);
+    buffer.append (reinterpret_cast<const char*>(buffer_), bytes_read);
+    delete[] buffer_;
+    return bytes_read;
+}
 
-	uint32_t Serial::getBaudrate () const {
-		return uint32_t(pimpl_->getBaudrate ());
-	}
+string Serial::read (size_t size)
+{
+    std::string buffer;
+    this->read (buffer, size);
+    return buffer;
+}
 
-	bool Serial::setBytesize (bytesize_t bytesize){
-		return pimpl_->setBytesize (bytesize);
-	}
+size_t Serial::readline (string &buffer, size_t size, string eol)
+{
+    ScopedReadLock lock(this->pimpl_);
+    size_t eol_len = eol.length ();
+    uint8_t *buffer_ = static_cast<uint8_t*> (alloca (size * sizeof (uint8_t)));
+    size_t read_so_far = 0;
+    while (true)
+    {
+        size_t bytes_read = this->read_ (buffer_ + read_so_far, 1);
+        read_so_far += bytes_read;
+        if (bytes_read == 0)
+        {
+            break; // Timeout occured on reading 1 byte
+        }
+        if (string (reinterpret_cast<const char*> (buffer_ + read_so_far - eol_len), eol_len) == eol)
+        {
+            break; // EOL found
+        }
+        if (read_so_far == size)
+        {
+            break; // Reached the maximum read length
+        }
+    }
+    buffer.append(reinterpret_cast<const char*> (buffer_), read_so_far);
+    return read_so_far;
+}
 
-	bytesize_t Serial::getBytesize () const{
-		return pimpl_->getBytesize ();
-	}
+string Serial::readline (size_t size, string eol)
+{
+    std::string buffer;
+    this->readline (buffer, size, eol);
+    return buffer;
+}
 
-	bool Serial::setParity (parity_t parity){
-		return pimpl_->setParity (parity);
-	}
+vector<string> Serial::readlines (size_t size, string eol)
+{
+    ScopedReadLock lock(this->pimpl_);
+    std::vector<std::string> lines;
+    size_t eol_len = eol.length ();
+    uint8_t *buffer_ = static_cast<uint8_t*> (alloca (size * sizeof (uint8_t)));
+    size_t read_so_far = 0;
+    size_t start_of_line = 0;
+    while (read_so_far < size)
+    {
+        size_t bytes_read = this->read_ (buffer_+read_so_far, 1);
+        read_so_far += bytes_read;
+        if (bytes_read == 0)
+        {
+            if (start_of_line != read_so_far)
+            {
+                lines.push_back ( string (reinterpret_cast<const char*> (buffer_ + start_of_line), read_so_far - start_of_line));
+            }
+            break; // Timeout occured on reading 1 byte
+        }
+        if (string (reinterpret_cast<const char*>
+                    (buffer_ + read_so_far - eol_len), eol_len) == eol)
+        {
+            // EOL found
+            lines.push_back( string(reinterpret_cast<const char*> (buffer_ + start_of_line), read_so_far - start_of_line));
+            start_of_line = read_so_far;
+        }
+        if (read_so_far == size)
+        {
+            if (start_of_line != read_so_far)
+            {
+                lines.push_back( string(reinterpret_cast<const char*> (buffer_ + start_of_line), read_so_far - start_of_line));
+            }
+            break; // Reached the maximum read length
+        }
+    }
+    return lines;
+}
 
-	parity_t Serial::getParity () const{
-		return pimpl_->getParity ();
-	}
+size_t Serial::write (const string &data)
+{
+    ScopedWriteLock lock(this->pimpl_);
+    return this->write_ (reinterpret_cast<const uint8_t*>(data.c_str()), data.length());
+}
 
-	bool Serial::setStopbits (stopbits_t stopbits){
-		return pimpl_->setStopbits (stopbits);
-	}
+size_t Serial::write (const std::vector<uint8_t> &data)
+{
+    ScopedWriteLock lock(this->pimpl_);
+    return this->write_ (&data[0], data.size());
+}
 
-	stopbits_t Serial::getStopbits () const{
-		return pimpl_->getStopbits ();
-	}
+size_t Serial::write (const uint8_t *data, size_t size)
+{
+    ScopedWriteLock lock(this->pimpl_);
+    return this->write_(data, size);
+}
 
-	bool Serial::setFlowcontrol (flowcontrol_t flowcontrol){
-		return pimpl_->setFlowcontrol (flowcontrol);
-	}
+size_t Serial::write_ (const uint8_t *data, size_t length)
+{
+    return pimpl_->write (data, length);
+}
 
-	flowcontrol_t Serial::getFlowcontrol () const{
-		return pimpl_->getFlowcontrol ();
-	}
+void Serial::setPort (const string &port)
+{
+    ScopedReadLock rlock(this->pimpl_);
+    ScopedWriteLock wlock(this->pimpl_);
+    bool was_open = pimpl_->isOpen ();
+    if (was_open) closePort();
+    pimpl_->setPort (port);
+    if (was_open) open ();
+}
 
-	void Serial::flush (){
-		ScopedReadLock rlock(this->pimpl_);
-		ScopedWriteLock wlock(this->pimpl_);
-		pimpl_->flush ();
-	}
+string Serial::getPort () const
+{
+    return pimpl_->getPort ();
+}
 
-	void Serial::flushInput (){
-		ScopedReadLock lock(this->pimpl_);
-		pimpl_->flushInput ();
-	}
+void Serial::setTimeout (serial::Timeout &timeout)
+{
+    pimpl_->setTimeout (timeout);
+}
 
-	void Serial::flushOutput (){
-		ScopedWriteLock lock(this->pimpl_);
-		pimpl_->flushOutput ();
-	}
+serial::Timeout Serial::getTimeout () const
+{
+    return pimpl_->getTimeout ();
+}
 
-	void Serial::sendBreak (int duration){
-		pimpl_->sendBreak (duration);
-	}
+bool Serial::setBaudrate (uint32_t baudrate)
+{
+    return pimpl_->setBaudrate (baudrate);
+}
 
-	bool Serial::setBreak (bool level){
-		return pimpl_->setBreak (level);
-	}
+uint32_t Serial::getBaudrate () const
+{
+    return uint32_t(pimpl_->getBaudrate ());
+}
 
-	bool Serial::setRTS (bool level){
-		return pimpl_->setRTS (level);
-	}
+bool Serial::setBytesize (bytesize_t bytesize)
+{
+    return pimpl_->setBytesize (bytesize);
+}
 
-	bool Serial::setDTR (bool level){
-		return pimpl_->setDTR (level);
-	}
+bytesize_t Serial::getBytesize () const
+{
+    return pimpl_->getBytesize ();
+}
 
-	bool Serial::waitForChange(){
-		return pimpl_->waitForChange();
-	}
+bool Serial::setParity (parity_t parity)
+{
+    return pimpl_->setParity (parity);
+}
 
-	bool Serial::getCTS (){
-		return pimpl_->getCTS ();
-	}
+parity_t Serial::getParity () const
+{
+    return pimpl_->getParity ();
+}
 
-	bool Serial::getDSR (){
-		return pimpl_->getDSR ();
-	}
+bool Serial::setStopbits (stopbits_t stopbits)
+{
+    return pimpl_->setStopbits (stopbits);
+}
 
-	bool Serial::getRI (){
-		return pimpl_->getRI ();
-	}
+stopbits_t Serial::getStopbits () const
+{
+    return pimpl_->getStopbits ();
+}
 
-	bool Serial::getCD (){
-		return pimpl_->getCD ();
-	}
+bool Serial::setFlowcontrol (flowcontrol_t flowcontrol)
+{
+    return pimpl_->setFlowcontrol (flowcontrol);
+}
 
-    int Serial::getByteTime(){
-		return pimpl_->getByteTime();
-	}
+flowcontrol_t Serial::getFlowcontrol () const
+{
+    return pimpl_->getFlowcontrol ();
+}
+
+void Serial::flush ()
+{
+    ScopedReadLock rlock(this->pimpl_);
+    ScopedWriteLock wlock(this->pimpl_);
+    pimpl_->flush ();
+}
+
+void Serial::flushInput ()
+{
+    ScopedReadLock lock(this->pimpl_);
+    pimpl_->flushInput ();
+}
+
+void Serial::flushOutput ()
+{
+    ScopedWriteLock lock(this->pimpl_);
+    pimpl_->flushOutput ();
+}
+
+void Serial::sendBreak (int duration)
+{
+    pimpl_->sendBreak (duration);
+}
+
+bool Serial::setBreak (bool level)
+{
+    return pimpl_->setBreak (level);
+}
+
+bool Serial::setRTS (bool level)
+{
+    return pimpl_->setRTS (level);
+}
+
+bool Serial::setDTR (bool level)
+{
+    return pimpl_->setDTR (level);
+}
+
+bool Serial::waitForChange()
+{
+    return pimpl_->waitForChange();
+}
+
+bool Serial::getCTS ()
+{
+    return pimpl_->getCTS ();
+}
+
+bool Serial::getDSR ()
+{
+    return pimpl_->getDSR ();
+}
+
+bool Serial::getRI ()
+{
+    return pimpl_->getRI ();
+}
+
+bool Serial::getCD ()
+{
+    return pimpl_->getCD ();
+}
+
+int Serial::getByteTime()
+{
+    return pimpl_->getByteTime();
+}
 }
