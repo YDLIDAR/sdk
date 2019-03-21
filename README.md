@@ -15,11 +15,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  1.3.9 |   2018-12-1  |
+| SDK     |  1.4.0 |   2019-03-21  |
 
 
-- [new feature] Reduce abnormal situation recovery time.
-- [new feature] fix timestamp from zero.
+- [new feature] fix turnOn and turnOff.
 
 
 
