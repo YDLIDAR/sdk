@@ -187,10 +187,7 @@ bool CYdLidar::getDeviceHealth() const
 
         if (healthinfo.status == 2)
         {
-            if (print_error >= 2)
-            {
-                fprintf(stderr, "Error, Yd Lidar internal error detected. Please reboot the device to retry.\n");
-            }
+            fprintf(stderr, "Error, Yd Lidar internal error detected. Please reboot the device to retry.\n");
             return false;
         }
         else
@@ -201,10 +198,8 @@ bool CYdLidar::getDeviceHealth() const
     }
     else
     {
-        if (print_error >= 2)
-        {
-            fprintf(stderr, "Error, cannot retrieve Yd Lidar health code: %x\n", op_result);
-        }
+        
+        fprintf(stderr, "Error, cannot retrieve Yd Lidar health code: %x\n", op_result);
         return false;
     }
 

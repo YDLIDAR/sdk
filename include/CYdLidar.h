@@ -91,7 +91,6 @@ protected:
 
 private:
     bool    isScanning;
-    int     print_error;
     YDlidarDriver *lidarPtr;
 
 };	// End of class
