@@ -75,7 +75,13 @@ namespace ydlidar{
 		* @retval true     成功
     	* @retval false    失败
     	*/
-        bool isconnected() const;
+        bool isConnected() const;
+
+        /**
+         * @brief isScanning
+         * @return
+         */
+        bool isScanning() const;
 
         /**
         * @brief 设置雷达异常自动重新连接 \n
@@ -146,6 +152,11 @@ namespace ydlidar{
     	* @retval RESULT_FAILE    失败
     	*/
 		result_t stopMotor();
+
+		/**
+		 * @brief flush
+		 */
+		void flush();
 
 	protected:
 
@@ -265,8 +276,8 @@ namespace ydlidar{
 
 
 	public:
-        bool     isConnected;  ///< 串口连接状体
-        bool     isScanning;   ///< 扫图状态
+				bool     m_isConnected;  ///< 串口连接状体
+				bool     m_isScanning;   ///< 扫图状态
         bool     isAutoReconnect;  ///< 异常自动从新连接
         bool     isAutoconnting;  ///< 是否正在自动连接中
 
@@ -274,8 +285,8 @@ namespace ydlidar{
 		enum {
 			DEFAULT_TIMEOUT = 2000,    /**< 默认超时时间. */ 
 			DEFAULT_HEART_BEAT = 1000, /**< 默认检测掉电功能时间. */ 
-			MAX_SCAN_NODES = 2048,	   /**< 最大扫描点数. */ 
-            DEFAULT_TIMEOUT_COUNT = 10,
+			MAX_SCAN_NODES = 2048,	   /**< 最大扫描点数. */   
+			DEFAULT_TIMEOUT_COUNT = 10,
 		};
 		enum { 
 			YDLIDAR_F4=1, /**< F4雷达型号代号. */ 
@@ -305,8 +316,8 @@ namespace ydlidar{
         bool        isSupportMotorCtrl;			///< 是否支持电机控制
         bool        CheckSunResult;
         uint32_t    m_baudrate;					///< 波特率
-        uint64_t    m_ns;						///< 时间戳
-        uint64_t    m_last_ns;						///< 时间戳
+        uint64_t    m_node_time;						///< 时间戳
+        uint64_t    m_last_node_time;						///< 时间戳
         uint32_t    m_signalpointTime;			///< 两个激光点时间间隔
         uint32_t    trans_delay;				///< 串口传输一个byte时间
         uint16_t    package_Sample_Index;

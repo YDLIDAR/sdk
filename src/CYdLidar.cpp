@@ -21,6 +21,7 @@ CYdLidar::CYdLidar(): lidarPtr(0) {
   m_MinAngle          = -180.f;
   m_MaxRange          = 16.0;
   m_MinRange          = 0.08;
+  m_AbnormalCheckCount= 2;
   isScanning          = false;
   isConnected         = false;
   node_counts         = 720;
@@ -223,22 +224,32 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 						turnOn
 -------------------------------------------------------------*/
 bool  CYdLidar::turnOn() {
-  bool ret = isScanning;
-
-  if (!isScanning) {
-    result_t ans = lidarPtr->startScan();
-    ret = true;
-
-    if (!IS_OK(ans)) {
-      ret = false;
-    } else {
-      isScanning = true;
-      printf("[YDLIDAR INFO] Now YDLIDAR is scanning ......\n");
-      fflush(stdout);
-    }
+  if (isScanning && lidarPtr->isScanning()) {
+    true;
   }
 
-  return ret;
+  // start scan...
+  result_t op_result = lidarPtr->startScan();
+  if (!IS_OK(op_result)) {
+    op_result = lidarPtr->startScan();
+    if (!IS_OK(op_result)) {
+      fprintf(stderr, "[CYdLidar] Failed to start scan mode: %x\n", op_result);
+      isScanning = false;
+      return false;
+    }
+  }
+  if (checkLidarAbnormal()) {
+      lidarPtr->stop();
+      fprintf(stderr, "[CYdLidar] Failed to turn on the Lidar, because the lidar is blocked or the lidar hardware is faulty.\n");
+      isScanning = false;
+      return false;
+  }
+  lidarPtr->flush();
+  isScanning = true;
+  lidarPtr->setAutoReconnect(m_AutoReconnect);
+  printf("[YDLIDAR INFO] Now YDLIDAR is scanning ......\n");
+  fflush(stdout);
+  return true;
 }
 
 /*-------------------------------------------------------------
@@ -248,12 +259,39 @@ bool  CYdLidar::turnOff() {
   if (lidarPtr) {
     lidarPtr->stop();
     lidarPtr->stopMotor();
-    isScanning = false;
   }
-
+  if (isScanning) {
+    printf("[YDLIDAR INFO] Now YDLIDAR Scanning has stopped ......\n");
+  }
+  isScanning = false;
   return true;
 }
 
+
+/*-------------------------------------------------------------
+            checkLidarAbnormal
+-------------------------------------------------------------*/
+bool CYdLidar::checkLidarAbnormal() {
+  node_info nodes[2048];
+  size_t   count = _countof(nodes);
+  int check_abnormal_count = 0;
+  if (m_AbnormalCheckCount < 2) {
+    m_AbnormalCheckCount = 2;
+  }
+  result_t op_result = RESULT_FAIL;
+  while (check_abnormal_count < m_AbnormalCheckCount) {
+    //Ensure that the voltage is insufficient or the motor resistance is high, causing an abnormality.
+    if (check_abnormal_count > 0) {
+      delay(check_abnormal_count*1000);
+    }
+    op_result =  lidarPtr->grabScanData(nodes, count);
+    if (IS_OK(op_result)) {
+      return false;
+    }
+    check_abnormal_count++;
+  }
+  return !IS_OK(op_result);
+}
 /*-------------------------------------------------------------
 						checkCOMMs
 -------------------------------------------------------------*/
@@ -310,19 +348,13 @@ bool  CYdLidar::checkCOMMs() {
                         checkHardware
 -------------------------------------------------------------*/
 bool CYdLidar::checkHardware() {
-  bool ret = true;
-
-  if (!isScanning) {
-    ret = false;
-
-    if (checkCOMMs()) {
-      if (turnOn()) {
-        ret = true;
-      }
-    }
+  if (!lidarPtr) {
+    return false;
   }
-
-  return ret;
+  if (isScanning && lidarPtr->isScanning()) {
+    return true;
+  }
+  return false;
 }
 
 /*-------------------------------------------------------------

@@ -15,8 +15,8 @@ namespace ydlidar {
 
 YDlidarDriver::YDlidarDriver():
   _serial(0) {
-  isConnected         = false;
-  isScanning          = false;
+  m_isConnected         = false;
+  m_isScanning          = false;
   //串口配置参数
   isAutoReconnect     = true;
   isAutoconnting      = false;
@@ -26,8 +26,8 @@ YDlidarDriver::YDlidarDriver():
 
   m_signalpointTime   = 1e9 / 4000;
   trans_delay         = 0;
-  m_ns                = 0;
-  m_last_ns           = 0;
+  m_node_time         = 0;
+  m_last_node_time    = 0;
 
   //解析参数
   PackageSampleBytes  = 2;
@@ -47,7 +47,7 @@ YDlidarDriver::YDlidarDriver():
 
 YDlidarDriver::~YDlidarDriver() {
   {
-    isScanning = false;
+    m_isScanning = false;
   }
 
   isAutoReconnect = false;
@@ -82,12 +82,13 @@ result_t YDlidarDriver::connect(const char *port_path, uint32_t baudrate) {
     return RESULT_FAIL;
   }
 
-  isConnected = true;
+  m_isConnected = true;
   {
     ScopedLocker l(_lock);
     sendCommand(LIDAR_CMD_FORCE_STOP);
     sendCommand(LIDAR_CMD_STOP);
   }
+  delay(50);
   clearDTR();
 
   return RESULT_OK;
@@ -95,7 +96,7 @@ result_t YDlidarDriver::connect(const char *port_path, uint32_t baudrate) {
 
 
 void YDlidarDriver::setDTR() {
-  if (!isConnected) {
+  if (!m_isConnected) {
     return ;
   }
 
@@ -107,7 +108,7 @@ void YDlidarDriver::setDTR() {
 }
 
 void YDlidarDriver::clearDTR() {
-  if (!isConnected) {
+  if (!m_isConnected) {
     return ;
   }
 
@@ -145,10 +146,20 @@ result_t YDlidarDriver::stopMotor() {
   return RESULT_OK;
 }
 
+void YDlidarDriver::flush() {
+  if (!m_isConnected) {
+    return ;
+  }
+  if (_serial) {
+    _serial->flush();
+  }
+  delay(30);
+}
+
 void YDlidarDriver::disconnect() {
   isAutoReconnect = false;
 
-  if (!isConnected) {
+  if (!m_isConnected) {
     return ;
   }
 
@@ -162,23 +173,27 @@ void YDlidarDriver::disconnect() {
     }
   }
 
-  isConnected = false;
+  m_isConnected = false;
 
 }
 
 
 void YDlidarDriver::disableDataGrabbing() {
   {
-    if (isScanning) {
-      isScanning = false;
+    if (m_isScanning) {
+      m_isScanning = false;
       _dataEvent.set();
     }
   }
   _thread.join();
 }
 
-bool YDlidarDriver::isconnected() const {
-  return isConnected;
+bool YDlidarDriver::isConnected() const {
+  return m_isConnected;
+}
+
+bool YDlidarDriver::isScanning() const {
+  return m_isScanning;
 }
 
 
@@ -188,7 +203,7 @@ result_t YDlidarDriver::sendCommand(uint8_t cmd, const void *payload, size_t pay
   cmd_packet *header = reinterpret_cast<cmd_packet * >(pkt_header);
   uint8_t checksum = 0;
 
-  if (!isConnected) {
+  if (!m_isConnected) {
     return RESULT_FAIL;
   }
 
@@ -221,7 +236,7 @@ result_t YDlidarDriver::sendCommand(uint8_t cmd, const void *payload, size_t pay
 }
 
 result_t YDlidarDriver::sendData(const uint8_t *data, size_t size) {
-  if (!isConnected) {
+  if (!m_isConnected) {
     return RESULT_FAIL;
   }
 
@@ -247,7 +262,7 @@ result_t YDlidarDriver::sendData(const uint8_t *data, size_t size) {
 }
 
 result_t YDlidarDriver::getData(uint8_t *data, size_t size) {
-  if (!isConnected) {
+  if (!m_isConnected) {
     return RESULT_FAIL;
   }
 
@@ -348,18 +363,19 @@ int YDlidarDriver::cacheScanData() {
 
   int timeout_count = 0;
 
-  while (isScanning) {
+  while (m_isScanning) {
     if ((ans = waitScanData(local_buf, count)) != RESULT_OK) {
       if (!IS_TIMEOUT(ans) || timeout_count > DEFAULT_TIMEOUT_COUNT) {
-        if (!isAutoReconnect) { //不重新连接, 退出线程
+        if (!isAutoReconnect) {
           fprintf(stderr, "exit scanning thread!!\n");
           fflush(stderr);
           {
-            isScanning = false;
+            m_isScanning = false;
           }
           return RESULT_FAIL;
         } else {//做异常处理, 重新连接
           isAutoconnting = true;
+          printf("Starting automatic reconnection of Lidar.....\n");
 
           while (isAutoReconnect && isAutoconnting) {
             {
@@ -371,21 +387,22 @@ int YDlidarDriver::cacheScanData() {
                   _serial->closePort();
                   delete _serial;
                   _serial = NULL;
-                  isConnected = false;
+                  m_isConnected = false;
                 }
               }
             }
 
             while (isAutoReconnect && connect(serial_port.c_str(), m_baudrate) != RESULT_OK) {
-              delay(200);
+              printf("Waiting for the Lidar serial port to be available\n");
+              delay(1000);
             }
 
             if (!isAutoReconnect) {
-              isScanning = false;
+              m_isScanning = false;
               return RESULT_FAIL;
             }
 
-            if (isconnected()) {
+            if (isConnected()) {
               {
                 ScopedLocker l(_serial_lock);
                 ans = startAutoScan();
@@ -393,7 +410,9 @@ int YDlidarDriver::cacheScanData() {
 
               if (IS_OK(ans)) {
                 timeout_count = 0;
+                local_buf[0].sync_flag =  Node_NotSync;
                 isAutoconnting = false;
+                printf("automatic connection succeeded\n");
               }
 
             }
@@ -404,6 +423,7 @@ int YDlidarDriver::cacheScanData() {
 
       } else {
         timeout_count++;
+        local_buf[0].sync_flag =  Node_NotSync;
       }
     } else {
       timeout_count = 0;
@@ -433,7 +453,7 @@ int YDlidarDriver::cacheScanData() {
   }
 
   {
-    isScanning = false;
+    m_isScanning = false;
   }
 
   return RESULT_OK;
@@ -687,28 +707,28 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
 
   if ((*node).sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
-    m_last_ns = m_ns;
-    m_ns = getTime() - (nowPackageNum * 3 + 10) * trans_delay - (nowPackageNum - 1) * m_signalpointTime;
+    m_last_node_time = m_node_time;
+    m_node_time = getTime() - (nowPackageNum * 3 + 10) * trans_delay - (nowPackageNum - 1) * m_signalpointTime;
 
-    if (m_ns < m_last_ns) {
-      m_ns = m_last_ns;
+    if ( m_last_node_time -  m_node_time < 1e9/15) {
+      m_node_time = m_last_node_time;
     }
   }
 
-  (*node).stamp = m_ns + package_Sample_Index * m_signalpointTime;
+  (*node).stamp = m_node_time + package_Sample_Index * m_signalpointTime;
 
   package_Sample_Index++;
 
   if (package_Sample_Index >= nowPackageNum) {
     package_Sample_Index = 0;
-    m_ns = (*node).stamp + m_signalpointTime;
+    m_node_time = (*node).stamp + m_signalpointTime;
   }
 
   return RESULT_OK;
 }
 
 result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count, uint32_t timeout) {
-  if (!isConnected) {
+  if (!m_isConnected) {
     count = 0;
     return RESULT_FAIL;
   }
@@ -849,12 +869,14 @@ result_t YDlidarDriver::ascendScanData(node_info *nodebuffer, size_t count) {
 
   node_info *tmpbuffer = new node_info[count];
 
-  for (i = (int)zero_pos; i < (int)count; i++) {
+  for (i = (int)zero_pos; i < (int)count; i++) {   
     tmpbuffer[i - zero_pos] = nodebuffer[i];
+    tmpbuffer[i - zero_pos].stamp = nodebuffer[i - zero_pos].stamp;
   }
 
   for (i = 0; i < (int)zero_pos; i++) {
-    tmpbuffer[i + (int)count - zero_pos] = nodebuffer[i];
+    tmpbuffer[i + (int)count - zero_pos] = nodebuffer[i]; 
+    tmpbuffer[i + (int)count - zero_pos].stamp = nodebuffer[i + (int)count - zero_pos].stamp;
   }
 
   memcpy(nodebuffer, tmpbuffer, count * sizeof(node_info));
@@ -880,17 +902,16 @@ void YDlidarDriver::setAutoReconnect(const bool &enable) {
 result_t YDlidarDriver::startScan(bool force, uint32_t timeout) {
   result_t ans;
 
-  if (!isConnected) {
+  if (!m_isConnected) {
     return RESULT_FAIL;
   }
 
-  if (isScanning) {
+  if (m_isScanning) {
     return RESULT_OK;
   }
 
   stop();
   startMotor();
-
   {
     ScopedLocker l(_lock);
 
@@ -908,11 +929,11 @@ result_t YDlidarDriver::createThread() {
   _thread = CLASS_THREAD(YDlidarDriver, cacheScanData);
 
   if (_thread.getHandle() == 0) {
-    isScanning = false;
+    m_isScanning = false;
     return RESULT_FAIL;
   }
 
-  isScanning = true;
+  m_isScanning = true;
   return RESULT_OK;
 }
 
@@ -920,7 +941,7 @@ result_t YDlidarDriver::createThread() {
 result_t YDlidarDriver::startAutoScan(bool force, uint32_t timeout) {
   result_t ans;
 
-  if (!isConnected) {
+  if (!m_isConnected) {
     return RESULT_FAIL;
   }
 
@@ -942,7 +963,7 @@ result_t YDlidarDriver::startAutoScan(bool force, uint32_t timeout) {
 result_t YDlidarDriver::stop() {
   if (isAutoconnting) {
     isAutoReconnect = false;
-    isScanning = false;
+    m_isScanning = false;
     disableDataGrabbing();
     return RESULT_OK;
 
@@ -954,7 +975,7 @@ result_t YDlidarDriver::stop() {
     sendCommand(LIDAR_CMD_FORCE_STOP);
     sendCommand(LIDAR_CMD_STOP);
   }
-
+  delay(10);
   stopMotor();
 
   return RESULT_OK;

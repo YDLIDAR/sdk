@@ -1,4 +1,4 @@
-YDLIDAR SDK PACKAGE V1.3.6
+YDLIDAR SDK PACKAGE V1.3.7
 =====================================================================
 
 SDK [test](https://github.com/yangfuyuan/sdk/tree/s2) application for YDLIDAR
@@ -137,6 +137,10 @@ code:
 
 Upgrade Log
 =====================================================================
+
+2019-03-21 version:1.3.7
+
+   1.fix time stamp.
 
 2018-11-1 version:1.3.6
 

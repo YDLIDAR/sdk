@@ -47,15 +47,15 @@ int main(int argc, char * argv[])
     laser.setFixedResolution(false);
     laser.setReversion(false);
     laser.setAutoReconnect(true);
-    laser.initialize();
-    while(ydlidar::ok()){
-		bool hardError;
-		LaserScan scan;
-		if(laser.doProcessSimple(scan, hardError )){
-            fprintf(stdout,"Scan received: %u ranges\n",(unsigned int)scan.ranges.size());
-            fflush(stdout);
-		}
-	}
+    bool ret = laser.initialize();
+    while(ret&&ydlidar::ok()){
+      bool hardError;
+      LaserScan scan;
+      if(laser.doProcessSimple(scan, hardError )){
+              fprintf(stdout,"Scan received: %u ranges\n",(unsigned int)scan.ranges.size());
+              fflush(stdout);
+      }
+    }
 
 
     laser.turnOff();
