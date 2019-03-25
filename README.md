@@ -15,7 +15,7 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.0.5 |   2019-03-01  |
+| SDK     |  1.4.0 |   2019-03-25  |
 
 
 - [new feature] User can set the maximum number of abnormal checks.
@@ -40,7 +40,7 @@ How to build YDLIDAR SDK samples
 ---------------
     $ git clone https://github.com/ydlidar/sdk
     $ cd sdk
-    $ git checkout samsung
+    $ git checkout gaussian
     $ cd ..
     $ mkdir build
     $ cd build
@@ -65,7 +65,7 @@ windows:
 
 You should see YDLIDAR's scan result in the console:
 
-	[YDLIDAR]:SDK Version: 2.0.0
+	[YDLIDAR]:SDK Version: 1.4.0
 	[YDLIDAR]:Lidar running correctly ! The health status: good
 	[YDLIDAR] Connection established in [/dev/ttyUSB0][230400]:
 	Firmware version: 1.2
@@ -73,8 +73,6 @@ You should see YDLIDAR's scan result in the console:
 	Model: G2-SS-1
 	Serial: 2018101800011111
 	[YDLIDAR INFO] Current Sampling Rate : 5K
-	[YDLIDAR INFO] Successfully obtained the offset angle[0.0000] from the lidar[2018101800011111]
-	[YDLIDAR INFO] Current AngleOffset : 0.000000°
 	[YDLIDAR INFO] Current Scan Frequency : 8.000000Hz
 	[YDLIDAR INFO] Now YDLIDAR is scanning ......
 	Scan received: 625 ranges
@@ -101,7 +99,7 @@ code:
                 
                 current_angle = ((data[i].angle_q6_checkbit>>LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT)/64.0f);//LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT equals 8
 
-                current_distance =  data[i].distance_q/4.f;
+                current_distance =  data[i].distance_q2/4.f;
 
                 current_intensity = (float)(data[i].sync_quality);
 
@@ -208,34 +206,20 @@ Coordinate System
 Upgrade Log
 ---------------
 
-2019-03-01 version:2.0.5
+2019-03-25 version:1.4.0
 
    1.fix Large motor resistance at startup issues.
 
-2019-02-13 version:2.0.4
+   2.fix ascendScanData timestamp issues.
 
-   1.fix ascendScanData timestamp issues.
+   3.check lidar abnormality when turn on lidar.
 
-2019-01-23 version:2.0.3
+   4.only support G4 lidar
 
-   1.Change the Lidar coordinate system to clockwise, ranging from 0 to 360 degrees.
+   5.Remove other lidar model interfaces functions.
 
-2019-01-17 version:2.0.2
-
-   1.check lidar abnormality when turn on lidar.
-
-2019-01-15 version:2.0.1
-
-   1.support G4 lidar
-
-2019-01-03 version:2.0.0
-
-   1.Remove other lidar model interfaces functions.
-
-   2.fix turnOn function.
+   6.fix turnOn function.
    
-   3.Lidar supports zero offset angle adjustment.
-
 2018-12-07 version:1.3.9
 
    1.Remove other lidar model interfaces functions.

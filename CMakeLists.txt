@@ -27,7 +27,7 @@ ENDIF()
 
 add_subdirectory(samples)
 
-add_library(ydlidar_driver SHARED ${SDK_SRC})
+add_library(ydlidar_driver STATIC ${SDK_SRC})
 IF (WIN32)
 target_link_libraries(ydlidar_driver setupapi Winmm)
 ELSE()
