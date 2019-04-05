@@ -29,10 +29,6 @@ Dataset
 
 | Model      |  Baudrate |  Sampling Frequency | Range(m)  | Scanning Frequency(HZ) | Working temperature(°C) | Laser power max(mW) | voltage(V) | Current(mA)
 | :-------- | --------:|--------:|  --------:| --------:|--------:| --------:| --------:|  :--: |
-| G2-SS-1 |  230400 |   5000  |  0.1-16   |5-12|0-50| ~5|4.8-5.2|400-480|
-| G4     |  230400 |   9000  |  0.26-16   |5-12|0-50| ~5|4.8-5.2|400-480|
-| X4     |  128000 |   5000  |  0.12-10   |5-12|0-40| ~5|4.8-5.2|330-380|
-| F4     | 115200 |   4000 |  0.1-12        |5-12|0-40| ~5|4.8-5.2|400-480|
 | S4     |  115200|    4000 |  0.1-8        |6-12|0-40| ~5|4.8-5.2|330-380|
 | S4Pro |  153600|    4000 |  0.1-8        |6-12|0-40| ~5|4.8-5.2|330-380|
 
@@ -40,7 +36,7 @@ How to build YDLIDAR SDK samples
 ---------------
     $ git clone https://github.com/ydlidar/sdk
     $ cd sdk
-    $ git checkout gaussian
+    $ git checkout S4
     $ cd ..
     $ mkdir build
     $ cd build
@@ -67,13 +63,11 @@ You should see YDLIDAR's scan result in the console:
 
 	[YDLIDAR]:SDK Version: 1.4.0
 	[YDLIDAR]:Lidar running correctly ! The health status: good
-	[YDLIDAR] Connection established in [/dev/ttyUSB0][230400]:
+	[YDLIDAR] Connection established in [/dev/ttyUSB0][115200]:
 	Firmware version: 1.2
 	Hardware version: 3
-	Model: G2-SS-1
+	Model: S4
 	Serial: 2018101800011111
-	[YDLIDAR INFO] Current Sampling Rate : 5K
-	[YDLIDAR INFO] Current Scan Frequency : 8.000000Hz
 	[YDLIDAR INFO] Now YDLIDAR is scanning ......
 	Scan received: 625 ranges
 	Scan received: 626 ranges
@@ -214,7 +208,7 @@ Upgrade Log
 
    3.check lidar abnormality when turn on lidar.
 
-   4.only support G4 lidar
+   4.only support S4 lidar
 
    5.Remove other lidar model interfaces functions.
 
