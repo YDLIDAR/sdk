@@ -350,17 +350,19 @@ bool CYdLidar::getDeviceInfo() {
     return false;
   }
 
-  if (devinfo.model != YDlidarDriver::YDLIDAR_S4) {
+  if (devinfo.model != YDlidarDriver::YDLIDAR_S4 ||
+      devinfo.model != YDlidarDriver::YDLIDAR_S4B) {
     printf("[YDLIDAR INFO] Current SDK does not support current lidar models[%d]\n",
            devinfo.model);
     return false;
   }
 
-  std::string model = "S4";
+  std::string model = "S4B";
 
   switch (devinfo.model) {
     case YDlidarDriver::YDLIDAR_G4:
-      model = "S4";
+    case YDlidarDriver::YDLIDAR_S4B:
+      model = "S4B";
       break;
 
     default:

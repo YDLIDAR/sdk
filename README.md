@@ -36,7 +36,7 @@ How to build YDLIDAR SDK samples
 ---------------
     $ git clone https://github.com/ydlidar/sdk
     $ cd sdk
-    $ git checkout S4
+    $ git checkout S4B
     $ cd ..
     $ mkdir build
     $ cd build
@@ -66,7 +66,7 @@ You should see YDLIDAR's scan result in the console:
 	[YDLIDAR] Connection established in [/dev/ttyUSB0][115200]:
 	Firmware version: 1.2
 	Hardware version: 3
-	Model: S4
+	Model: S4B
 	Serial: 2018101800011111
 	[YDLIDAR INFO] Now YDLIDAR is scanning ......
 	Scan received: 625 ranges
@@ -208,7 +208,7 @@ Upgrade Log
 
    3.check lidar abnormality when turn on lidar.
 
-   4.only support S4 lidar
+   4.only support S4B lidar
 
    5.Remove other lidar model interfaces functions.
 

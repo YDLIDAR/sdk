@@ -18,10 +18,10 @@ YDlidarDriver::YDlidarDriver():
   isConnected         = false;
   isScanning          = false;
   //串口配置参数
-  m_intensities       = false;
+  m_intensities       = true;
   isAutoReconnect     = true;
   isAutoconnting      = false;
-  m_baudrate          = 115200;
+  m_baudrate          = 153600;
   isSupportMotorCtrl  = true;
   scan_node_count     = 0;
 
@@ -32,7 +32,7 @@ YDlidarDriver::YDlidarDriver():
   scan_frequence      = 0;
 
   //解析参数
-  PackageSampleBytes  = 2;
+  PackageSampleBytes  = 3;
   IntervalSampleAngle = 0.0;
   FirstSampleAngle    = 0;
   LastSampleAngle     = 0;
