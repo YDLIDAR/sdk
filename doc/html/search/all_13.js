@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['usingspaces',['UsingSpaces',['../class_c_simple_ini_templ.html#a9c967faf796cf5babea67e97975bed9b',1,'CSimpleIniTempl']]]
+  ['ydlidardriver',['YDlidarDriver',['../classydlidar_1_1_y_dlidar_driver.html',1,'ydlidar']]],
+  ['ydlidardriver',['YDlidarDriver',['../classydlidar_1_1_y_dlidar_driver.html#a19e20b6aa35834507a0dacc8a3c510e6',1,'ydlidar::YDlidarDriver']]]
 ];

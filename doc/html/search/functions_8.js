@@ -4,5 +4,5 @@ var searchData=
   ['readdata',['readData',['../classserial_1_1_serial.html#a23af62642b1739cf31fb1c8a272074a1',1,'serial::Serial']]],
   ['readline',['readline',['../classserial_1_1_serial.html#a010b18ec545dfe1a7bb1c95be4bdaa54',1,'serial::Serial::readline(std::string &amp;buffer, size_t size=65536, std::string eol=&quot;\n&quot;)'],['../classserial_1_1_serial.html#a04177f637cc02f92ec0492d377528b2a',1,'serial::Serial::readline(size_t size=65536, std::string eol=&quot;\n&quot;)']]],
   ['readlines',['readlines',['../classserial_1_1_serial.html#a2ff222081c30ee4343498c6cc5c14b10',1,'serial::Serial']]],
-  ['reset',['reset',['../classydlidar_1_1_y_dlidar_driver.html#a3dd4086c5685163f7c7487ea0f5af08c',1,'ydlidar::YDlidarDriver::reset()'],['../class_c_simple_ini_templ.html#a89b34d38be4518e9ed91c634a41b8055',1,'CSimpleIniTempl::Reset()']]]
+  ['reset',['reset',['../classydlidar_1_1_y_dlidar_driver.html#a3dd4086c5685163f7c7487ea0f5af08c',1,'ydlidar::YDlidarDriver']]]
 ];
