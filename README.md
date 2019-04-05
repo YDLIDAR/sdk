@@ -40,7 +40,7 @@ How to build YDLIDAR SDK samples
 ---------------
     $ git clone https://github.com/ydlidar/sdk
     $ cd sdk
-    $ git checkout gaussian
+    $ git checkout S2I
     $ cd ..
     $ mkdir build
     $ cd build
@@ -67,13 +67,7 @@ You should see YDLIDAR's scan result in the console:
 
 	[YDLIDAR]:SDK Version: 1.4.0
 	[YDLIDAR]:Lidar running correctly ! The health status: good
-	[YDLIDAR] Connection established in [/dev/ttyUSB0][230400]:
-	Firmware version: 1.2
-	Hardware version: 3
-	Model: G2-SS-1
-	Serial: 2018101800011111
-	[YDLIDAR INFO] Current Sampling Rate : 5K
-	[YDLIDAR INFO] Current Scan Frequency : 8.000000Hz
+	[YDLIDAR] Connection established in [/dev/ttyUSB0][115200]:
 	[YDLIDAR INFO] Now YDLIDAR is scanning ......
 	Scan received: 625 ranges
 	Scan received: 626 ranges
@@ -214,7 +208,7 @@ Upgrade Log
 
    3.check lidar abnormality when turn on lidar.
 
-   4.only support G4 lidar
+   4.only support S2I lidar
 
    5.Remove other lidar model interfaces functions.
 
