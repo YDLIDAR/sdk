@@ -17,6 +17,8 @@ class YDLIDAR_API CYdLidar {
                         private) ///< 设置和获取激光最小角度, 最小值-180度(度)
   PropertyBuilderByName(bool, FixedResolution,
                         private) ///< 设置和获取激光是否是固定角度分辨率
+  PropertyBuilderByName(int, FixedCount,
+                        private) ///< 设置固定点数
   PropertyBuilderByName(bool, AutoReconnect,
                         private) ///< 设置异常是否开启重新连接
   PropertyBuilderByName(int, SerialBaudrate,

@@ -26,6 +26,7 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   node_counts         = 720;
   each_angle          = 0.5;
   m_AbnormalCheckCount  = 4;
+  m_FixedCount        = -1;
   Major               = 0;
   Minjor              = 0;
   m_IgnoreArray.clear();
@@ -81,6 +82,10 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
         all_nodes_counts = count;
       } else {
         all_nodes_counts = node_counts;
+
+        if (m_FixedCount > 0) {
+          all_nodes_counts = m_FixedCount;
+        }
       }
 
       each_angle = 360.0 / all_nodes_counts;

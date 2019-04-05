@@ -71,6 +71,7 @@ int main(int argc, char *argv[]) {
   laser.setSerialBaudrate(115200);
   laser.setFixedResolution(false);
   laser.setAutoReconnect(true);//hot plug
+  laser.setFixedCount(-1);
 
   //unit: °
   laser.setMaxAngle(180);
@@ -78,7 +79,7 @@ int main(int argc, char *argv[]) {
 
   //unit: m
   laser.setMinRange(0.1);
-  laser.setMaxRange(16.0);
+  laser.setMaxRange(12.0);
 
   std::vector<float> ignore_array;
   ignore_array.clear();
