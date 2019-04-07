@@ -15,10 +15,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.0.5 |   2019-03-01  |
+| SDK     |  2.0.6 |   2019-04-07  |
 
 
-- [new feature] User can set the maximum number of abnormal checks.
+- [new feature] Change SDK timestamp clock from system clock to steady clock
 
 
 
@@ -40,7 +40,7 @@ How to build YDLIDAR SDK samples
 ---------------
     $ git clone https://github.com/ydlidar/sdk
     $ cd sdk
-    $ git checkout samsung
+    $ git checkout samsung_clockwise
     $ cd ..
     $ mkdir build
     $ cd build
@@ -207,6 +207,10 @@ Coordinate System
 
 Upgrade Log
 ---------------
+
+2019-04-07 version:2.0.6
+
+   1.Change SDK timestamp clock from system clock to steady clock
 
 2019-03-01 version:2.0.5
 

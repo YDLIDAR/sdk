@@ -13,10 +13,15 @@ uint64_t getCurrentTime() {
   struct timespec  tim;
   clock_gettime(CLOCK_REALTIME, &tim);
   return (TTimeStamp)(tim.tv_sec * 1000000000LL + tim.tv_nsec);
-#else
+#elif HAS_SYSTEM_TIME
   struct timeval timeofday;
   gettimeofday(&timeofday, NULL);
   return (uint64_t)(timeofday.tv_sec * 1000000000LL + timeofday.tv_usec * 1000);
+#else
+  struct timespec t;
+  t.tv_sec = t.tv_nsec = 0;
+  clock_gettime(CLOCK_MONOTONIC_RAW, &t);
+  return t.tv_sec * 1000000000L + t.tv_nsec;
 #endif
 }
 }

@@ -23,16 +23,18 @@ int main(int argc, char *argv[]) {
   if (argc > 1) {
     calibration_filename = (std::string)argv[1];
   }
+
   ydlidar::init(argc, argv);
 
   printf("lidar angle calibration file: %s\n", calibration_filename.c_str());
-  std::map<std::string, std::string> ports =  ydlidar::YDlidarDriver::lidarPortList();
+  std::map<std::string, std::string> ports =
+    ydlidar::YDlidarDriver::lidarPortList();
   std::map<std::string, std::string>::iterator it;
 
   if (ports.size() == 1) {
     it = ports.begin();
     printf("Lidar[%s] detected, whether to select current radar(yes/no)?:",
-                          it->first.c_str());
+           it->first.c_str());
     std::string ok;
     std::cin >> ok;
 
@@ -83,19 +85,24 @@ int main(int argc, char *argv[]) {
 
   std::string input_frequency;
   float frequency = 8.0;
+
   while (ydlidar::ok()) {
     printf("Please enter the lidar scan frequency[5-12]:");
     std::cin >> input_frequency;
     frequency = atof(input_frequency.c_str());
-    if(frequency <=12.0 && frequency >= 5.0 ) {
-       break;
+
+    if (frequency <= 12.0 && frequency >= 5.0) {
+      break;
     }
-    fprintf(stderr, "Invalid scan frequency,The scanning frequency range is 5 to 12 HZ, Please re-enter.\n");
+
+    fprintf(stderr,
+            "Invalid scan frequency,The scanning frequency range is 5 to 12 HZ, Please re-enter.\n");
   }
 
-  if(!ydlidar::ok()) {
+  if (!ydlidar::ok()) {
     return 0;
   }
+
   CYdLidar laser;
   laser.setSerialPort(port);
   laser.setSerialBaudrate(230400);
@@ -125,7 +132,8 @@ int main(int argc, char *argv[]) {
   laser.setIgnoreArray(ignore_array);
 
   bool ret = laser.initialize();
-  if(ret) {
+
+  if (ret) {
     ret = laser.turnOn();
   }
 
@@ -134,7 +142,8 @@ int main(int argc, char *argv[]) {
     LaserScan scan;
 
     if (laser.doProcessSimple(scan, hardError)) {
-      fprintf(stdout, "Scan received[%llu]: %u ranges is [%f]Hz\n", scan.self_time_stamp,
+      fprintf(stdout, "Scan received[%llu]: %u ranges is [%f]Hz\n",
+              scan.self_time_stamp,
               (unsigned int)scan.ranges.size(), 1.0 / scan.config.scan_time);
       fflush(stdout);
     } else {
