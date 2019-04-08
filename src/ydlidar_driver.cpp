@@ -25,7 +25,7 @@ YDlidarDriver::YDlidarDriver():
   isSupportMotorCtrl  = true;
   scan_node_count     = 0;
 
-  m_pointTime         = 1e9 / 4000;
+  m_pointTime         = 1e9 / 3000;
   trans_delay         = 0;
   m_node_time_ns      = 0;
   m_node_last_time_ns = 0;
@@ -965,7 +965,7 @@ void YDlidarDriver::setAutoReconnect(const bool &enable) {
 void YDlidarDriver::checkTransDelay() {
   //calc stamp
   trans_delay = _serial->getByteTime();
-  m_pointTime = 1e9 / 4000;
+  m_pointTime = 1e9 / 3000;
 }
 
 /************************************************************************/
