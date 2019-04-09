@@ -1,18 +1,18 @@
-YDLIDAR SDK PACKAGE V1.3.7
+YDLIDAR SDK PACKAGE V1.4.0
 =====================================================================
 
-SDK [test](https://github.com/yangfuyuan/sdk/tree/s2) application for YDLIDAR
+SDK [test](https://github.com/ydlidar/sdk/tree/TS2) application for YDLIDAR
 
 Visit EAI Website for more details about [YDLIDAR](http://www.ydlidar.com/) .
 
 How to build YDLIDAR SDK samples
 =====================================================================
    
-    $ git clone https://github.com/yangfuyuan/sdk
+    $ git clone https://github.com/ydlidar/sdk
     
     $ cd sdk
     
-    $ git checkout s2
+    $ git checkout TS2
     
     $ cd ..
     
@@ -34,20 +34,18 @@ linux:
 
     $ ./ydlidar_test
     $Please enter the lidar serial port :/dev/ttyUSB0
-    $Please enter the lidar serial baud rate:115200
 
 windows:
 
     $ ydlidar_test.exe
     $Please enter the lidar serial port:COM3
-    $Please enter the lidar serial baud rate:115200
 
 
 You should see YDLIDAR's scan result in the console:
 
      	YDLIDAR C++ TEST
      	
-	[YDLIDAR INFO] Now YDLIDAR SDK VERSION: 1.3.6
+	[YDLIDAR INFO] Now YDLIDAR SDK VERSION: 1.4.0
 	
 	fhs_lock: creating lockfile:      11796
 
@@ -55,7 +53,7 @@ You should see YDLIDAR's scan result in the console:
 	
 	[YDLIDAR INFO] Now YDLIDAR is scanning ......
 	
-	Scan received: 272 ranges
+	Scan received: 506 ranges
 	
 
 
@@ -138,31 +136,8 @@ code:
 Upgrade Log
 =====================================================================
 
-2019-03-21 version:1.3.7
 
-   1.fix time stamp.
+2019-04-09 version:1.4.0
 
-2018-11-1 version:1.3.6
-
-   1.remove unwanted code.
-
-2018-05-23 version:1.3.4
-
-   1.add automatic reconnection if there is an exception
-
-   2.add serial file lock.
-
-2018-05-14 version:1.3.3
-
-   1.add the heart function constraint.
-
-   2.add packet type with scan frequency support.
-
-2018-04-16 version:1.3.2
-
-   1.add multithreading support.
-
-2018-04-16 version:1.3.1
-
-   1.Compensate for each laser point timestamp.
+   1.Only support TS2 lidar.
 
