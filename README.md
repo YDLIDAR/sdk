@@ -29,14 +29,14 @@ Dataset
 
 | Model      |  Baudrate |  Sampling Frequency | Range(m)  | Scanning Frequency(HZ) | Working temperature(°C) | Laser power max(mW) | voltage(V) | Current(mA)
 | :-------- | --------:|--------:|  --------:| --------:|--------:| --------:| --------:|  :--: |
-| G4     |  230400 |   9000  |  0.26-16   |5-12|0-50| ~5|4.8-5.2|400-480|
+| X4     |  128000 |   5000  |  0.1-10   |5-12|0-40| ~5|4.8-5.2|330-380|
 
 
 How to build YDLIDAR SDK samples
 ---------------
     $ git clone https://github.com/ydlidar/sdk
     $ cd sdk
-    $ git checkout G4
+    $ git checkout X4
     $ cd ..
     $ mkdir build
     $ cd build
@@ -66,13 +66,13 @@ You should see YDLIDAR's scan result in the console:
 	[YDLIDAR] Connection established in [/dev/ttyUSB0][230400]:
 	Firmware version: 1.2
 	Hardware version: 2
-	Model: G4
+	Model: X4
 	Serial: 2018101800011111
-	[YDLIDAR INFO] Current Sampling Rate : 9K
-	[YDLIDAR INFO] Current Scan Frequency : 8.000000Hz
+	[YDLIDAR INFO] Current Sampling Rate : 5K
+	[YDLIDAR INFO] Current Scan Frequency : 7.600000Hz
 	[YDLIDAR INFO] Now YDLIDAR is scanning ......
-	Scan received: 1220 ranges
-	Scan received: 1221 ranges
+	Scan received: 660 ranges
+	Scan received: 661 ranges
 	
 	
 code:
