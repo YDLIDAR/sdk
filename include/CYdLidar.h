@@ -30,6 +30,8 @@ class YDLIDAR_API CYdLidar
 public:
     CYdLidar(); //!< Constructor
     virtual ~CYdLidar();  //!< Destructor: turns the laser off.
+	
+	static std::map<std::string, std::string> lidarPortList();
     /**
      * @brief initialize
      * @return

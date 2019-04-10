@@ -55,6 +55,11 @@ void CYdLidar::disconnecting()
     isScanning = false;
 }
 
+std::map<std::string, std::string>  CYdLidar::lidarPortList()
+{
+    return ydlidar::YDlidarDriver::lidarPortList();
+}
+
 /*-------------------------------------------------------------
 						doProcessSimple
 -------------------------------------------------------------*/

@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
     std::string port;
     ydlidar::init(argc, argv);
 
-    std::map<std::string, std::string> ports =  ydlidar::YDlidarDriver::lidarPortList();
+    std::map<std::string, std::string> ports =  CYdLidar::lidarPortList();
     std::map<std::string, std::string>::iterator it;
 
     if (ports.size() == 1)
