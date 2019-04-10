@@ -27,26 +27,6 @@ int main(int argc, char *argv[])
     if (ports.size() == 1)
     {
         port = ports.begin()->second;
-        /*it = ports.begin();
-        printf("Lidar[%s] detected, whether to select current radar(yes/no)?:",
-               it->first.c_str());
-        std::string ok;
-        std::cin >> ok;
-
-        for (size_t i = 0; i < ok.size(); i++)
-        {
-            ok[i] = tolower(ok[i]);
-        }
-
-        if (ok.find("yes") != std::string::npos || atoi(ok.c_str()) == 1)
-        {
-            port = it->second;
-        }
-        else
-        {
-            printf("Please enter the lidar serial port:");
-            std::cin >> port;
-        }*/
     }
     else
     {
@@ -113,7 +93,7 @@ int main(int argc, char *argv[])
     laser.setSerialPort(port);
     laser.setSerialBaudrate(230400);
     laser.setFixedResolution(false);
-    laser.setReversion(false); //
+    laser.setReversion(true); //
     laser.setAutoReconnect(true);//hot plug
 
     //unit: °

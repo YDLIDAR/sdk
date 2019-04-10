@@ -17,7 +17,7 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr)
     m_SerialPort        = "";
     m_SerialBaudrate    = 230400;
     m_FixedResolution   = true;
-    m_Reversion         = false;
+    m_Reversion         = true;
     m_AutoReconnect     = true;
     m_MaxAngle          = 180.f;
     m_MinAngle          = -180.f;
