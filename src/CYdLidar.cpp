@@ -52,16 +52,7 @@ void CYdLidar::disconnecting()
 
 std::map<std::string, std::string>  CYdLidar::lidarPortList()
 {
-	std::vector<PortInfo> lst = list_ports();
-	std::map<std::string, std::string> ports;
-
-	for (std::vector<PortInfo>::iterator it = lst.begin(); it != lst.end(); it++)
-	{
-		std::string port = "ydlidar" + (*it).device_id;
-		ports[port] = (*it).port;
-	}
-
-	return ports;
+    return ydlidar::YDlidarDriver::lidarPortList();
 }
 
 
