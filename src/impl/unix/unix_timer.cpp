@@ -20,7 +20,7 @@ uint64_t getCurrentTime() {
 #else
   struct timespec t;
   t.tv_sec = t.tv_nsec = 0;
-  clock_gettime(CLOCK_MONOTONIC_RAW, &t);
+  clock_gettime(CLOCK_MONOTONIC, &t);
   return t.tv_sec * 1000000000L + t.tv_nsec;
 #endif
 }

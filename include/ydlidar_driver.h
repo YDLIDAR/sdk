@@ -152,7 +152,8 @@ class YDlidarDriver {
   * @retval RESULT_FAILE    获取失败
   * @note 获取之前，必须使用::startScan函数开启扫描
   */
-  result_t grabScanData(node_info *nodebuffer, size_t &count, uint32_t timeout = DEFAULT_TIMEOUT) ;
+  result_t grabScanData(node_info *nodebuffer, size_t &count,
+                        uint32_t timeout = DEFAULT_TIMEOUT) ;
 
 
   /**
@@ -186,7 +187,8 @@ class YDlidarDriver {
   * @retval RESULT_FAILE    失败
   * @note 停止扫描后再执行当前操作
   */
-  result_t getScanFrequency(scan_frequency &frequency, uint32_t timeout = DEFAULT_TIMEOUT);
+  result_t getScanFrequency(scan_frequency &frequency,
+                            uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
   * @brief 设置增加扫描频率1HZ \n
@@ -197,7 +199,8 @@ class YDlidarDriver {
   * @retval RESULT_FAILE    失败
   * @note 停止扫描后再执行当前操作
   */
-  result_t setScanFrequencyAdd(scan_frequency &frequency, uint32_t timeout = DEFAULT_TIMEOUT);
+  result_t setScanFrequencyAdd(scan_frequency &frequency,
+                               uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
   * @brief 设置减小扫描频率1HZ \n
@@ -208,7 +211,8 @@ class YDlidarDriver {
   * @retval RESULT_FAILE    失败
   * @note 停止扫描后再执行当前操作
   */
-  result_t setScanFrequencyDis(scan_frequency &frequency, uint32_t timeout = DEFAULT_TIMEOUT);
+  result_t setScanFrequencyDis(scan_frequency &frequency,
+                               uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
   * @brief 设置增加扫描频率0.1HZ \n
@@ -219,7 +223,8 @@ class YDlidarDriver {
   * @retval RESULT_FAILE    失败
   * @note 停止扫描后再执行当前操作
   */
-  result_t setScanFrequencyAddMic(scan_frequency &frequency, uint32_t timeout = DEFAULT_TIMEOUT);
+  result_t setScanFrequencyAddMic(scan_frequency &frequency,
+                                  uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
   * @brief 设置减小扫描频率0.1HZ \n
@@ -230,7 +235,8 @@ class YDlidarDriver {
   * @retval RESULT_FAILE    失败
   * @note 停止扫描后再执行当前操作
   */
-  result_t setScanFrequencyDisMic(scan_frequency &frequency, uint32_t timeout = DEFAULT_TIMEOUT);
+  result_t setScanFrequencyDisMic(scan_frequency &frequency,
+                                  uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
   * @brief 获取激光雷达当前采样频率 \n
@@ -241,7 +247,8 @@ class YDlidarDriver {
   * @retval RESULT_FAILE    失败
   * @note 停止扫描后再执行当前操作
   */
-  result_t getSamplingRate(sampling_rate &rate, uint32_t timeout = DEFAULT_TIMEOUT);
+  result_t getSamplingRate(sampling_rate &rate,
+                           uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
   * @brief 设置激光雷达当前采样频率 \n
@@ -252,7 +259,8 @@ class YDlidarDriver {
   * @retval RESULT_FAILE    失败
   * @note 停止扫描后再执行当前操作
   */
-  result_t setSamplingRate(sampling_rate &rate, uint32_t timeout = DEFAULT_TIMEOUT);
+  result_t setSamplingRate(sampling_rate &rate,
+                           uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
   * @brief 获取激光雷达当前零位角 \n
@@ -263,7 +271,8 @@ class YDlidarDriver {
   * @retval RESULT_FAILE    失败
   * @note 停止扫描后再执行当前操作
   */
-  result_t getZeroOffsetAngle(offset_angle& angle, uint32_t timeout = DEFAULT_TIMEOUT);
+  result_t getZeroOffsetAngle(offset_angle &angle,
+                              uint32_t timeout = DEFAULT_TIMEOUT);
 
  protected:
 
@@ -309,7 +318,8 @@ class YDlidarDriver {
   * @retval RESULT_TIMEOUT  等待超时
   * @retval RESULT_FAILE    失败
   */
-  result_t waitScanData(node_info *nodebuffer, size_t &count, uint32_t timeout = DEFAULT_TIMEOUT);
+  result_t waitScanData(node_info *nodebuffer, size_t &count,
+                        uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
   * @brief 激光数据解析线程 \n
@@ -325,7 +335,8 @@ class YDlidarDriver {
   * @retval RESULT_OK       成功
   * @retval RESULT_FAILE    失败
   */
-  result_t sendCommand(uint8_t cmd, const void *payload = NULL, size_t payloadsize = 0);
+  result_t sendCommand(uint8_t cmd, const void *payload = NULL,
+                       size_t payloadsize = 0);
 
   /**
   * @brief 等待激光数据包头 \n
@@ -337,7 +348,8 @@ class YDlidarDriver {
   * @retval RESULT_FAILE    获取失败
   * @note 当timeout = -1 时, 将一直等待
   */
-  result_t waitResponseHeader(lidar_ans_header *header, uint32_t timeout = DEFAULT_TIMEOUT);
+  result_t waitResponseHeader(lidar_ans_header *header,
+                              uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
   * @brief 等待固定数量串口数据 \n
@@ -403,7 +415,6 @@ class YDlidarDriver {
    * @brief checkAutoConnecting
    */
   result_t checkAutoConnecting();
-
 
  public:
   std::atomic<bool>     isConnected;  ///< 串口连接状体
