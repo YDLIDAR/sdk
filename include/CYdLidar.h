@@ -42,6 +42,11 @@ class YDLIDAR_API CYdLidar {
    */
   bool initialize();  //!< Attempts to connect and turns the laser on. Raises an exception on error.
 
+  /** Returns true if the normal scan runs with the device. If it's not,
+    * \return false on error.
+    */
+  bool checkHardware();
+
   // Return true if laser data acquistion succeeds, If it's not
   bool doProcessSimple(LaserScan &outscan, bool &hardwareError);
 
@@ -54,6 +59,12 @@ class YDLIDAR_API CYdLidar {
   //Turn off lidar connection
   void disconnecting(); //!< Closes the comms with the laser. Shouldn't have to be directly needed by the user
 
+  //lidar pointer
+  YDlidarDriver *getYdlidarDriver();
+
+  //get zero angle offset value
+  float getAngleOffset() const;
+
  protected:
   /** Returns true if communication has been established with the device. If it's not,
     *  try to create a comms channel.
@@ -65,11 +76,6 @@ class YDLIDAR_API CYdLidar {
     * \return false on error.
     */
   bool  checkStatus();
-
-  /** Returns true if the normal scan runs with the device. If it's not,
-    * \return false on error.
-    */
-  bool checkHardware();
 
   /**
    * @brief checkSampleRate

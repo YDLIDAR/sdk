@@ -55,6 +55,16 @@ void CYdLidar::disconnecting() {
   isScanning = false;
 }
 
+//lidar pointer
+YDlidarDriver *CYdLidar::getYdlidarDriver() {
+  return lidarPtr;
+}
+
+//get zero angle offset value
+float CYdLidar::getAngleOffset() const {
+  return m_AngleOffset;
+}
+
 /*-------------------------------------------------------------
 						doProcessSimple
 -------------------------------------------------------------*/
