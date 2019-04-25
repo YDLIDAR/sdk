@@ -21,7 +21,7 @@ uint64_t getCurrentTime() {
   struct timespec t;
   t.tv_sec = t.tv_nsec = 0;
   clock_gettime(CLOCK_MONOTONIC, &t);
-  return t.tv_sec * 1000000000L + t.tv_nsec;
+  return static_cast<uint64_t>(t.tv_sec) * 1000000000L + static_cast<uint64_t>(t.tv_nsec);
 #endif
 }
 }
