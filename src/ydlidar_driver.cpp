@@ -492,7 +492,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   uint32_t startTs    = getms();
   uint32_t size       = (m_intensities) ? sizeof(node_package) : sizeof(
                           node_packages);
-  uint8_t *recvBuffer = new uint8_t[size];
 
   uint32_t waitTime   = 0;
   uint8_t  *packageBuffer = (m_intensities) ? (uint8_t *)&package.package_Head :
@@ -503,6 +502,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   uint8_t package_type    = 0;
 
   if (package_Sample_Index == 0) {
+    uint8_t *recvBuffer = new uint8_t[size];
     recvPos = 0;
 
     while ((waitTime = getms() - startTs) <= timeout) {
@@ -703,6 +703,8 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
       CheckSunResult = true;
     }
 
+    delete[] recvBuffer;
+
   }
 
   uint8_t package_CT;
@@ -814,7 +816,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     m_node_time_ns = (*node).stamp + m_pointTime;
   }
 
-  delete[] recvBuffer;
   return RESULT_OK;
 }
 
