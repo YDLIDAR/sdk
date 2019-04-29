@@ -90,7 +90,7 @@ YDlidarDriver::~YDlidarDriver() {
   isAutoReconnect = false;
   _thread.join();
 
-  ScopedLocker lk(_serial_lock);
+  ScopedLocker lock(_serial_lock);
 
   if (_serial) {
     if (_serial->isOpen()) {
@@ -106,7 +106,7 @@ YDlidarDriver::~YDlidarDriver() {
 }
 
 result_t YDlidarDriver::connect(const char *port_path, uint32_t baudrate) {
-  ScopedLocker lk(_serial_lock);
+  ScopedLocker lock(_serial_lock);
   m_baudrate = baudrate;
   serial_port = string(port_path);
 
@@ -305,7 +305,7 @@ result_t YDlidarDriver::waitResponseHeader(lidar_ans_header *header,
 
   while ((waitTime = getms() - startTs) <= timeout) {
     size_t remainSize = sizeof(lidar_ans_header) - recvPos;
-    size_t recvSize;
+    size_t recvSize = 0;
     result_t ans = waitForData(remainSize, timeout - waitTime, &recvSize);
 
     if (!IS_OK(ans)) {
