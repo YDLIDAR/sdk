@@ -423,6 +423,7 @@ int YDlidarDriver::cacheScanData() {
   memset(local_scan, 0, sizeof(local_scan));
   m_node_time_ns  = getTime();
   m_node_last_time_ns = getTime();
+  flushSerial();
   waitScanData(local_buf, count);
   int timeout_count   = 0;
 
@@ -773,7 +774,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     }
   } else {
     (*node).sync_flag       = Node_NotSync;
-    (*node).sync_quality    = Node_Default_Quality;
+    (*node).sync_quality    = 0;
     (*node).angle_q6_checkbit = LIDAR_RESP_MEASUREMENT_CHECKBIT;
     (*node).distance_q      = 0;
     (*node).scan_frequence  = 0;
@@ -791,7 +792,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   if ((*node).sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
     m_node_last_time_ns = m_node_time_ns;
     uint64_t current_time_ns = getTime();
-    uint64_t delay_time_ns = (nowPackageNum * 3 + 10) * trans_delay +
+    uint64_t delay_time_ns = (nowPackageNum * PackageSampleBytes + PackagePaidBytes) * trans_delay +
                              (nowPackageNum - 1) * m_pointTime;
     m_node_time_ns = current_time_ns - delay_time_ns;
 

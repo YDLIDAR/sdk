@@ -207,9 +207,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
       scan_msg.self_time_stamp = tim_scan_start;
       scan_msg.config.min_angle = (m_MinAngle);
       scan_msg.config.max_angle = (m_MaxAngle);
-      printf("start: %lu, end:%lu, = %f\n", tim_scan_start, tim_scan_end, scan_time);
-      fflush(stdout);
-
 
       if (scan_msg.config.max_angle - scan_msg.config.min_angle == 360) {
         scan_msg.config.ang_increment = (scan_msg.config.max_angle -
