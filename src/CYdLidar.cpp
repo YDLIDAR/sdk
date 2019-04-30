@@ -19,15 +19,13 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_AutoReconnect     = true;
   m_MaxAngle          = 180.f;
   m_MinAngle          = -180.f;
-  m_MaxRange          = 16.0;
+  m_MaxRange          = 8.0;
   m_MinRange          = 0.08;
   isScanning          = false;
   node_counts         = 720;
   each_angle          = 0.5;
   m_AbnormalCheckCount  = 2;
   m_ScanFrequency     = 8.0;
-  Major               = 0;
-  Minjor              = 0;
   m_IgnoreArray.clear();
 }
 

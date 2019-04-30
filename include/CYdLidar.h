@@ -75,8 +75,6 @@ class YDLIDAR_API CYdLidar {
   int     node_counts ;
   double  each_angle;
   double  m_ScanFrequency;
-  uint8_t Major;
-  uint8_t Minjor;
   YDlidarDriver *lidarPtr;
 
 };	// End of class
