@@ -74,6 +74,7 @@ YDlidarDriver::YDlidarDriver():
   SampleNumlAndCTCal  = 0;
   LastSampleAngleCal  = 0;
   CheckSumResult      = true;
+  Last_CheckSum_Result= true;
   Valu8Tou16          = 0;
 
   package_Sample_Index = 0;
@@ -517,6 +518,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   int32_t  AngleCorrectForDistance    = 0;
   int  package_recvPos    = 0;
   uint8_t package_type    = 0;
+  bool package_header_error = false;
 
   if (package_Sample_Index == 0) {
     uint8_t *recvBuffer = new uint8_t[size];
@@ -546,6 +548,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
           if (currentByte == (PH & 0xFF)) {
 
           } else {
+            package_header_error = true;
             continue;
           }
 
@@ -557,6 +560,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
           if (currentByte == (PH >> 8)) {
 
           } else {
+            package_header_error = true;
             recvPos = 0;
             continue;
           }
@@ -571,6 +575,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
               scan_frequence = (currentByte & 0xFE) >> 1;
             }
           } else {
+            package_header_error = true;
             recvPos = 0;
             continue;
           }
@@ -583,6 +588,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
           if (currentByte & LIDAR_RESP_MEASUREMENT_CHECKBIT) {
             FirstSampleAngle = currentByte;
           } else {
+            package_header_error = true;
             recvPos = 0;
             continue;
           }
@@ -596,6 +602,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
           if (currentByte & LIDAR_RESP_MEASUREMENT_CHECKBIT) {
             LastSampleAngle = currentByte;
           } else {
+            package_header_error = true;
             recvPos = 0;
             continue;
           }
@@ -784,18 +791,23 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     (*node).dy = 0;
     (*node).dth = 0;
 
-    m_node_time_ns = current_time_ns- delay_time_ns;
+    m_node_time_ns = current_time_ns - delay_time_ns;
     if(current_time_ns <= delay_time_ns) {
         m_node_time_ns = current_time_ns;
     }
 
     if (m_node_time_ns < m_node_last_time_ns) {
-        printf("time=%lu\n", m_node_last_time_ns - m_node_time_ns);
-        fflush(stdout);
-      if ((m_node_last_time_ns - m_node_time_ns) < 1e9/16) {
-         m_node_time_ns = m_node_last_time_ns;
-      }
+//      if ((m_node_last_time_ns - m_node_time_ns) < 1e9/20) {
+//         m_node_time_ns = m_node_last_time_ns;
+//      }
+    } else {
+        if(m_node_time_ns - m_node_last_time_ns < 8*1e6 && CheckSumResult &&
+                Last_CheckSum_Result&&!package_header_error) {
+            m_node_time_ns = m_node_last_time_ns;
+        } else {
+        }
     }
+    Last_CheckSum_Result = CheckSumResult;
 
   }
 

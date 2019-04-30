@@ -15,7 +15,7 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.0.3 |   2019-02-18  |
+| SDK     |  2.0.4 |   2019-04-30  |
 
 
 - [new feature] add sync imu.
@@ -40,7 +40,7 @@ How to build YDLIDAR SDK samples
 ---------------
     $ git clone https://github.com/ydlidar/sdk
     $ cd sdk
-    $ git checkout Temi
+    $ git checkout temi_sync_imu
     $ cd ..
     $ mkdir build
     $ cd build

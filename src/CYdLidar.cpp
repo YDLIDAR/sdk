@@ -93,8 +93,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
   uint64_t tim_scan_start = getTime();
   result_t op_result =  lidarPtr->grabScanData(nodes, count);
   uint64_t tim_scan_end = getTime();
-  printf("scan_hz: %f\n", 1e9*1.0/(tim_scan_end - tim_scan_start));
-  fflush(stdout);
+
 
   // Fill in scan data:
   if (IS_OK(op_result)) {
