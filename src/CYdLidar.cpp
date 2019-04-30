@@ -14,20 +14,19 @@ using namespace angles;
 -------------------------------------------------------------*/
 CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_SerialPort        = "";
-  m_SerialBaudrate    = 115200;
+  m_SerialBaudrate    = 153600;
   m_FixedResolution   = true;
   m_AutoReconnect     = true;
   m_MaxAngle          = 180.f;
   m_MinAngle          = -180.f;
-  m_MaxRange          = 16.0;
+  m_MaxRange          = 8.0;
   m_MinRange          = 0.08;
   isScanning          = false;
   node_counts         = 720;
   each_angle          = 0.5;
   m_AbnormalCheckCount  = 2;
   m_ScanFrequency     = 8.0;
-  Major               = 0;
-  Minjor              = 0;
+  last_exposure_mode = Node_HightExposure;
   m_IgnoreArray.clear();
 }
 
@@ -64,6 +63,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
   node_info nodes[2048];
   size_t   count = _countof(nodes);
   size_t all_nodes_counts = node_counts;
+  uint8_t current_exposure_mode = Node_HightExposure;
 
   //wait Scan data:
   uint64_t tim_scan_start = getTime();
@@ -74,7 +74,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
   if (IS_OK(op_result)) {
     op_result = lidarPtr->ascendScanData(nodes, count);
     tim_scan_start = nodes[0].stamp;
-    tim_scan_end   = nodes[count - 1].stamp;;
+    tim_scan_end   = nodes[count - 1].stamp;
+    current_exposure_mode = nodes[0].exposure_mode;
 
     if (IS_OK(op_result) && count > 1) {
       if (!m_FixedResolution) {
@@ -114,6 +115,10 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
         if (nodes[i].stamp > tim_scan_end) {
           tim_scan_end = nodes[i].stamp;
         }
+
+        if (nodes[i].exposure_mode != 0) {
+            current_exposure_mode = nodes[i].exposure_mode;
+        }
       }
 
 
@@ -138,7 +143,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
       for (size_t i = 0; i < all_nodes_counts; i++) {
         range = (float)angle_compensate_nodes[i].distance_q2 / 4.f / 1000;
-        intensity = (float)(angle_compensate_nodes[i].sync_quality);
+        intensity = (float)(angle_compensate_nodes[i].sync_quality >> LIDAR_RESP_MEASUREMENT_QUALITY_SHIFT);
 
         if (i < all_nodes_counts / 2) {
           index = all_nodes_counts / 2 - 1 - i;
@@ -202,6 +207,12 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
       scan_msg.config.min_range = m_MinRange;
       scan_msg.config.max_range = m_MaxRange;
       outscan = scan_msg;
+
+      if(last_exposure_mode != current_exposure_mode) {
+          printf("Switch exposrue mode to %s\n", (current_exposure_mode==Node_LowExposure)?"Low":"Hight");
+          fflush(stdout);
+      }
+      last_exposure_mode = current_exposure_mode;
       return true;
 
 

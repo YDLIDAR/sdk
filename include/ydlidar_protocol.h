@@ -68,7 +68,7 @@
 #define LIDAR_CMD_ENABLE_CONST_FREQ        0x0E
 #define LIDAR_CMD_DISABLE_CONST_FREQ       0x0F
 
-#define LIDAR_CMD_GET_OFFSET_ANGLE        0x93
+#define LIDAR_CMD_GET_OFFSET_ANGLE          0x93
 #define LIDAR_CMD_SAVE_SET_EXPOSURE         0x94
 #define LIDAR_CMD_SET_LOW_EXPOSURE          0x95
 #define LIDAR_CMD_ADD_EXPOSURE       	    0x96
@@ -88,6 +88,8 @@ typedef enum
 #define Node_Default_Quality (10)
 #define Node_Sync 1
 #define Node_NotSync 2
+#define Node_HightExposure 1
+#define Node_LowExposure 2
 #define PackagePaidBytes 10
 #define PH 0x55AA
 
@@ -103,6 +105,7 @@ struct node_info
     uint16_t   distance_q2; //! 当前测距点距离
     uint64_t   stamp; //! 时间戳
     uint8_t    scan_frequence;//! 特定版本此值才有效,无效值是0
+    uint8_t    exposure_mode;
 } __attribute__((packed)) ;
 
 struct PackageNode

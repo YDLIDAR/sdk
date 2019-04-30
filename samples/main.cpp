@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
 
   CYdLidar laser;
   laser.setSerialPort(port);
-  laser.setSerialBaudrate(115200);
+  laser.setSerialBaudrate(153600);
   laser.setFixedResolution(false);
   laser.setAutoReconnect(true);//hot plug
 
@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
 
   //unit: m
   laser.setMinRange(0.1);
-  laser.setMaxRange(12.0);
+  laser.setMaxRange(8.0);
 
   std::vector<float> ignore_array;
   ignore_array.clear();
