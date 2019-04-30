@@ -81,7 +81,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
   // Bound?
   if (!checkHardware()) {
     hardwareError = true;
-    delay(80);
+    delay(50);
     return false;
   }
 
@@ -93,6 +93,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
   uint64_t tim_scan_start = getTime();
   result_t op_result =  lidarPtr->grabScanData(nodes, count);
   uint64_t tim_scan_end = getTime();
+  printf("scan_hz: %f\n", 1e9*1.0/(tim_scan_end - tim_scan_start));
+  fflush(stdout);
 
   // Fill in scan data:
   if (IS_OK(op_result)) {
@@ -342,7 +344,8 @@ bool CYdLidar::getDeviceInfo() {
   }
   bool ret = false;
   std::string buffer;
-  size_t size;
+  buffer.clear();
+  size_t size = 0;
   result_t op_result = lidarPtr->getDeviceInfo(buffer, size);
   if (!IS_OK(op_result)) {
     fprintf(stderr, "get Device Information Error\n");

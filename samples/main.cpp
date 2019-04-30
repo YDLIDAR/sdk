@@ -76,18 +76,6 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  std::string input_frequency;
-  float frequency = 8.0;
-  while (ydlidar::ok()) {
-    printf("Please enter the lidar scan frequency[5-12]:");
-    std::cin >> input_frequency;
-    frequency = atof(input_frequency.c_str());
-    if(frequency <=12.0 && frequency >= 5.0 ) {
-       break;
-    }
-    fprintf(stderr, "Invalid scan frequency,The scanning frequency range is 5 to 12 HZ, Please re-enter.\n");
-  }
-
   if(!ydlidar::ok()) {
     return 0;
   }
