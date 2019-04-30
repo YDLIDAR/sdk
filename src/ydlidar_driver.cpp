@@ -76,6 +76,7 @@ YDlidarDriver::YDlidarDriver():
   SampleNumlAndCTCal  = 0;
   LastSampleAngleCal  = 0;
   CheckSumResult      = true;
+  LastCheckSumResult  = true;
   Valu8Tou16          = 0;
 
   package_Sample_Index = 0;
@@ -501,6 +502,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   int32_t  AngleCorrectForDistance    = 0;
   int  package_recvPos    = 0;
   uint8_t package_type    = 0;
+  bool data_header_error = false;
 
   if (package_Sample_Index == 0) {
     uint8_t *recvBuffer = new uint8_t[size];
@@ -530,6 +532,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
             if (currentByte == (PH & 0xFF)) {
 
             } else {
+              data_header_error = true;
               continue;
             }
 
@@ -541,6 +544,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
             if (currentByte == (PH >> 8)) {
 
             } else {
+              data_header_error = true;
               recvPos = 0;
               continue;
             }
@@ -556,6 +560,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
                 scan_frequence = (currentByte & 0xFE) >> 1;
               }
             } else {
+              data_header_error = true;
               recvPos = 0;
               continue;
             }
@@ -571,6 +576,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
             if (currentByte & LIDAR_RESP_MEASUREMENT_CHECKBIT) {
               FirstSampleAngle = currentByte;
             } else {
+              data_header_error = true;
               recvPos = 0;
               continue;
             }
@@ -587,6 +593,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
             if (currentByte & LIDAR_RESP_MEASUREMENT_CHECKBIT) {
               LastSampleAngle = currentByte;
             } else {
+              data_header_error = true;
               recvPos = 0;
               continue;
             }
@@ -804,7 +811,13 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
       if ((m_node_last_time_ns - m_node_time_ns) < 1e9 / 15) {
         m_node_time_ns = m_node_last_time_ns;
       }
+    } else {//Optimize starting point timestamp
+        if ((m_node_time_ns - m_node_last_time_ns) < 8*1e6 && !data_header_error
+                && CheckSumResult && LastCheckSumResult) {
+            m_node_time_ns = m_node_last_time_ns;
+        }
     }
+    LastCheckSumResult = CheckSumResult;
 
   }
 

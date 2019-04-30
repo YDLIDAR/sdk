@@ -489,6 +489,7 @@ class YDlidarDriver {
   uint16_t SampleNumlAndCTCal;
   uint16_t LastSampleAngleCal;
   bool CheckSumResult;
+  bool LastCheckSumResult;
   uint16_t Valu8Tou16;
 
   std::string serial_port;///< 雷达端口
