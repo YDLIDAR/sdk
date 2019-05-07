@@ -8,29 +8,29 @@
 using namespace ydlidar;
 
 class YDLIDAR_API CYdLidar {
-  PropertyBuilderByName(float, MaxRange, private) ///< 设置和获取激光最大测距范围(m)
-  PropertyBuilderByName(float, MinRange, private) ///< 设置和获取激光最小测距范围(m)
+  PropertyBuilderByName(float, MaxRange, private) ///< Constrained maximum distance(m)
+  PropertyBuilderByName(float, MinRange, private) ///< Constrained minimum distance(m)
   PropertyBuilderByName(float, MaxAngle,
-                        private) ///< 设置和获取激光最大角度, 最大值180度(度)
+                        private) ///< constrained maximum angle, Maximum 360 Deg(Deg)
   PropertyBuilderByName(float, MinAngle,
-                        private) ///< 设置和获取激光最小角度, 最小值-180度(度)
+                        private) ///< constrained minimum angle, minmum 0 Deg(Deg)
   PropertyBuilderByName(float, ScanFrequency,
-                        private) ///< 设置和获取激光扫描频率(范围5HZ~12HZ)(HZ)
+                        private) ///< scan frequency (5HZ~12HZ)(HZ)
 
   PropertyBuilderByName(bool, Intensities,
-                        private) ///< 设置和获取激光带信号质量(只有S4B雷达支持)
+                        private) ///< intensity
   PropertyBuilderByName(bool, FixedResolution,
-                        private) ///< 设置和获取激光是否是固定角度分辨率
-  PropertyBuilderByName(bool, Reversion, private) ///< 设置和获取是否旋转激光180度
-  PropertyBuilderByName(bool, AutoReconnect, private) ///< 设置异常是否开启重新连接
-  PropertyBuilderByName(bool, GlassNoise, private) ///< 设置是否关闭玻璃噪声干扰
-  PropertyBuilderByName(bool, SunNoise, private) ///< 设置是否关闭太阳干扰
-  PropertyBuilderByName(int, SerialBaudrate, private) ///< 设置和获取激光通讯波特率
-  PropertyBuilderByName(int, SampleRate, private) ///< 设置和获取激光采样频率(KHz)
+                        private) ///< Whether it is a fixed angle resolution.
+  PropertyBuilderByName(bool, Reversion, private) ///< Whether to rotate 180 Deg
+  PropertyBuilderByName(bool, AutoReconnect, private) ///< whether to support hot swap
+  PropertyBuilderByName(bool, GlassNoise, private) ///< whether to close glass noise
+  PropertyBuilderByName(bool, SunNoise, private) ///< whether to close sun noise
+  PropertyBuilderByName(int, SerialBaudrate, private) ///< serial baudrate
+  PropertyBuilderByName(int, SampleRate, private) ///< sampling rate(KHz)
   PropertyBuilderByName(int, AbnormalCheckCount, private) ///< Maximum number of abnormal checks
-  PropertyBuilderByName(std::string, CalibrationFileName, private) ///< 角度校准文件名
-  PropertyBuilderByName(std::string, SerialPort, private) ///< 设置和获取激光端口号
-  PropertyBuilderByName(std::vector<float>, IgnoreArray, private) ///< 设置和获取激光剔除点
+  PropertyBuilderByName(std::string, CalibrationFileName, private) ///< calibration file
+  PropertyBuilderByName(std::string, SerialPort, private) ///< serial port
+  PropertyBuilderByName(std::vector<float>, IgnoreArray, private) ///< Culling angle list
 
 
  public:

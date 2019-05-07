@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['readme',['README',['../md__home_yang_Samsung_sdk_README.html',1,'']]],
+  ['readme',['README',['../md__home_tony_gitlab_sdk_README.html',1,'']]],
   ['range_5fres',['range_res',['../struct_laser_config.html#ae52eb0e0aca41f6dde58700a642e4c80',1,'LaserConfig']]],
   ['ranges',['ranges',['../struct_laser_scan.html#a4d059cb77f0f9f6e558db50c9993f7df',1,'LaserScan']]],
   ['rate',['rate',['../structsampling__rate.html#a8d860fbedd930d2022fe7bb6cf1f78b6',1,'sampling_rate']]],
@@ -10,5 +10,5 @@ var searchData=
   ['readdata',['readData',['../classserial_1_1_serial.html#a23af62642b1739cf31fb1c8a272074a1',1,'serial::Serial']]],
   ['readline',['readline',['../classserial_1_1_serial.html#a010b18ec545dfe1a7bb1c95be4bdaa54',1,'serial::Serial::readline(std::string &amp;buffer, size_t size=65536, std::string eol=&quot;\n&quot;)'],['../classserial_1_1_serial.html#a04177f637cc02f92ec0492d377528b2a',1,'serial::Serial::readline(size_t size=65536, std::string eol=&quot;\n&quot;)']]],
   ['readlines',['readlines',['../classserial_1_1_serial.html#a2ff222081c30ee4343498c6cc5c14b10',1,'serial::Serial']]],
-  ['reset',['reset',['../classydlidar_1_1_y_dlidar_driver.html#a3dd4086c5685163f7c7487ea0f5af08c',1,'ydlidar::YDlidarDriver::reset()'],['../class_c_simple_ini_templ.html#a89b34d38be4518e9ed91c634a41b8055',1,'CSimpleIniTempl::Reset()']]]
+  ['reset',['Reset',['../class_c_simple_ini_templ.html#a89b34d38be4518e9ed91c634a41b8055',1,'CSimpleIniTempl::Reset()'],['../classydlidar_1_1_y_dlidar_driver.html#a3dd4086c5685163f7c7487ea0f5af08c',1,'ydlidar::YDlidarDriver::reset()']]]
 ];

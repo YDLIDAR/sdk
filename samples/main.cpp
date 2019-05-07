@@ -127,6 +127,8 @@ int main(int argc, char *argv[]) {
 
   laser.setCalibrationFileName(calibration_filename);//Zero angle offset filename
 
+  //set the range of angles that need to be removed.
+  //usage: [0, 10, 15,25, 80, 90]
   std::vector<float> ignore_array;
   ignore_array.clear();
   laser.setIgnoreArray(ignore_array);

@@ -50,7 +50,7 @@ YDlidarDriver::YDlidarDriver():
   _serial(NULL) {
   isConnected         = false;
   isScanning          = false;
-  //串口配置参数
+  //serial config
   m_intensities       = false;
   isAutoReconnect     = true;
   isAutoconnting      = false;
@@ -66,7 +66,7 @@ YDlidarDriver::YDlidarDriver():
   m_sampling_rate     = -1;
   model               = -1;
 
-  //解析参数
+  //parse config
   PackageSampleBytes  = 2;
   IntervalSampleAngle = 0.0;
   FirstSampleAngle    = 0;
@@ -81,6 +81,7 @@ YDlidarDriver::YDlidarDriver():
 
   package_Sample_Index = 0;
   IntervalSampleAngle_LastPackage = 0.0;
+  m_IgnoreArray.clear();
 }
 
 YDlidarDriver::~YDlidarDriver() {
@@ -758,6 +759,24 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
       (*node).sync_quality = 0;
     }
 
+    if (m_IgnoreArray.size() != 0) {//eliminate the specified range angle.
+      double angle = (FirstSampleAngle + IntervalSampleAngle * package_Sample_Index)/64.0;
+      if(angle < 0) {
+          angle += 360;
+      }
+      if (angle >= 360) {
+        angle = angle - 360;
+      }
+
+      for (uint16_t j = 0; j < m_IgnoreArray.size(); j = j + 2) {
+        if ((m_IgnoreArray[j] <= angle) && (angle <= m_IgnoreArray[j + 1])) {
+          (*node).distance_q = 0;
+          (*node).sync_quality = 0;
+          break;
+        }
+      }
+    }
+
     if ((FirstSampleAngle + IntervalSampleAngle * package_Sample_Index +
          AngleCorrectForDistance) < 0) {
       (*node).angle_q6_checkbit = (((uint16_t)(FirstSampleAngle + IntervalSampleAngle
@@ -1109,8 +1128,18 @@ void YDlidarDriver::setAutoReconnect(const bool &enable) {
   isAutoReconnect = enable;
 }
 
+/**
+ * @brief setIgnoreArray
+ * set the range of angles that need to be removed.
+ * @param ignore_array
+ * angle list
+ */
+void YDlidarDriver::setIgnoreArray(const std::vector<float> ignore_array) {
+    m_IgnoreArray = ignore_array;
+}
 
-void YDlidarDriver::checkTransDelay() {
+
+void YDlidarDriver::checkTransferDelay() {
   //calc stamp
   trans_delay = _serial->getByteTime();
   m_pointTime = 1e9 / 5000;
@@ -1160,7 +1189,7 @@ result_t YDlidarDriver::startScan(bool force, uint32_t timeout) {
   }
 
   stop();
-  checkTransDelay();
+  checkTransferDelay();
   flushSerial();
   delay(30);
   {

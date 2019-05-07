@@ -161,15 +161,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
             }
           }
 
-          if (m_IgnoreArray.size() != 0) {
-            for (uint16_t j = 0; j < m_IgnoreArray.size(); j = j + 2) {
-              if ((m_IgnoreArray[j] <= angle) && (angle <= m_IgnoreArray[j + 1])) {
-                range = 0.0;
-                break;
-              }
-            }
-          }
-
           int index = (int)(angle / each_angle);
           float angle_pre = angle - index * each_angle;
           float angle_next = (index + 1) * each_angle - angle;
@@ -663,6 +654,7 @@ bool CYdLidar::checkStatus() {
   }
 
   lidarPtr->setIntensities(m_Intensities);
+  lidarPtr->setIgnoreArray(m_IgnoreArray);
   return true;
 }
 

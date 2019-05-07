@@ -14,6 +14,7 @@ var searchData=
   ['setdoublevalue',['SetDoubleValue',['../class_c_simple_ini_templ.html#af92ba0b8067553ab693c62a370de6534',1,'CSimpleIniTempl']]],
   ['setdtr',['setDTR',['../classserial_1_1_serial.html#a4c8a44a1e6ce42f8cb521d9a4e10bc59',1,'serial::Serial::setDTR()'],['../classydlidar_1_1_y_dlidar_driver.html#a88de43cf13058344fc83389cb9df7e21',1,'ydlidar::YDlidarDriver::setDTR()']]],
   ['setflowcontrol',['setFlowcontrol',['../classserial_1_1_serial.html#a76e56ce22e2706b8954a1dc9c5188c92',1,'serial::Serial']]],
+  ['setignorearray',['setIgnoreArray',['../classydlidar_1_1_y_dlidar_driver.html#a60dd7a2a881495dc525694579692db55',1,'ydlidar::YDlidarDriver']]],
   ['setintensities',['setIntensities',['../classydlidar_1_1_y_dlidar_driver.html#afc543dbbe1c5e37afc366e3c92203533',1,'ydlidar::YDlidarDriver']]],
   ['setlongvalue',['SetLongValue',['../class_c_simple_ini_templ.html#ab2238be407232e4bba0f1343e4793e4e',1,'CSimpleIniTempl']]],
   ['setmultikey',['SetMultiKey',['../class_c_simple_ini_templ.html#ac3cfaf072a64f960bdcb7ddf2edc52b6',1,'CSimpleIniTempl']]],

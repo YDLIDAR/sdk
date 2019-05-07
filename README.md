@@ -15,10 +15,12 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.0.6 |   2019-04-07  |
+| SDK     |  2.0.7 |   2019-05-07  |
 
 
-- [new feature] Change SDK timestamp clock from system clock to steady clock
+- [fix] fix ignore array
+
+- [fix] Optimize starting point timestamp
 
 
 
@@ -30,11 +32,8 @@ Dataset
 | Model      |  Baudrate |  Sampling Frequency | Range(m)  | Scanning Frequency(HZ) | Working temperature(°C) | Laser power max(mW) | voltage(V) | Current(mA)
 | :-------- | --------:|--------:|  --------:| --------:|--------:| --------:| --------:|  :--: |
 | G2-SS-1 |  230400 |   5000  |  0.1-16   |5-12|0-50| ~5|4.8-5.2|400-480|
+| R2-SS-1 |  230400 |   5000  |  0.1-16   |5-12|0-50| ~5|4.8-5.2|400-480|
 | G4     |  230400 |   9000  |  0.26-16   |5-12|0-50| ~5|4.8-5.2|400-480|
-| X4     |  128000 |   5000  |  0.12-10   |5-12|0-40| ~5|4.8-5.2|330-380|
-| F4     | 115200 |   4000 |  0.1-12        |5-12|0-40| ~5|4.8-5.2|400-480|
-| S4     |  115200|    4000 |  0.1-8        |6-12|0-40| ~5|4.8-5.2|330-380|
-| S4Pro |  153600|    4000 |  0.1-8        |6-12|0-40| ~5|4.8-5.2|330-380|
 
 How to build YDLIDAR SDK samples
 ---------------
@@ -207,6 +206,13 @@ Coordinate System
 
 Upgrade Log
 ---------------
+
+2019-05-07 version:2.0.7
+
+   1.fix ignore array
+
+   2.Optimize starting point timestamp
+
 
 2019-04-07 version:2.0.6
 
