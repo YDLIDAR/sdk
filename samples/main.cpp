@@ -32,6 +32,8 @@ int main(int argc, char *argv[])
 	if (ports.size() == 1)
 	{
 		it = ports.begin();
+        port = it->second;
+        /*
 		ydlidar::console.show("Lidar[%s] detected, whether to select current radar(yes/no)?:", it->first.c_str());
 		std::string ok;
 		std::cin >> ok;
@@ -47,7 +49,7 @@ int main(int argc, char *argv[])
 		{
 			ydlidar::console.message("Please enter the lidar serial port:");
 			std::cin >> port;
-		}
+        }*/
 	}
 	else
 	{
@@ -102,10 +104,14 @@ int main(int argc, char *argv[])
 	laser.setScanFrequency(8.0);
 	laser.setReversion(false);
 	laser.setFixedResolution(false);
-	laser.initialize();
+    bool ret = laser.initialize();
+    if(ret)
+     {
+       ret = laser.turnOn();
+    }
 
 
-	while (ydlidar::ok())
+    while (ret && ydlidar::ok())
 	{
 		bool hardError;
 		LaserScan scan;

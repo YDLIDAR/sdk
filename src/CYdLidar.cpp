@@ -29,6 +29,7 @@ CYdLidar::CYdLidar() : lidarPtr(nullptr)
 	node_counts         = 2400;
 	each_angle          = 0.15;
 	m_FrequencyOffset   = 0.4;
+    m_AbnormalCheckCount = 2;
 	m_IgnoreArray.clear();
 }
 
@@ -48,6 +49,7 @@ void CYdLidar::disconnecting()
 		delete lidarPtr;
 		lidarPtr = nullptr;
 	}
+    isScanning = false;
 }
 
 std::map<std::string, std::string>  CYdLidar::lidarPortList()
@@ -66,6 +68,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError)
 	// Bound?
 	if (!checkHardware())
 	{
+        delay(1000 / m_ScanFrequency);
 		hardwareError = true;
 		return false;
 	}
@@ -86,7 +89,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError)
 		op_result = lidarPtr->ascendScanData(nodes, count);
 		//同步后的时间
 		tim_scan_start = nodes[0].stamp;
-		tim_scan_end   = nodes[0].stamp;
+        tim_scan_end   = nodes[count - 1].stamp;
 
 		if (IS_OK(op_result))
 		{
@@ -279,15 +282,34 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError)
 -------------------------------------------------------------*/
 bool  CYdLidar::turnOn()
 {
-	bool ret = false;
-
-	if (isScanning)
-	{
-		lidarPtr->startMotor();
-		ret = true;
-	}
-
-	return ret;
+    if (isScanning && lidarPtr->isscanning())
+    {
+        return true;
+    }
+    // start scan...
+    result_t op_result = lidarPtr->startScan();
+    if (!IS_OK(op_result))
+    {
+        op_result = lidarPtr->startScan();
+        if (!IS_OK(op_result))
+        {
+            ydlidar::console.error("[CYdLidar] Failed to start scan mode: %x", op_result);
+            isScanning = false;
+            return false;
+        }
+    }
+    if (checkLidarAbnormal())
+    {
+        lidarPtr->stop();
+        ydlidar::console.error("[CYdLidar] Failed to turn on the Lidar, because the lidar is blocked or the lidar hardware is faulty.");
+        isScanning = false;
+        return false;
+    }
+    isScanning = true;
+    lidarPtr->setAutoReconnect(m_AutoReconnect);
+    ydlidar::console.message("[YDLIDAR INFO] Now YDLIDAR is scanning ......");
+    fflush(stdout);
+    return true;
 }
 
 /*-------------------------------------------------------------
@@ -295,14 +317,44 @@ bool  CYdLidar::turnOn()
 -------------------------------------------------------------*/
 bool  CYdLidar::turnOff()
 {
-	if (lidarPtr)
-	{
-		lidarPtr->stop();
-		lidarPtr->stopMotor();
-		isScanning = false;
-	}
+    if (lidarPtr)
+    {
+        lidarPtr->stop();
+    }
+    if (isScanning)
+    {
+        ydlidar::console.message("[YDLIDAR INFO] Now YDLIDAR Scanning has stopped ......");
 
-	return true;
+    }
+    isScanning = false;
+    return true;
+}
+
+bool CYdLidar::checkLidarAbnormal()
+{
+    node_info nodes[3600];
+    size_t   count = _countof(nodes);
+    int check_abnormal_count = 0;
+    if (m_AbnormalCheckCount < 2)
+    {
+        m_AbnormalCheckCount = 2;
+    }
+    result_t op_result = RESULT_FAIL;
+    while (check_abnormal_count < m_AbnormalCheckCount)
+    {
+        //Ensure that the voltage is insufficient or the motor resistance is high, causing an abnormality.
+        if (check_abnormal_count > 0)
+        {
+            delay(check_abnormal_count * 1000);
+        }
+        op_result =  lidarPtr->grabScanData(nodes, count);
+        if (IS_OK(op_result))
+        {
+            return false;
+        }
+        check_abnormal_count++;
+    }
+    return !IS_OK(op_result);
 }
 
 /** Returns true if the device is connected & operative */
@@ -313,9 +365,10 @@ bool CYdLidar::getDeviceHealth() const
 		return false;
 	}
 
+    lidarPtr->stop();
 	result_t op_result;
 	device_health healthinfo;
-
+    ydlidar::console.message("[YDLIDAR]:SDK Version: %s", YDlidarDriver::getSDKVersion().c_str());
 	op_result = lidarPtr->getHealth(healthinfo);
 
 	if (IS_OK(op_result))
@@ -365,264 +418,31 @@ bool CYdLidar::getDeviceInfo()
 		return false;
 	}
 
-	std::string model;
-	sampling_rate _rate;
-	int _samp_rate = 4;
-	int bad = 0;
+    if ( devinfo.model != YDlidarDriver::YDLIDAR_G6)
+    {
+        ydlidar::console.error("[YDLIDAR INFO] Current SDK does not support current lidar models[%d]", devinfo.model);
+        return false;
+    }
+    std::string model = "G6";
+    switch (devinfo.model)
+    {
+        case YDlidarDriver::YDLIDAR_G6:
+            model = "G6";
+        break;
+        default:
+        break;
+    }
 
-	switch (devinfo.model)
-	{
-	case YDlidarDriver::YDLIDAR_F4:
-		model = "F4";
-		break;
-
-	case YDlidarDriver::YDLIDAR_T1:
-		model = "T1";
-		break;
-
-	case YDlidarDriver::YDLIDAR_F2:
-		model = "F2";
-		break;
-
-	case YDlidarDriver::YDLIDAR_S4:
-		model = "S4";
-		break;
-
-	case YDlidarDriver::YDLIDAR_G4:
-	{
-		model = "G4";
-		ans = lidarPtr->getSamplingRate(_rate);
-
-		if (IS_OK(ans))
-		{
-			switch (m_SampleRate)
-			{
-			case 4:
-				_samp_rate = YDlidarDriver::YDLIDAR_RATE_4K;
-				break;
-
-			case 8:
-				_samp_rate = YDlidarDriver::YDLIDAR_RATE_8K;
-				break;
-
-			case 9:
-				_samp_rate = YDlidarDriver::YDLIDAR_RATE_9K;
-				break;
-
-			default:
-				_samp_rate = _rate.rate;
-				break;
-			}
-
-			while (_samp_rate != _rate.rate)
-			{
-				ans = lidarPtr->setSamplingRate(_rate);
-
-				if (!IS_OK(ans))
-				{
-					bad++;
-
-					if (bad > 5)
-					{
-						break;
-					}
-				}
-			}
-
-			switch (_rate.rate)
-			{
-			case YDlidarDriver::YDLIDAR_RATE_4K:
-				_samp_rate = 4;
-				break;
-
-			case YDlidarDriver::YDLIDAR_RATE_8K:
-				node_counts = 1440;
-				each_angle = 0.25;
-				_samp_rate = 8;
-				break;
-
-			case YDlidarDriver::YDLIDAR_RATE_9K:
-				node_counts = 1440;
-				each_angle = 0.25;
-				_samp_rate = 9;
-				break;
-
-			default:
-				break;
-			}
-
-
-		}
-
-	}
-	break;
-	case YDlidarDriver::YDLIDAR_X4:
-		model = "X4";
-		break;
-	case YDlidarDriver::YDLIDAR_G4PRO:
-		model = "G4Pro";
-		break;
-	case YDlidarDriver::YDLIDAR_F4PRO:
-	{
-		model = "F4Pro";
-		ans = lidarPtr->getSamplingRate(_rate);
-
-		if (IS_OK(ans))
-		{
-			switch (m_SampleRate)
-			{
-			case 4:
-				_samp_rate = 0;
-				break;
-
-			case 6:
-				_samp_rate = 1;
-				break;
-
-			default:
-				_samp_rate = _rate.rate;
-				break;
-			}
-
-			while (_samp_rate != _rate.rate)
-			{
-				ans = lidarPtr->setSamplingRate(_rate);
-
-				if (!IS_OK(ans))
-				{
-					bad++;
-
-					if (bad > 5)
-					{
-						break;
-					}
-				}
-			}
-
-			switch (_rate.rate)
-			{
-			case 0:
-				_samp_rate = 4;
-				break;
-
-			case 1:
-				node_counts = 1440;
-				each_angle = 0.25;
-				_samp_rate = 6;
-				break;
-			}
-
-		}
-
-	}
-	break;
-
-	case  YDlidarDriver::YDLIDAR_G4C:
-		model = "G4C";
-		break;
-
-	case  YDlidarDriver::YDLIDAR_G10:
-		model = "G10";
-		_samp_rate = 10;
-		break;
-
-	case  YDlidarDriver::YDLIDAR_S4B:
-		model = "S4B";
-		break;
-
-	case  YDlidarDriver::YDLIDAR_S2:
-		model = "S2";
-		break;
-
-	case  YDlidarDriver::YDLIDAR_G6:
-		model = "G6";
-		ans = lidarPtr->getSamplingRate(_rate);
-
-		if (IS_OK(ans))
-		{
-			switch (m_SampleRate)
-			{
-			case 10:
-				_samp_rate = YDlidarDriver::YDLIDAR_RATE_4K;
-				break;
-
-			case 16:
-				_samp_rate = YDlidarDriver::YDLIDAR_RATE_8K;
-				break;
-
-			case 18:
-				_samp_rate = YDlidarDriver::YDLIDAR_RATE_9K;
-				break;
-
-			default:
-				_samp_rate = _rate.rate;
-				break;
-			}
-
-			while (_samp_rate != _rate.rate)
-			{
-				ans = lidarPtr->setSamplingRate(_rate);
-
-				if (!IS_OK(ans))
-				{
-					bad++;
-
-					if (bad > 5)
-					{
-						break;
-					}
-				}
-			}
-
-			switch (_rate.rate)
-			{
-			case YDlidarDriver::YDLIDAR_RATE_4K:
-				_samp_rate = 10;
-				node_counts = 1440;
-				each_angle = 0.25;
-				break;
-
-			case YDlidarDriver::YDLIDAR_RATE_8K:
-				node_counts = 2400;
-				each_angle = 0.15;
-				_samp_rate = 16;
-				break;
-
-			case YDlidarDriver::YDLIDAR_RATE_9K:
-				node_counts = 2600;
-				each_angle = 0.1;
-				_samp_rate = 18;
-				break;
-
-			default:
-				break;
-			}
-
-
-		}
-
-		break;
-
-	default:
-		model = "Unknown";
-		break;
-	}
-
-	m_SampleRate = _samp_rate;
-
-
-	unsigned int maxv = (unsigned int)(devinfo.firmware_version >> 8);
-	unsigned int midv = (unsigned int)(devinfo.firmware_version & 0xff) / 10;
-	unsigned int minv = (unsigned int)(devinfo.firmware_version & 0xff) % 10;
+    unsigned int Major = (unsigned int)(devinfo.firmware_version >> 8);
+    unsigned int Minjor = (unsigned int)(devinfo.firmware_version & 0xff);
 	ydlidar::console.show("[YDLIDAR] Connection established in [%s]:\n"
-						  "Firmware version: %u.%u.%u\n"
+                          "Firmware version: %u.%u\n"
 						  "Hardware version: %u\n"
 						  "Model: %s\n"
 						  "Serial: ",
 						  m_SerialPort.c_str(),
-						  maxv,
-						  midv,
-						  minv,
+                          Major,
+                          Minjor,
 						  (unsigned int)devinfo.hardware_version,
 						  model.c_str());
 
@@ -632,17 +452,76 @@ bool CYdLidar::getDeviceInfo()
 	}
 
 	ydlidar::console.show("\n");
-
-	ydlidar::console.message("[YDLIDAR INFO] Current Sampling Rate : %dK", _samp_rate);
-
-	if (devinfo.model != YDlidarDriver::YDLIDAR_G6)
-	{
-		ydlidar::console.error("current sdk is not support %s lidar", model);
-		return false;
-	}
+    checkSampleRate();
+    ydlidar::console.message("[YDLIDAR INFO] Current Sampling Rate : %dK", m_SampleRate);
 	checkScanFrequency();
 	return true;
 
+
+}
+
+void CYdLidar::checkSampleRate()
+{
+    sampling_rate _rate;
+    int _samp_rate = 18;
+    int try_count;
+    node_counts = 2600;
+    each_angle = 0.1;
+    result_t ans = lidarPtr->getSamplingRate(_rate);
+    if(IS_OK(ans))
+    {
+        switch (m_SampleRate)
+        {
+        case 10:
+            _samp_rate = YDlidarDriver::YDLIDAR_RATE_4K;
+            break;
+        case 16:
+            _samp_rate = YDlidarDriver::YDLIDAR_RATE_8K;
+            break;
+        case 18:
+            _samp_rate = YDlidarDriver::YDLIDAR_RATE_9K;
+            break;
+        default:
+            _samp_rate = _rate.rate;
+            break;
+        }
+        while (_samp_rate != _rate.rate)
+        {
+            ans = lidarPtr->setSamplingRate(_rate);
+            if (!IS_OK(ans))
+            {
+                try_count++;
+                if (try_count > 3)
+                {
+                    break;
+                }
+            }
+        }
+        switch (_rate.rate)
+        {
+        case YDlidarDriver::YDLIDAR_RATE_4K:
+            _samp_rate = 10;
+            node_counts = 1440;
+            each_angle = 0.25;
+            break;
+
+        case YDlidarDriver::YDLIDAR_RATE_8K:
+            node_counts = 2400;
+            each_angle = 0.15;
+            _samp_rate = 16;
+            break;
+
+        case YDlidarDriver::YDLIDAR_RATE_9K:
+            node_counts = 2600;
+            each_angle = 0.1;
+            _samp_rate = 18;
+            break;
+
+        default:
+            break;
+        }
+    }
+    m_SampleRate = _samp_rate;
 
 }
 
@@ -656,7 +535,7 @@ bool CYdLidar::checkScanFrequency()
 	float hz = 0;
 	result_t ans;
 	m_ScanFrequency += m_FrequencyOffset;
-	if (4.6 <= m_ScanFrequency && m_ScanFrequency <= 12.4)
+    if (5.0 - m_FrequencyOffset <= m_ScanFrequency && m_ScanFrequency <= 12 + m_FrequencyOffset)
 	{
 		ans = lidarPtr->getScanFrequency(_scan_frequency) ;
 		if (IS_OK(ans))
@@ -705,6 +584,7 @@ bool CYdLidar::checkScanFrequency()
 		m_ScanFrequency = freq;
 	}
 
+    m_ScanFrequency -= m_FrequencyOffset;
 	node_counts = m_SampleRate * 1000 / (m_ScanFrequency - m_FrequencyOffset);
 	each_angle = 360.0 / node_counts;
 
@@ -769,47 +649,34 @@ bool  CYdLidar::checkCOMMs()
 bool CYdLidar::checkStatus()
 {
 
-	if (!lidarPtr)
-	{
-		return false;
-	}
+    if (!checkCOMMs())
+    {
+        return false;
+    }
 
-	if (lidarPtr->isscanning())
-	{
-		return true;
-	}
+    bool ret = getDeviceHealth();
 
-	bool ret = getDeviceHealth();
-	if (!ret)
-	{
-		delay(1000);
-	}
+    if (!ret)
+    {
+        delay(2000);
+        ret = getDeviceHealth();
+        if(!ret)
+        {
+            delay(1000);
+        }
+    }
 
-	ret = getDeviceInfo();
-	if (!ret)
-	{
-		return ret;
-	}
-	// start scan...
-	result_t s_result = lidarPtr->startScan();
+    if (!getDeviceInfo())
+    {
+        delay(2000);
+        ret = getDeviceInfo();
 
-	if (!IS_OK(s_result))
-	{
-		s_result = lidarPtr->startScan();
-
-		if (!IS_OK(s_result))
-		{
-			ydlidar::console.error("[CYdLidar] Error starting scanning mode: %x", s_result);
-			isScanning = false;
-			return false;
-		}
-	}
-
-	lidarPtr->setAutoReconnect(m_AutoReconnect);
-	ydlidar::console.message("[YDLIDAR INFO] Now YDLIDAR is scanning ......\n");
-	isScanning = true;
-	return true;
-
+        if (!ret)
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 /*-------------------------------------------------------------
@@ -817,22 +684,15 @@ bool CYdLidar::checkStatus()
 -------------------------------------------------------------*/
 bool CYdLidar::checkHardware()
 {
-	bool ret = true;
-
-	if (!isScanning)
-	{
-		ret = checkCOMMs();
-
-		if (ret && (ret = checkStatus()))
-		{
-			if (ret)
-			{
-				ret = turnOn();
-			}
-		}
-	}
-
-	return ret;
+    if (!lidarPtr)
+    {
+        return false;
+    }
+    if (isScanning && lidarPtr->isscanning())
+    {
+        return true;
+    }
+    return false;
 }
 
 /*-------------------------------------------------------------
@@ -851,12 +711,7 @@ bool CYdLidar::initialize()
 	if (!checkStatus())
 	{
 		ydlidar::console.warning("[CYdLidar::initialize] Error initializing YDLIDAR scanner.because of failure in scan mode.");
-	}
-
-	if (!turnOn())
-	{
-		ydlidar::console.warning("[CYdLidar::initialize] Error initializing YDLIDAR scanner. Because the motor falied to start.");
-
+        return false;
 	}
 
 	return ret;

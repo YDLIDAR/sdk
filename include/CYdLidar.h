@@ -37,6 +37,7 @@ class YDLIDAR_API CYdLidar
 
 	PropertyBuilderByName(int, SerialBaudrate, private) ///< 设置和获取激光通讯波特率
 	PropertyBuilderByName(int, SampleRate, private) ///< 设置和获取激光采样频率
+    PropertyBuilderByName(int, AbnormalCheckCount, private) ///< Maximum number of abnormal checks
 
 	PropertyBuilderByName(std::string, SerialPort, private) ///< 设置和获取激光端口号
 	PropertyBuilderByName(std::vector<float>, IgnoreArray, private) ///< 设置和获取激光剔除点
@@ -86,6 +87,14 @@ protected:
 	  * \return false on error.
 	  */
 	bool checkHardware();
+
+    /**
+     * @brief checkSampleRate
+    */
+    void checkSampleRate();
+
+    /** returns true if the lidar data is normal, If it's not*/
+   bool checkLidarAbnormal();
 
 
 
