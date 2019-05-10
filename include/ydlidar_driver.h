@@ -549,8 +549,8 @@ private:
     int m_sampling_rate;					///< 采样频率
     uint32_t m_baudrate;					///< 波特率
     bool isSupportMotorCtrl;			///< 是否支持电机控制
-    uint64_t m_ns;						///< 时间戳
-    uint64_t m_last_ns;					///< 时间戳
+    uint64_t m_node_time_ns;						///< 时间戳
+    uint64_t m_node_last_time_ns;					///< 时间戳
     uint32_t m_pointTime;				///< 激光点直接时间间隔
     uint32_t trans_delay;				///< 串口传输一个byte时间
 
@@ -567,6 +567,7 @@ private:
     uint16_t SampleNumlAndCTCal;
     uint16_t LastSampleAngleCal;
     bool CheckSumResult;
+    bool Last_CheckSum_Result;
     uint16_t Valu8Tou16;
     uint8_t scan_frequence;
 
