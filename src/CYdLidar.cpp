@@ -49,6 +49,7 @@ void CYdLidar::disconnecting()
         delete lidarPtr;
         lidarPtr = nullptr;
     }
+    isScanning = false;
 }
 
 /*-------------------------------------------------------------
@@ -554,18 +555,16 @@ bool CYdLidar::getDeviceInfo()
 
 
 
-    unsigned int maxv = (unsigned int)(devinfo.firmware_version >> 8);
-    unsigned int midv = (unsigned int)(devinfo.firmware_version & 0xff) / 10;
-    unsigned int minv = (unsigned int)(devinfo.firmware_version & 0xff) % 10;
+    unsigned int Maxjor = (unsigned int)(devinfo.firmware_version >> 8);
+    unsigned int Minjor = (unsigned int)(devinfo.firmware_version & 0xff);
     ydlidar::console.show("[YDLIDAR] Connection established in [%s]:\n"
-                          "Firmware version: %u.%u.%u\n"
+                          "Firmware version: %u.%u\n"
                           "Hardware version: %u\n"
                           "Model: %s\n"
                           "Serial: ",
                           m_SerialPort.c_str(),
-                          maxv,
-                          midv,
-                          minv,
+                          Maxjor,
+                          Minjor,
                           (unsigned int)devinfo.hardware_version,
                           model.c_str());
 
@@ -652,6 +651,7 @@ bool  CYdLidar::checkCOMMs()
             ydlidar::console.error("Create Driver fail");
             return false;
         }
+        ydlidar::console.message("[YDLIDAR]:SDK Version: %s", YDlidarDriver::getSDKVersion().c_str());
     }
     if (lidarPtr->isconnected())
     {
