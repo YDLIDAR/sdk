@@ -15,10 +15,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  1.4.0 |   2019-03-25  |
+| SDK     |  1.4.1 |   2019-05-10  |
 
 
-- [new feature] User can set the maximum number of abnormal checks.
+- [bug] fix memory leak.
 
 
 
@@ -65,7 +65,7 @@ windows:
 
 You should see YDLIDAR's scan result in the console:
 
-	[YDLIDAR]:SDK Version: 1.4.0
+	[YDLIDAR]:SDK Version: 1.4.1
 	[YDLIDAR]:Lidar running correctly ! The health status: good
 	[YDLIDAR] Connection established in [/dev/ttyUSB0][230400]:
 	Firmware version: 1.2
@@ -205,6 +205,10 @@ Coordinate System
 
 Upgrade Log
 ---------------
+
+2019-05-10 version:1.4.1
+
+   1.fix memory leak.
 
 2019-03-25 version:1.4.0
 
