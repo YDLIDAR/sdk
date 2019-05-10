@@ -63,6 +63,7 @@ public:
 
 	//Turn on the motor enable
 	bool  turnOn();  //!< See base class docs
+
 	//Turn off the motor enable and close the scan
 	bool  turnOff(); //!< See base class docs
 

@@ -68,6 +68,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError)
 	// Bound?
 	if (!checkHardware())
 	{
+        delay(50);
 		hardwareError = true;
 		return false;
 	}
@@ -550,8 +551,8 @@ bool CYdLidar::getDeviceInfo(int &type)
 		model = "S2";
 		break;
 
-	case  YDlidarDriver::YDLIDAR_G25:
-		model = "G25";
+    case  YDlidarDriver::YDLIDAR_G6:
+        model = "G6";
 		ans = lidarPtr->getSamplingRate(_rate);
 
 		if (IS_OK(ans))
@@ -631,18 +632,16 @@ bool CYdLidar::getDeviceInfo(int &type)
 
 
 
-	unsigned int maxv = (unsigned int)(devinfo.firmware_version >> 8);
-	unsigned int midv = (unsigned int)(devinfo.firmware_version & 0xff) / 10;
-	unsigned int minv = (unsigned int)(devinfo.firmware_version & 0xff) % 10;
+    unsigned int Maxjor = (unsigned int)(devinfo.firmware_version >> 8);
+    unsigned int Minjor = (unsigned int)(devinfo.firmware_version & 0xff);
 	ydlidar::console.show("[YDLIDAR] Connection established in [%s]:\n"
-						  "Firmware version: %u.%u.%u\n"
+                          "Firmware version: %u.%u\n"
 						  "Hardware version: %u\n"
 						  "Model: %s\n"
 						  "Serial: ",
 						  m_SerialPort.c_str(),
-						  maxv,
-						  midv,
-						  minv,
+                          Maxjor,
+                          Minjor,
 						  (unsigned int)devinfo.hardware_version,
 						  model.c_str());
 
@@ -660,7 +659,7 @@ bool CYdLidar::getDeviceInfo(int &type)
 		devinfo.model == YDlidarDriver::YDLIDAR_F4PRO ||
 		devinfo.model == YDlidarDriver::YDLIDAR_G4C ||
 		devinfo.model == YDlidarDriver::YDLIDAR_G10 ||
-		devinfo.model == YDlidarDriver::YDLIDAR_G25)
+        devinfo.model == YDlidarDriver::YDLIDAR_G6)
 	{
 		checkScanFrequency();
 	}
@@ -738,6 +737,7 @@ bool  CYdLidar::checkCOMMs()
 			ydlidar::console.error("Create Driver fail");
 			return false;
 		}
+        ydlidar::console.message("[YDLIDAR]:SDK Version: %s", YDlidarDriver::getSDKVersion().c_str());
 	}
 
 	if (lidarPtr->isconnected())
@@ -853,28 +853,6 @@ bool CYdLidar::checkStatus()
 		if (m_SerialBaudrate == 153600 || m_type == YDlidarDriver::YDLIDAR_S4B)
 		{
 			m_Intensities = true;
-		}
-
-		if (m_Intensities)
-		{
-			scan_exposure exposure;
-			int cnt = 0;
-
-			while ((lidarPtr->setLowExposure(exposure) == RESULT_OK) && (cnt < 3))
-			{
-				if (exposure.exposure != m_Exposure)
-				{
-					ydlidar::console.message("set EXPOSURE MODEL SUCCESS!!!");
-					break;
-				}
-
-				cnt++;
-			}
-
-			if (cnt >= 4)
-			{
-				ydlidar::console.warning("set LOW EXPOSURE MODEL FALIED!!!");
-			}
 		}
 	}
 

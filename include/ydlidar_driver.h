@@ -581,7 +581,7 @@ class YDlidarDriver {
     YDLIDAR_G10			= 10,/**< G10雷达型号代号. */
     YDLIDAR_S4B 		= 11,/**< S4B雷达型号代号. */
     YDLIDAR_S2 			= 12,/**< S2雷达型号代号. */
-    YDLIDAR_G25 		= 13,/**< G25雷达型号代号. */
+    YDLIDAR_G6 		    = 13,/**< G6雷达型号代号. */
     YDLIDAR_Tail,/**< 雷达型号代号. */
 
   };
@@ -606,7 +606,7 @@ class YDlidarDriver {
     YDLIDAR_G10_BAUD	= 230400,/**< G10雷达型号波特率. */
     YDLIDAR_S4B_BAUD 	= 153600,/**< S4B雷达型号波特率. */
     YDLIDAR_S2_BAUD 	= 115200,/**< S2雷达型号波特率. */
-    YDLIDAR_G25_BAUD 	= 512000,/**< G25雷达型号波特率. */
+    YDLIDAR_G6_BAUD 	= 512000,/**< G6雷达型号波特率. */
 
   };
 
@@ -625,8 +625,8 @@ class YDlidarDriver {
   int model;							///< 雷达型号
   uint32_t m_baudrate;					///< 波特率
   bool isSupportMotorCtrl;			///< 是否支持电机控制
-  uint64_t m_ns;						///< 时间戳
-  uint64_t m_last_ns;					///< 时间戳
+  uint64_t m_node_time_ns;						///< 时间戳
+  uint64_t m_node_last_time_ns;					///< 时间戳
   uint32_t m_pointTime;				///< 激光点直接时间间隔
   uint32_t trans_delay;				///< 串口传输一个byte时间
 
@@ -638,12 +638,13 @@ class YDlidarDriver {
   float IntervalSampleAngle_LastPackage;
   uint16_t FirstSampleAngle;
   uint16_t LastSampleAngle;
-  uint16_t CheckSun;
+  uint16_t CheckSum;
 
-  uint16_t CheckSunCal;
+  uint16_t CheckSumCal;
   uint16_t SampleNumlAndCTCal;
   uint16_t LastSampleAngleCal;
-  bool CheckSunResult;
+  bool CheckSumResult;
+  bool Last_CheckSum_Result;
   uint16_t Valu8Tou16;
   bool isMultipleRate;
   uint8_t scan_frequence;

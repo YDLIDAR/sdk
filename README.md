@@ -1,4 +1,4 @@
-YDLIDAR SDK PACKAGE V1.3.9
+YDLIDAR SDK PACKAGE V1.4.1
 =====================================================================
 
 SDK [test](https://github.com/yangfuyuan/sdk) application for YDLIDAR
@@ -151,6 +151,10 @@ code:
 
 Upgrade Log
 =====================================================================
+
+2019-05-10 version:1.4.1
+
+1.optimize timestamp.
 
 2018-12-3 version:1.3.9
 
