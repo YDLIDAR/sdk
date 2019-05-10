@@ -213,6 +213,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
           fflush(stdout);
       }
       last_exposure_mode = current_exposure_mode;
+      delete[] angle_compensate_nodes;
       return true;
 
 
