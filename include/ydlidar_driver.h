@@ -473,13 +473,14 @@ private:
     float IntervalSampleAngle_LastPackage;
     uint16_t FirstSampleAngle;
     uint16_t LastSampleAngle;
-    uint16_t CheckSun;
+    uint16_t CheckSum;
     uint8_t scan_frequence;
 
-    uint16_t CheckSunCal;
+    uint16_t CheckSumCal;
     uint16_t SampleNumlAndCTCal;
     uint16_t LastSampleAngleCal;
-    bool CheckSunResult;
+    bool CheckSumResult;
+    bool Last_CheckSum_Result;
     uint16_t Valu8Tou16;
 
     std::string serial_port;///< 雷达端口
