@@ -206,6 +206,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
       scan_msg.config.min_range = m_MinRange;
       scan_msg.config.max_range = m_MaxRange;
       outscan = scan_msg;
+      delete[] angle_compensate_nodes;
       return true;
 
 
