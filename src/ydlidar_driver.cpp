@@ -36,11 +36,11 @@ YDlidarDriver::YDlidarDriver():
   IntervalSampleAngle_LastPackage = 0.0;
   FirstSampleAngle = 0;
   LastSampleAngle = 0;
-  CheckSun = 0;
-  CheckSunCal = 0;
+  CheckSum = 0;
+  CheckSumCal = 0;
   SampleNumlAndCTCal = 0;
   LastSampleAngleCal = 0;
-  CheckSunResult = true;
+  CheckSumResult = true;
   Valu8Tou16 = 0;
 
 }
@@ -533,7 +533,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
           break;
 
         case 1:
-          CheckSunCal = PH;
+          CheckSumCal = PH;
 
           if (currentByte == (PH >> 8)) {
 
@@ -576,7 +576,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
         case 5:
           FirstSampleAngle += currentByte * 0x100;
-          CheckSunCal ^= FirstSampleAngle;
+          CheckSumCal ^= FirstSampleAngle;
           FirstSampleAngle = FirstSampleAngle >> 1;
           break;
 
@@ -629,11 +629,11 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
           break;
 
         case 8:
-          CheckSun = currentByte;
+          CheckSum = currentByte;
           break;
 
         case 9:
-          CheckSun += (currentByte * 0x100);
+          CheckSum += (currentByte * 0x100);
           break;
         }
 
@@ -669,7 +669,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
         for (size_t pos = 0; pos < recvSize; ++pos) {
           if (recvPos % 2 == 1) {
             Valu8Tou16 += recvBuffer[pos] * 0x100;
-            CheckSunCal ^= Valu8Tou16;
+            CheckSumCal ^= Valu8Tou16;
           } else {
             Valu8Tou16 = recvBuffer[pos];
           }
@@ -692,13 +692,13 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
       return RESULT_FAIL;
     }
 
-    CheckSunCal ^= SampleNumlAndCTCal;
-    CheckSunCal ^= LastSampleAngleCal;
+    CheckSumCal ^= SampleNumlAndCTCal;
+    CheckSumCal ^= LastSampleAngleCal;
 
-    if (CheckSunCal != CheckSun) {
-      CheckSunResult = false;
+    if (CheckSumCal != CheckSum) {
+      CheckSumResult = false;
     } else {
-      CheckSunResult = true;
+      CheckSumResult = true;
     }
 
   }
@@ -714,7 +714,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
   (*node).sync_quality = Node_Default_Quality;
 
-  if (CheckSunResult) {
+  if (CheckSumResult) {
     (*node).distance_q2 = packages.packageSampleDistance[package_Sample_Index];
     if ((*node).distance_q2 != 0) {
       AngleCorrectForDistance = (int32_t)(((atan(((21.8 * (155.3 - ((*node).distance_q2 / 2.0))) /
