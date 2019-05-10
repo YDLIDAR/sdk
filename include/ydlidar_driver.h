@@ -314,17 +314,18 @@ namespace ydlidar{
         float       IntervalSampleAngle_LastPackage;
         int         PackageSampleBytes;             ///< 一个包包含的激光点数
         bool        isSupportMotorCtrl;			///< 是否支持电机控制
-        bool        CheckSunResult;
+        bool        CheckSumResult;
+        bool        Last_CheckSum_Result;
         uint32_t    m_baudrate;					///< 波特率
-        uint64_t    m_node_time;						///< 时间戳
-        uint64_t    m_last_node_time;						///< 时间戳
-        uint32_t    m_signalpointTime;			///< 两个激光点时间间隔
+        uint64_t    m_node_time_ns;						///< 时间戳
+        uint64_t    m_node_last_time_ns;						///< 时间戳
+        uint32_t    m_pointTime;			///< 两个激光点时间间隔
         uint32_t    trans_delay;				///< 串口传输一个byte时间
         uint16_t    package_Sample_Index;
         uint16_t    FirstSampleAngle;
         uint16_t    LastSampleAngle;
-        uint16_t    CheckSun;
-        uint16_t    CheckSunCal;
+        uint16_t    CheckSum;
+        uint16_t    CheckSumCal;
         uint16_t    SampleNumlAndCTCal;
         uint16_t    LastSampleAngleCal;
         uint16_t    Valu8Tou16;

@@ -1,4 +1,4 @@
-YDLIDAR SDK PACKAGE V1.4.0
+YDLIDAR SDK PACKAGE V1.4.1
 =====================================================================
 
 SDK [test](https://github.com/ydlidar/sdk/tree/TS2) application for YDLIDAR
@@ -45,7 +45,7 @@ You should see YDLIDAR's scan result in the console:
 
      	YDLIDAR C++ TEST
      	
-	[YDLIDAR INFO] Now YDLIDAR SDK VERSION: 1.4.0
+	[YDLIDAR INFO] Now YDLIDAR SDK VERSION: 1.4.1
 	
 	fhs_lock: creating lockfile:      11796
 
@@ -136,6 +136,9 @@ code:
 Upgrade Log
 =====================================================================
 
+2019-04-09 version:1.4.1
+
+   1.optimize the timestamp.
 
 2019-04-09 version:1.4.0
 
