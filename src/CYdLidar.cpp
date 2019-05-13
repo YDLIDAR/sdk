@@ -232,7 +232,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 -------------------------------------------------------------*/
 bool  CYdLidar::turnOn() {
   if (isScanning && lidarPtr->isScanning()) {
-    true;
+    return true;
   }
 
   // start scan...
