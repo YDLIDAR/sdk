@@ -1,4 +1,4 @@
-YDLIDAR SDK PACKAGE V1.3.7
+YDLIDAR SDK PACKAGE V1.4.1
 =====================================================================
 
 SDK [test](https://github.com/yangfuyuan/sdk/tree/s2) application for YDLIDAR
@@ -47,7 +47,7 @@ You should see YDLIDAR's scan result in the console:
 
      	YDLIDAR C++ TEST
      	
-	[YDLIDAR INFO] Now YDLIDAR SDK VERSION: 1.3.6
+	[YDLIDAR INFO] Now YDLIDAR SDK VERSION: 1.4.1
 	
 	fhs_lock: creating lockfile:      11796
 
@@ -55,7 +55,7 @@ You should see YDLIDAR's scan result in the console:
 	
 	[YDLIDAR INFO] Now YDLIDAR is scanning ......
 	
-	Scan received: 272 ranges
+	Scan received: 480 ranges
 	
 
 
@@ -137,6 +137,10 @@ code:
 
 Upgrade Log
 =====================================================================
+
+2019-05-13 version:1.4.1
+
+   1.fix time stamp.
 
 2019-03-21 version:1.3.7
 
