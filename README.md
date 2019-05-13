@@ -39,7 +39,7 @@ How to build YDLIDAR SDK samples
 ---------------
     $ git clone https://github.com/ydlidar/sdk
     $ cd sdk
-    $ git checkout samsung_clockwise
+    $ git checkout SS
     $ cd ..
     $ mkdir build
     $ cd build
@@ -64,12 +64,12 @@ windows:
 
 You should see YDLIDAR's scan result in the console:
 
-	[YDLIDAR]:SDK Version: 2.0.0
+	[YDLIDAR]:SDK Version: 2.0.7
 	[YDLIDAR]:Lidar running correctly ! The health status: good
 	[YDLIDAR] Connection established in [/dev/ttyUSB0][230400]:
 	Firmware version: 1.2
 	Hardware version: 3
-	Model: G2-SS-1
+	Model: R2-SS-1
 	Serial: 2018101800011111
 	[YDLIDAR INFO] Current Sampling Rate : 5K
 	[YDLIDAR INFO] Successfully obtained the offset angle[0.0000] from the lidar[2018101800011111]

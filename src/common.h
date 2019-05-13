@@ -13,4 +13,4 @@
 #include "thread.h"
 #include "timer.h"
 
-#define SDKVerision "2.0.6"
+#define SDKVerision "2.0.7"

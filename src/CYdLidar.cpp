@@ -363,7 +363,7 @@ bool CYdLidar::getDeviceInfo() {
     return false;
   }
 
-  std::string model = "G2-SS-1";
+  std::string model = "R2-SS-1";
   int m_samp_rate = 5;
 
   switch (devinfo.model) {
@@ -372,7 +372,7 @@ bool CYdLidar::getDeviceInfo() {
       break;
 
     case YDlidarDriver::YDLIDAR_G2_SS_1:
-      model = "G2-SS-1";
+      model = "R2-SS-1";
       m_samp_rate = 5;
       m_SampleRate = m_samp_rate;
       break;
