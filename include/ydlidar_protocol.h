@@ -96,11 +96,11 @@ typedef enum {
 
 struct node_info {
   uint8_t    sync_flag;  //sync flag
-  uint16_t   sync_quality;//!信号质量
-  uint16_t   angle_q6_checkbit; //!测距点角度
-  uint16_t   distance_q; //! 当前测距点距离
-  uint64_t   stamp; //! 时间戳
-  uint8_t    scan_frequence;//! 特定版本此值才有效,无效值是0
+  uint16_t   sync_quality;//!intensity
+  uint16_t   angle_q6_checkbit; //!angle
+  uint16_t   distance_q; //! distance
+  uint64_t   stamp; //! timestamp
+  uint8_t    scan_frequence;//! scan frequency
 } __attribute__((packed)) ;
 
 struct PackageNode {
@@ -130,23 +130,23 @@ struct node_packages {
 
 
 struct device_info {
-  uint8_t   model; ///< 雷达型号
-  uint16_t  firmware_version; ///< 固件版本号
-  uint8_t   hardware_version; ///< 硬件版本号
-  uint8_t   serialnum[16];    ///< 系列号
+  uint8_t   model; ///< lidar model
+  uint16_t  firmware_version; ///< Firmware Major Version
+  uint8_t   hardware_version; ///< Firmware Minjor Version
+  uint8_t   serialnum[16];    ///< serial number
 } __attribute__((packed)) ;
 
 struct device_health {
-  uint8_t   status; ///< 健康状体
-  uint16_t  error_code; ///< 错误代码
+  uint8_t   status; ///< health status
+  uint16_t  error_code; ///< error code
 } __attribute__((packed))  ;
 
 struct sampling_rate {
-  uint8_t rate;	///< 采样频率
+  uint8_t rate;	///< sampling frequency
 } __attribute__((packed))  ;
 
 struct scan_frequency {
-  uint32_t frequency;	///< 扫描频率
+  uint32_t frequency;	///< scanning frequency
 } __attribute__((packed))  ;
 
 struct scan_rotation {
@@ -154,11 +154,11 @@ struct scan_rotation {
 } __attribute__((packed))  ;
 
 struct scan_exposure {
-  uint8_t exposure;	///< 低光功率模式
+  uint8_t exposure;	///<
 } __attribute__((packed))  ;
 
 struct scan_heart_beat {
-  uint8_t enable;	///< 掉电保护状态
+  uint8_t enable;	///<
 } __attribute__((packed));
 
 struct scan_points {

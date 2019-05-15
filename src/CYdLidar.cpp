@@ -24,6 +24,7 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_SampleRate        = 5;
   m_ScanFrequency     = 7;
   m_AngleOffset       = 0.0;
+  m_isAngleOffsetCorrected = false;
   m_GlassNoise        = true;
   m_SunNoise          = true;
   isScanning          = false;
@@ -63,6 +64,10 @@ YDlidarDriver *CYdLidar::getYdlidarDriver() {
 //get zero angle offset value
 float CYdLidar::getAngleOffset() const {
   return m_AngleOffset;
+}
+
+bool CYdLidar::isAngleOffetCorrected() const {
+  return m_isAngleOffsetCorrected;
 }
 
 /*-------------------------------------------------------------
@@ -356,7 +361,7 @@ bool CYdLidar::getDeviceInfo() {
     return false;
   }
 
-  if (devinfo.model != YDlidarDriver::YDLIDAR_G2_SS_1 &&
+  if (devinfo.model != YDlidarDriver::YDLIDAR_R2_SS_1 &&
       devinfo.model != YDlidarDriver::YDLIDAR_G4) {
     printf("[YDLIDAR INFO] Current SDK does not support current lidar models[%d]\n",
            devinfo.model);
@@ -371,7 +376,7 @@ bool CYdLidar::getDeviceInfo() {
       model = "G4";
       break;
 
-    case YDlidarDriver::YDLIDAR_G2_SS_1:
+    case YDlidarDriver::YDLIDAR_R2_SS_1:
       model = "R2-SS-1";
       m_samp_rate = 5;
       m_SampleRate = m_samp_rate;
@@ -402,9 +407,10 @@ bool CYdLidar::getDeviceInfo() {
 
   printf("%s\n", serial_number.c_str());
 
-  if (devinfo.model == YDlidarDriver::YDLIDAR_G2_SS_1) {
+  if (devinfo.model == YDlidarDriver::YDLIDAR_R2_SS_1) {
     checkCalibrationAngle(serial_number);
   } else {
+    m_isAngleOffsetCorrected = true;
     checkSampleRate();
   }
 
@@ -552,14 +558,17 @@ void CYdLidar::checkCalibrationAngle(const std::string &serialNumber) {
   result_t ans;
   offset_angle angle;
   int retry = 0;
+  m_isAngleOffsetCorrected = false;
 
   while (retry < 2 && (Major > 1 || (Major >= 1 && Minjor > 1))) {
     ans = lidarPtr->getZeroOffsetAngle(angle);
 
     if (IS_OK(ans)) {
+      m_isAngleOffsetCorrected = (angle.angle != 720);
       m_AngleOffset = angle.angle / 4.0;
-      printf("[YDLIDAR INFO] Successfully obtained the offset angle[%f] from the lidar[%s]\n"
-             , m_AngleOffset, serialNumber.c_str());
+      printf("[YDLIDAR INFO] Successfully obtained the %s offset angle[%f] from the lidar[%s]\n"
+             , m_isAngleOffsetCorrected ? "corrected" : "uncorrrected", m_AngleOffset,
+             serialNumber.c_str());
       return;
     }
 
@@ -570,10 +579,12 @@ void CYdLidar::checkCalibrationAngle(const std::string &serialNumber) {
     SI_Error rc = ini.LoadFile(m_CalibrationFileName.c_str());
 
     if (rc >= 0) {
+      m_isAngleOffsetCorrected = true;
       m_AngleOffset = ini.GetDoubleValue("CALIBRATION", serialNumber.c_str(),
                                          m_AngleOffset);
-      printf("[YDLIDAR INFO] Successfully obtained the calibration value[%f] from the calibration file[%s]\n"
-             , m_AngleOffset, m_CalibrationFileName.c_str());
+      printf("[YDLIDAR INFO] Successfully obtained the %s offset angle[%f] from the calibration file[%s]\n"
+             , m_isAngleOffsetCorrected ? "corrected" : "uncorrrected", m_AngleOffset,
+             m_CalibrationFileName.c_str());
 
     } else {
       printf("[YDLIDAR INFO] Failed to open calibration file[%s]\n",
@@ -584,7 +595,8 @@ void CYdLidar::checkCalibrationAngle(const std::string &serialNumber) {
            m_CalibrationFileName.c_str());
   }
 
-  printf("[YDLIDAR INFO] Current AngleOffset : %f°\n", m_AngleOffset);
+  printf("[YDLIDAR INFO] Current %s AngleOffset : %f°\n",
+         m_isAngleOffsetCorrected ? "corrected" : "uncorrrected", m_AngleOffset);
 }
 
 /*-------------------------------------------------------------

@@ -17,6 +17,7 @@ Release Notes
 | :-------- | --------:|  :--: |
 | SDK     |  2.0.7 |   2019-05-07  |
 
+- [new feature] add isAngleOffetCorrected function.
 
 - [fix] fix ignore array
 
@@ -49,7 +50,6 @@ How to build YDLIDAR SDK samples
 
 How to run YDLIDAR SDK samples
 ---------------
-    $ cd samples
 
 linux:
 
@@ -72,7 +72,7 @@ You should see YDLIDAR's scan result in the console:
 	Model: R2-SS-1
 	Serial: 2018101800011111
 	[YDLIDAR INFO] Current Sampling Rate : 5K
-	[YDLIDAR INFO] Successfully obtained the offset angle[0.0000] from the lidar[2018101800011111]
+	[YDLIDAR INFO] Successfully obtained the corrected offset angle[0.0000] from the lidar[2018101800011111]
 	[YDLIDAR INFO] Current AngleOffset : 0.000000°
 	[YDLIDAR INFO] Current Scan Frequency : 8.000000Hz
 	[YDLIDAR INFO] Now YDLIDAR is scanning ......
@@ -100,7 +100,7 @@ code:
                 
                 current_angle = ((data[i].angle_q6_checkbit>>LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT)/64.0f);//LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT equals 8
 
-                current_distance =  data[i].distance_q/4.f;
+                current_distance =  data[i].distance_q/1.f;//mm
 
                 current_intensity = (float)(data[i].sync_quality);
 
@@ -127,16 +127,16 @@ data structure:
     //! A struct for returning configuration from the YDLIDAR
     struct LaserConfig {
 
-        //! Start angle for the laser scan [rad].  0 is forward and angles are measured clockwise when viewing YDLIDAR from the top.
+        //! Start angle for the laser scan [Deg].  0 is forward and angles are measured clockwise when viewing YDLIDAR from the top.
         float min_angle;
 
-        //! Stop angle for the laser scan [rad].   0 is forward and angles are measured clockwise when viewing YDLIDAR from the top.
+        //! Stop angle for the laser scan [Deg].   0 is forward and angles are measured clockwise when viewing YDLIDAR from the top.
         float max_angle;
 
-        //! Scan resolution [rad].
+        //! Scan resolution [Deg].
         float ang_increment;
 
-        //! Scan resoltuion [ns]
+        //! Scan resoltuion [s]
         float time_increment;
 
         //! Time between scans
@@ -180,7 +180,7 @@ example angle parsing:
     for(size_t i =0; i < scan.ranges.size(); i++) {
 
       // current angle
-      double angle = scan.config.min_angle + i*scan.config.ang_increment;// radian format
+      double angle = scan.config.min_angle + i*scan.config.ang_increment;// Deg format
 
       //current distance
       double distance = scan.ranges[i];//meters
@@ -200,8 +200,7 @@ Coordinate System
 
 ### The relationship between the angle value and the data structure in the above figure:
 
-	double current_angle =  scan.config.min_angle + index*scan.config.ang_increment;// radian format
-	doube Angle = current_angle*180/M_PI;//Angle fomat
+	double current_angle =  scan.config.min_angle + index*scan.config.ang_increment;// Deg format
 
 
 Upgrade Log
@@ -209,9 +208,11 @@ Upgrade Log
 
 2019-05-07 version:2.0.7
 
-   1.fix ignore array
+   1.add isAngleOffetCorrected function
 
-   2.Optimize starting point timestamp
+   2.fix ignore array
+
+   3.Optimize starting point timestamp
 
 
 2019-04-07 version:2.0.6

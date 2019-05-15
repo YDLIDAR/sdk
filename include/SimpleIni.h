@@ -1,5 +1,4 @@
-/** @mainpage
-
+/**
     <table>
         <tr><th>Library     <td>SimpleIni
         <tr><th>File        <td>SimpleIni.h

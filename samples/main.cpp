@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
   laser.setReversion(false); //
   laser.setAutoReconnect(true);//hot plug
 
-  //unit: °
+  //unit: Deg
   laser.setMaxAngle(360);
   laser.setMinAngle(0);
 

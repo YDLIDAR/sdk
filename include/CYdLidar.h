@@ -8,8 +8,10 @@
 using namespace ydlidar;
 
 class YDLIDAR_API CYdLidar {
-  PropertyBuilderByName(float, MaxRange, private) ///< Constrained maximum distance(m)
-  PropertyBuilderByName(float, MinRange, private) ///< Constrained minimum distance(m)
+  PropertyBuilderByName(float, MaxRange,
+                        private) ///< Constrained maximum distance(m)
+  PropertyBuilderByName(float, MinRange,
+                        private) ///< Constrained minimum distance(m)
   PropertyBuilderByName(float, MaxAngle,
                         private) ///< constrained maximum angle, Maximum 360 Deg(Deg)
   PropertyBuilderByName(float, MinAngle,
@@ -22,15 +24,20 @@ class YDLIDAR_API CYdLidar {
   PropertyBuilderByName(bool, FixedResolution,
                         private) ///< Whether it is a fixed angle resolution.
   PropertyBuilderByName(bool, Reversion, private) ///< Whether to rotate 180 Deg
-  PropertyBuilderByName(bool, AutoReconnect, private) ///< whether to support hot swap
-  PropertyBuilderByName(bool, GlassNoise, private) ///< whether to close glass noise
+  PropertyBuilderByName(bool, AutoReconnect,
+                        private) ///< whether to support hot swap
+  PropertyBuilderByName(bool, GlassNoise,
+                        private) ///< whether to close glass noise
   PropertyBuilderByName(bool, SunNoise, private) ///< whether to close sun noise
   PropertyBuilderByName(int, SerialBaudrate, private) ///< serial baudrate
   PropertyBuilderByName(int, SampleRate, private) ///< sampling rate(KHz)
-  PropertyBuilderByName(int, AbnormalCheckCount, private) ///< Maximum number of abnormal checks
-  PropertyBuilderByName(std::string, CalibrationFileName, private) ///< calibration file
+  PropertyBuilderByName(int, AbnormalCheckCount,
+                        private) ///< Maximum number of abnormal checks
+  PropertyBuilderByName(std::string, CalibrationFileName,
+                        private) ///< calibration file
   PropertyBuilderByName(std::string, SerialPort, private) ///< serial port
-  PropertyBuilderByName(std::vector<float>, IgnoreArray, private) ///< Culling angle list
+  PropertyBuilderByName(std::vector<float>, IgnoreArray,
+                        private) ///< Culling angle list
 
 
  public:
@@ -64,6 +71,9 @@ class YDLIDAR_API CYdLidar {
 
   //get zero angle offset value
   float getAngleOffset() const;
+
+  //Whether the zero offset angle is corrected?
+  bool isAngleOffetCorrected() const;
 
  protected:
   /** Returns true if communication has been established with the device. If it's not,
@@ -105,6 +115,7 @@ class YDLIDAR_API CYdLidar {
   double  each_angle;
   float   frequencyOffset;
   float   m_AngleOffset;
+  bool    m_isAngleOffsetCorrected;
   uint8_t Major;
   uint8_t Minjor;
   CSimpleIniA ini;
