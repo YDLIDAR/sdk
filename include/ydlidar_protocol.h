@@ -5,13 +5,16 @@
 #include <vector>
 #include <ydlidar_cmd.h>
 
+#define SUNNOISEINTENSITY 0xff
+#define GLASSNOISEINTENSITY 0xfe
+
 #if defined(_WIN32)
 #pragma pack(1)
 #endif
 
 struct node_info {
   uint8_t    sync_flag;  //sync flag
-  uint8_t    sync_quality;//!信号质量
+  uint16_t   sync_quality;//!信号质量
   uint16_t   angle_q6_checkbit; //!测距点角度
   uint16_t   distance_q2; //! 当前测距点距离
   uint64_t   stamp; //! 时间戳

@@ -699,6 +699,9 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
       AngleCorrectForDistance = (int32_t)(((atan(((21.8 * (155.3 - ((
                                               *node).distance_q2 / 4.0))) /
                                             155.3) / ((*node).distance_q2 / 4.0))) * 180.0 / 3.1415) * 64.0);
+      uint16_t intensity = static_cast<uint16_t>(0xfc +
+                           (packages.packageSampleDistance[package_Sample_Index] & 0x0003));
+      (*node).sync_quality = (intensity << LIDAR_RESP_MEASUREMENT_QUALITY_SHIFT);
     } else {
       AngleCorrectForDistance = 0;
       (*node).sync_quality  = 0;

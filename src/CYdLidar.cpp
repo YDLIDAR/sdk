@@ -26,6 +26,8 @@ CYdLidar::CYdLidar(): lidarPtr(0) {
   isConnected         = false;
   node_counts         = 720;
   each_angle          = 0.5;
+  m_GlassNoise        = true;
+  m_SunNoise          = true;
   m_IgnoreArray.clear();
 }
 
@@ -149,7 +151,10 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
       for (size_t i = 0; i < all_nodes_counts; i++) {
         range = (float)angle_compensate_nodes[i].distance_q2 / 4000.f;
-        intensity = (float)(angle_compensate_nodes[i].sync_quality);
+        uint8_t intensities = static_cast<uint8_t>
+                              (angle_compensate_nodes[i].sync_quality >>
+                               LIDAR_RESP_MEASUREMENT_QUALITY_SHIFT);
+        intensity = intensities * 1.0f;
 
         if (i < all_nodes_counts / 2) {
           index = all_nodes_counts / 2 - 1 - i;
@@ -173,6 +178,16 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
               break;
             }
           }
+        }
+
+        if (m_GlassNoise && intensities == GLASSNOISEINTENSITY) {
+          intensity = 0.0;
+          range     = 0.0;
+        }
+
+        if (m_SunNoise && intensities == SUNNOISEINTENSITY) {
+          intensity = 0.0;
+          range     = 0.0;
         }
 
         if (range > m_MaxRange || range < m_MinRange) {

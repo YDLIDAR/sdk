@@ -66,7 +66,9 @@ data structure:
 
     struct node_info {
 
-       uint8_t    sync_quality;//!intensity
+       uint8_t    sync_flag;  //sync flag
+
+       uint16_t    sync_quality;//!intensity( 255-sunNosie, 254-glassNosie, 253-valid range, 0-no valid range)
 
        uint16_t   angle_q6_checkbit; //!angle
 
@@ -91,7 +93,7 @@ example:
 
     current_angle = ((data[i].angle_q6_checkbit>>LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT)/64.0f);
 
-    current_intensity = (float)(data[i].sync_quality);
+    current_intensity = (float)(data[i].sync_quality >> LIDAR_RESP_MEASUREMENT_QUALITY_SHIFT);
 
     ###note:current_frequence = data[0].scan_frequence/10.0.
 
@@ -119,7 +121,7 @@ code:
 
                 current_distance =  data[i].distance_q2/4.f;
 
-                current_intensity = (float)(data[i].sync_quality);
+                current_intensity = (float)(data[i].sync_quality >> LIDAR_RESP_MEASUREMENT_QUALITY_SHIFT);
 
             }
 

@@ -51,6 +51,8 @@ int main(int argc, char *argv[]) {
   laser.setFixedResolution(false);
   laser.setReversion(false);
   laser.setAutoReconnect(true);
+  laser.setGlassNoise(true);
+  laser.setSunNoise(true);
   bool ret = laser.initialize();
 
   while (ret && ydlidar::ok()) {
