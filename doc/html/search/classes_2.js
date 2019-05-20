@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['entry',['Entry',['../struct_c_simple_ini_templ_1_1_entry.html',1,'CSimpleIniTempl']]],
-  ['event',['Event',['../class_event.html',1,'']]]
+  ['device_5fhealth',['device_health',['../structdevice__health.html',1,'']]],
+  ['device_5finfo',['device_info',['../structdevice__info.html',1,'']]]
 ];

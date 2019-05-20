@@ -15,13 +15,9 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.0.7 |   2019-05-07  |
+| SDK     |  2.0.8 |   2019-05-20  |
 
-- [new feature] add isAngleOffetCorrected function.
-
-- [fix] fix ignore array
-
-- [fix] Optimize starting point timestamp
+- [new feature] increase the deviation between correcting the zero angle of the lidar and the zero angle of the robot.
 
 
 
@@ -73,6 +69,8 @@ You should see YDLIDAR's scan result in the console:
 	Serial: 2018101800011111
 	[YDLIDAR INFO] Current Sampling Rate : 5K
 	[YDLIDAR INFO] Successfully obtained the corrected offset angle[0.0000] from the lidar[2018101800011111]
+	[YDLIDAR INFO] Calibration file[LidarAngleCalibration.ini] does not exist
+	[YDLIDAR INFO] Current uncorrrected RobotAngleOffset : 0.000000°
 	[YDLIDAR INFO] Current AngleOffset : 0.000000°
 	[YDLIDAR INFO] Current Scan Frequency : 8.000000Hz
 	[YDLIDAR INFO] Now YDLIDAR is scanning ......
@@ -205,6 +203,10 @@ Coordinate System
 
 Upgrade Log
 ---------------
+
+2019-05-20 version:2.0.8
+
+   1.increase the deviation between correcting the zero angle of the lidar and the zero angle of the robot.
 
 2019-05-07 version:2.0.7
 

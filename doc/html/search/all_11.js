@@ -3,6 +3,7 @@ var searchData=
   ['sampling_5frate',['sampling_rate',['../structsampling__rate.html',1,'']]],
   ['save',['Save',['../class_c_simple_ini_templ.html#a5fea5d590edbb5eef694991c7c355915',1,'CSimpleIniTempl::Save(OutputWriter &amp;a_oOutput, bool a_bAddSignature=false) const '],['../class_c_simple_ini_templ.html#af944674fb44473ede150a3bcdc103d63',1,'CSimpleIniTempl::Save(std::string &amp;a_sBuffer, bool a_bAddSignature=false) const ']]],
   ['savefile',['SaveFile',['../class_c_simple_ini_templ.html#a1449e083d968790ef7479de24edddba0',1,'CSimpleIniTempl::SaveFile(const char *a_pszFile, bool a_bAddSignature=true) const '],['../class_c_simple_ini_templ.html#af3f26b331a0f9d7f071d7b4aa8038758',1,'CSimpleIniTempl::SaveFile(FILE *a_pFile, bool a_bAddSignature=false) const ']]],
+  ['saverobotoffsetangle',['saveRobotOffsetAngle',['../class_c_yd_lidar.html#a1cc84e839b7dbbf215c85c1eda0e0458',1,'CYdLidar']]],
   ['scan_5fexposure',['scan_exposure',['../structscan__exposure.html',1,'']]],
   ['scan_5ffrequence',['scan_frequence',['../structnode__info.html#a718a8a2f94497d5edea2be4550f74348',1,'node_info']]],
   ['scan_5ffrequency',['scan_frequency',['../structscan__frequency.html',1,'']]],

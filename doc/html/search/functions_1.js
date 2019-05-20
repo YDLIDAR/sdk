@@ -5,6 +5,7 @@ var searchData=
   ['checkcalibrationangle',['checkCalibrationAngle',['../class_c_yd_lidar.html#a8a3937dfb486836da1fd56ebb0016a51',1,'CYdLidar']]],
   ['checkcomms',['checkCOMMs',['../class_c_yd_lidar.html#ab43ca6b1d054aa464a36bea0d4b7934c',1,'CYdLidar']]],
   ['checklidarabnormal',['checkLidarAbnormal',['../class_c_yd_lidar.html#af305323871f06007e71cc12ab8a8be9a',1,'CYdLidar']]],
+  ['checkrobotoffsetanglecorrected',['checkRobotOffsetAngleCorrected',['../class_c_yd_lidar.html#a0f6c94a0fe756c4cffa7cb7947303e63',1,'CYdLidar']]],
   ['checksamplerate',['checkSampleRate',['../class_c_yd_lidar.html#abbe29195b58904a1c1c3c5183e6730df',1,'CYdLidar']]],
   ['checkscanfrequency',['checkScanFrequency',['../class_c_yd_lidar.html#a0e9ac7d5da50d40dd4f78b046a1618ae',1,'CYdLidar']]],
   ['checkstatus',['checkStatus',['../class_c_yd_lidar.html#a8b401544eb4c992c7eff8d5fd47e5676',1,'CYdLidar']]],

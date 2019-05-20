@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['offset_5fangle',['offset_angle',['../structoffset__angle.html',1,'']]],
-  ['outputwriter',['OutputWriter',['../class_c_simple_ini_templ_1_1_output_writer.html',1,'CSimpleIniTempl']]]
+  ['node_5finfo',['node_info',['../structnode__info.html',1,'']]],
+  ['node_5fpackage',['node_package',['../structnode__package.html',1,'']]],
+  ['node_5fpackages',['node_packages',['../structnode__packages.html',1,'']]]
 ];

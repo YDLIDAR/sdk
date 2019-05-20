@@ -2,6 +2,7 @@ var searchData=
 [
   ['save',['Save',['../class_c_simple_ini_templ.html#a5fea5d590edbb5eef694991c7c355915',1,'CSimpleIniTempl::Save(OutputWriter &amp;a_oOutput, bool a_bAddSignature=false) const '],['../class_c_simple_ini_templ.html#af944674fb44473ede150a3bcdc103d63',1,'CSimpleIniTempl::Save(std::string &amp;a_sBuffer, bool a_bAddSignature=false) const ']]],
   ['savefile',['SaveFile',['../class_c_simple_ini_templ.html#a1449e083d968790ef7479de24edddba0',1,'CSimpleIniTempl::SaveFile(const char *a_pszFile, bool a_bAddSignature=true) const '],['../class_c_simple_ini_templ.html#af3f26b331a0f9d7f071d7b4aa8038758',1,'CSimpleIniTempl::SaveFile(FILE *a_pFile, bool a_bAddSignature=false) const ']]],
+  ['saverobotoffsetangle',['saveRobotOffsetAngle',['../class_c_yd_lidar.html#a1cc84e839b7dbbf215c85c1eda0e0458',1,'CYdLidar']]],
   ['sendbreak',['sendBreak',['../classserial_1_1_serial.html#ab35e474beb136258cbeb04978be27455',1,'serial::Serial']]],
   ['sendcommand',['sendCommand',['../classydlidar_1_1_y_dlidar_driver.html#ab096ecdc3642c04e3e8b000e210c0962',1,'ydlidar::YDlidarDriver']]],
   ['senddata',['sendData',['../classydlidar_1_1_y_dlidar_driver.html#a998ba4b05927d19e8a0d4d29d3d47656',1,'ydlidar::YDlidarDriver']]],

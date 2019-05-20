@@ -25,7 +25,7 @@
   <td id="projectlogo"><img alt="Logo" src="ydliar.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">YDLIDAR-SS SDK
-   &#160;<span id="projectnumber">V2.0.7</span>
+   &#160;<span id="projectnumber">V2.0.8</span>
    </div>
   </td>
  </tr>
@@ -94,12 +94,10 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <tr>
 <th align="left">Title </th><th align="right">Version </th><th align="center">Data  </th></tr>
 <tr>
-<td align="left">SDK </td><td align="right">2.0.7 </td><td align="center">2019-05-07 </td></tr>
+<td align="left">SDK </td><td align="right">2.0.8 </td><td align="center">2019-05-20 </td></tr>
 </table>
 <ul>
-<li>[new feature] add isAngleOffetCorrected function.</li>
-<li>[fix] fix ignore array</li>
-<li>[fix] Optimize starting point timestamp</li>
+<li>[new feature] increase the deviation between correcting the zero angle of the lidar and the zero angle of the robot.</li>
 </ul>
 <h2>Dataset </h2>
 <table class="doxtable">
@@ -128,6 +126,8 @@ Model: R2-SS-1
 Serial: 2018101800011111
 [YDLIDAR INFO] Current Sampling Rate : 5K
 [YDLIDAR INFO] Successfully obtained the corrected offset angle[0.0000] from the lidar[2018101800011111]
+[YDLIDAR INFO] Calibration file[LidarAngleCalibration.ini] does not exist
+[YDLIDAR INFO] Current uncorrrected RobotAngleOffset : 0.000000°
 [YDLIDAR INFO] Current AngleOffset : 0.000000°
 [YDLIDAR INFO] Current Scan Frequency : 8.000000Hz
 [YDLIDAR INFO] Now YDLIDAR is scanning ......
@@ -237,6 +237,8 @@ for(size_t i =0; i &lt; scan.ranges.size(); i++) {
 <h3>The relationship between the angle value and the data structure in the above figure:</h3>
 <pre class="fragment">double current_angle =  scan.config.min_angle + index*scan.config.ang_increment;// Deg format
 </pre><h2>Upgrade Log </h2>
+<p>2019-05-20 version:2.0.8</p>
+<p>1.increase the deviation between correcting the zero angle of the lidar and the zero angle of the robot.</p>
 <p>2019-05-07 version:2.0.7</p>
 <p>1.add isAngleOffetCorrected function</p>
 <p>2.fix ignore array</p>

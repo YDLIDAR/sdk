@@ -127,6 +127,13 @@ int main(int argc, char *argv[]) {
 
   laser.setCalibrationFileName(calibration_filename);//Zero angle offset filename
 
+  //start correction zero angle and robot zero angle.
+  laser.setStartRobotAngleOffset();
+
+  //Theoretical difference between lidar zero angle and robot zero angle.
+  //unit: Deg
+  laser.setRobotLidarDifference(0);
+
   //set the range of angles that need to be removed.
   //usage: [0, 10, 15,25, 80, 90]
   std::vector<float> ignore_array;

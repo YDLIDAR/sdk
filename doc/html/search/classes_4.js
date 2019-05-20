@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['keyorder',['KeyOrder',['../struct_c_simple_ini_templ_1_1_entry_1_1_key_order.html',1,'CSimpleIniTempl::Entry']]]
+  ['filewriter',['FileWriter',['../class_c_simple_ini_templ_1_1_file_writer.html',1,'CSimpleIniTempl']]],
+  ['function_5fstate',['function_state',['../structfunction__state.html',1,'']]]
 ];

@@ -5,10 +5,10 @@
         <tr><th>File        <td>YDlidarDriver.h
         <tr><th>Author      <td>Tony [code at ydlidar com]
         <tr><th>Source      <td>https://github.com/ydlidar/sdk
-        <tr><th>Version     <td>2.0.7
+        <tr><th>Version     <td>2.0.8
     </table>
 
-    Jump to the @link ::ydlidar::YDlidarDriver @endlink interface documentation.
+    Jump to the @link ::ydlidar::YDlidarDriver @endlink and @link ::CYdLidar @endlink interface documentation.
 
 */
 
