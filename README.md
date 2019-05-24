@@ -11,6 +11,11 @@ YDLIDAR(https://www.ydlidar.com/) series is a set of high-performance and low-co
 
 If you are using ROS (Robot Operating System), please use our open-source [ROS Driver]( https://github.com/ydlidar/ydlidar) .
 
+Licence
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+The SDK itself is licensed under BSD [License](license)
+
 Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
