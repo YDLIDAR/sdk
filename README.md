@@ -5,6 +5,11 @@ SDK [test](https://github.com/yangfuyuan/sdk) application for YDLIDAR
 
 Visit EAI Website for more details about [YDLIDAR](http://www.ydlidar.com/) .
 
+Licence
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+
+The SDK itself is licensed under BSD [License](license)
+
 How to build YDLIDAR SDK samples
 =====================================================================
     $ git clone https://github.com/yangfuyuan/sdk
