@@ -107,8 +107,6 @@ int main(int argc, char *argv[]) {
   laser.setSerialPort(port);
   laser.setSerialBaudrate(230400);
   laser.setIntensities(false);//intensity
-  laser.setFixedResolution(false);
-  laser.setReversion(false); //
   laser.setAutoReconnect(true);//hot plug
 
   //unit: Deg
@@ -152,8 +150,14 @@ int main(int argc, char *argv[]) {
 
     if (laser.doProcessSimple(scan, hardError)) {
       fprintf(stdout, "Scan received[%llu]: %u ranges is [%f]Hz\n",
-              scan.self_time_stamp,
-              (unsigned int)scan.ranges.size(), 1.0 / scan.config.scan_time);
+              scan.system_time_stamp,
+              (unsigned int)scan.data.size(), 1.0 / scan.config.scan_time);
+
+      for (int i = 0; i < scan.data.size(); i++) {
+        uint64_t time_stamp = scan.system_time_stamp + i * scan.config.time_increment*1e9;
+        LaserPoint point = scan.data[i];
+      }
+
       fflush(stdout);
     } else {
       fprintf(stderr, "Failed to get Lidar Data\n");

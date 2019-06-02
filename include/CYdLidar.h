@@ -28,9 +28,6 @@ class YDLIDAR_API CYdLidar {
 
   PropertyBuilderByName(bool, Intensities,
                         private) ///< intensity
-  PropertyBuilderByName(bool, FixedResolution,
-                        private) ///< Whether it is a fixed angle resolution.
-  PropertyBuilderByName(bool, Reversion, private) ///< Whether to rotate 180 Deg
   PropertyBuilderByName(bool, AutoReconnect,
                         private) ///< whether to support hot swap
   PropertyBuilderByName(bool, GlassNoise,
@@ -141,8 +138,6 @@ class YDLIDAR_API CYdLidar {
 
  private:
   bool    isScanning;
-  int     node_counts ;
-  double  each_angle;
   float   frequencyOffset;
   float   m_AngleOffset;
   bool    m_isAngleOffsetCorrected;
