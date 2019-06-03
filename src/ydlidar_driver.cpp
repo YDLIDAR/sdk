@@ -708,8 +708,8 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
     if ((*node).distance_q2 != 0) {
       AngleCorrectForDistance = (int32_t)(((atan(((21.8 * (155.3 - ((
-                                              *node).distance_q2 / 4.0))) / 155.3) / ((
-                                                  *node).distance_q2 / 4.0))) * 180.0 / 3.1415) * 64.0);
+                                              *node).distance_q2 / 2.0))) / 155.3) / ((
+                                                  *node).distance_q2 / 2.0))) * 180.0 / 3.1415) * 64.0);
     } else {
       AngleCorrectForDistance = 0;
       (*node).sync_flag = 0;
@@ -756,11 +756,13 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   if ((*node).sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
     m_node_last_time_ns = m_node_time_ns;
     uint64_t current_time_ns = getTime();
-    uint64_t delay_time_ns = (nowPackageNum * PackageSampleBytes + PackagePaidBytes) * trans_delay +
-        (nowPackageNum -1)* m_pointTime;
+    uint64_t delay_time_ns = (nowPackageNum * PackageSampleBytes + PackagePaidBytes)
+                             * trans_delay +
+                             (nowPackageNum - 1) * m_pointTime;
     m_node_time_ns = current_time_ns - delay_time_ns;
-    if(current_time_ns <= delay_time_ns) {
-        m_node_time_ns = current_time_ns;
+
+    if (current_time_ns <= delay_time_ns) {
+      m_node_time_ns = current_time_ns;
     }
 
     if (m_node_time_ns < m_node_last_time_ns) {
@@ -768,13 +770,13 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
         m_node_time_ns = m_node_last_time_ns;
       }
     } else  {
-        if(m_node_time_ns - m_node_last_time_ns < 8*1e6 && CheckSumResult &&
-                        Last_CheckSum_Result&&!package_header_error) {
-            m_node_time_ns = m_node_last_time_ns;
-        }
+      if (m_node_time_ns - m_node_last_time_ns < 8 * 1e6 && CheckSumResult &&
+          Last_CheckSum_Result && !package_header_error) {
+        m_node_time_ns = m_node_last_time_ns;
+      }
     }
 
-     Last_CheckSum_Result = CheckSumResult;
+    Last_CheckSum_Result = CheckSumResult;
 
   }
 
