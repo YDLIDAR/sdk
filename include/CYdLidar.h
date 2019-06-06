@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "ydlidar_driver.h"
 #include <math.h>
+#include "matrix/math.hpp"
 
 using namespace ydlidar;
 
@@ -52,6 +53,18 @@ class YDLIDAR_API CYdLidar {
   //Turn off lidar connection
   void disconnecting(); //!< Closes the comms with the laser. Shouldn't have to be directly needed by the user
 
+  /**
+   * @brief 输入的纠正数据源， imu数据或者误差很小的里程计数据
+   * @param odom
+   */
+  void setOdometry(const odom_t &odom);
+
+  /**
+   * @brief 雷达相对于机器人坐标系的位置
+   * @param pose
+   */
+  void setLidarPose(const pose2D_t &pose);
+
  protected:
   /** Returns true if communication has been established with the device. If it's not,
     *  try to create a comms channel.
@@ -88,6 +101,12 @@ class YDLIDAR_API CYdLidar {
   uint8_t Major;
   uint8_t Minjor;
   YDlidarDriver *lidarPtr;
+
+  matrix::SquareMatrix<double, 3> sensor_matrix;
+  matrix::SquareMatrix<double, 3> sensor_matrix_inv;
+  matrix::SquareMatrix<double, 3> robot_matrix;
+  matrix::Vector<double, 3> lidar_sensor_vector;
+  matrix::Vector<double, 3> current_sensor_vector;
 
 };	// End of class
 

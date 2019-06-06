@@ -46,6 +46,10 @@ YDlidarDriver::YDlidarDriver():
 
   package_Sample_Index = 0;
   IntervalSampleAngle_LastPackage = 0.0;
+
+  m_odom.clear();
+  memset(&last_odom, 0, sizeof(last_odom));
+  memset(&current_odom, 0, sizeof(current_odom));
 }
 
 YDlidarDriver::~YDlidarDriver() {
@@ -669,6 +673,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     } else {
       CheckSumResult = true;
     }
+
     delete[] recvBuffer;
 
   }
@@ -754,32 +759,72 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   if ((*node).sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
     m_node_last_time_ns = m_node_time_ns;
     uint64_t current_time_ns = getTime();
-    uint64_t delay_time_ns = (nowPackageNum * PackageSampleBytes + PackagePaidBytes) * trans_delay +
-    (nowPackageNum -1)* m_pointTime;
+    uint64_t delay_time_ns = (nowPackageNum * PackageSampleBytes + PackagePaidBytes)
+                             * trans_delay +
+                             (nowPackageNum - 1) * m_pointTime;
     m_node_time_ns = current_time_ns - delay_time_ns;
-    if(current_time_ns <= delay_time_ns) {
-        m_node_time_ns = current_time_ns;
+    (*node).dx = 0;
+    (*node).dy = 0;
+    (*node).dth = 0;
+
+    if (current_time_ns <= delay_time_ns) {
+      m_node_time_ns = current_time_ns;
     }
 
-    if (m_node_time_ns < m_node_last_time_ns)
-    {
-        if ((m_node_last_time_ns - m_node_time_ns) < 1e9 / 15)
-            m_node_time_ns = m_node_last_time_ns;
+    if (m_node_time_ns < m_node_last_time_ns) {
+      if ((m_node_last_time_ns - m_node_time_ns) < 1e9 / 15) {
+        m_node_time_ns = m_node_last_time_ns;
+      }
 
     } else {
-        if(m_node_time_ns - m_node_last_time_ns < 8*1e6 && CheckSumResult &&
-                Last_CheckSum_Result&&!package_header_error) {
-            m_node_time_ns = m_node_last_time_ns;
-        } else {
+      if (m_node_time_ns - m_node_last_time_ns < 8 * 1e6 && CheckSumResult &&
+          Last_CheckSum_Result && !package_header_error) {
+        m_node_time_ns = m_node_last_time_ns;
+      } else {
 
-        }
+      }
     }
+
     Last_CheckSum_Result = CheckSumResult;
 
   }
 
   (*node).scan_frequence  = scan_frequence;
   (*node).stamp = m_node_time_ns + package_Sample_Index * m_pointTime;
+
+  //这个值可根据输入的imu频率设定
+  if (package_Sample_Index % 4 ==
+      0) {//四个点对齐一次时间戳，一个点时间间隔250000ns(0.25ms)， 四个点就是1ms
+    std::list<odom_t> temp;
+    temp.clear();
+    {
+      ScopedLocker l(_odom_lock);
+      temp = m_odom;
+    }
+
+    if (!temp.empty()) {
+      int min = 200 * 1e6; //200ms
+
+      for (std::list<odom_t>::const_iterator it = temp.begin(); it != temp.end();
+           ++it) {
+        int time_diff = (*node).stamp - (*it).time_now;
+
+        if (abs(time_diff) < min) {
+          min = fabs(time_diff);
+          last_odom = *it;
+        }
+      }
+    }
+  }
+
+  if ((*node).sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
+    current_odom = last_odom;
+  }
+
+  (*node).dx = last_odom.x - current_odom.x;
+  (*node).dy = last_odom.y - current_odom.y;
+  (*node).dth = last_odom.theta - current_odom.theta;
+
   package_Sample_Index++;
 
   if (package_Sample_Index >= nowPackageNum) {
@@ -1065,6 +1110,20 @@ void YDlidarDriver::setAutoReconnect(const bool &enable) {
   isAutoReconnect = enable;
 }
 
+
+/**
+ * @brief YDlidarDriver::setOdometry
+ * @param odom
+ */
+void YDlidarDriver::setOdometry(const odom_t &odom) {
+  ScopedLocker l(_odom_lock);
+
+  if (m_odom.size() >= MAXIMUQUEUE) {
+    m_odom.pop_front();
+  }
+
+  m_odom.push_back(odom);
+}
 
 void YDlidarDriver::checkTransDelay() {
   //calc stamp

@@ -30,6 +30,12 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   Major               = 0;
   Minjor              = 0;
   m_IgnoreArray.clear();
+
+  sensor_matrix.setIdentity();
+  sensor_matrix_inv.setIdentity();
+  robot_matrix.setIdentity();
+  current_sensor_vector.setOne();
+  lidar_sensor_vector.setOne();
 }
 
 /*-------------------------------------------------------------
@@ -47,6 +53,25 @@ void CYdLidar::disconnecting() {
   }
 
   isScanning = false;
+}
+
+void CYdLidar::setOdometry(const odom_t &odom) {
+  if (lidarPtr) {
+    lidarPtr->setOdometry(odom);
+  }
+}
+
+void CYdLidar::setLidarPose(const pose2D_t &pose) {
+  sensor_matrix(0, 0) = cos(pose.theta);
+  sensor_matrix(0, 1) = -sin(pose.theta);
+  sensor_matrix(0, 2) = pose.x;
+  sensor_matrix(1, 0) = sin(pose.theta);
+  sensor_matrix(1, 1) = cos(pose.theta);
+  sensor_matrix(1, 2) = pose.y;
+  sensor_matrix(2, 0) = 0;
+  sensor_matrix(2, 1) = 0;
+  sensor_matrix(2, 2) = 1;
+  sensor_matrix_inv = matrix::inv(sensor_matrix);
 }
 
 /*-------------------------------------------------------------
@@ -138,6 +163,33 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
       scan_msg.ranges.resize(counts, 0.0);
       scan_msg.intensities.resize(counts, 0.0);
+
+
+
+
+      double scan_time = (tim_scan_end - tim_scan_start);
+      scan_time /= 1e9;
+      scan_msg.system_time_stamp = tim_scan_start;
+      scan_msg.self_time_stamp = tim_scan_start;
+      scan_msg.config.min_angle = from_degrees(m_MinAngle);
+      scan_msg.config.max_angle = from_degrees(m_MaxAngle);
+
+      if (scan_msg.config.max_angle - scan_msg.config.min_angle == 2 * M_PI) {
+        scan_msg.config.ang_increment = (scan_msg.config.max_angle -
+                                         scan_msg.config.min_angle) /
+                                        (double)counts;
+        scan_msg.config.time_increment = scan_time / (double)counts;
+      } else {
+        scan_msg.config.ang_increment = (scan_msg.config.max_angle -
+                                         scan_msg.config.min_angle) /
+                                        (double)(counts - 1);
+        scan_msg.config.time_increment = scan_time / (double)(counts - 1);
+      }
+
+      scan_msg.config.scan_time = scan_time;
+      scan_msg.config.min_range = m_MinRange;
+      scan_msg.config.max_range = m_MaxRange;
+
       float range = 0.0;
       float intensity = 0.0;
       int index = 0;
@@ -178,36 +230,55 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
         int pos = index - node_start ;
 
         if (0 <= pos && pos < counts) {
-          scan_msg.ranges[pos] =  range;
-          scan_msg.intensities[pos] = intensity;
+          //极坐标换笛卡尔坐标系
+          current_sensor_vector(0) = range * cos(scan_msg.config.min_angle +
+                                                 scan_msg.config.ang_increment * pos);
+          current_sensor_vector(1) = range * sin(scan_msg.config.min_angle +
+                                                 scan_msg.config.ang_increment * pos);
+          current_sensor_vector(2) = 1;
+          //对齐时间戳后， 当前激光点相对于第一个激光点时间戳的机器人坐标系旋转平移矩阵
+          //
+          robot_matrix.setIdentity();
+          robot_matrix(0, 0) = cos(angle_compensate_nodes[i].dth);
+          robot_matrix(0, 1) = sin(angle_compensate_nodes[i].dth);
+          robot_matrix(0, 2) = angle_compensate_nodes[i].dx;
+          robot_matrix(1, 0) = -sin(angle_compensate_nodes[i].dth);
+          robot_matrix(1, 1) = cos(angle_compensate_nodes[i].dth);
+          robot_matrix(1, 2) = angle_compensate_nodes[i].dy;
+
+          //如果上面的rotot_matrix 增量矩阵是在雷达坐标系的， sendor_matrix_inv 和 sensor_matrix 矩阵就不需要了，
+          //sensor_matrix: 雷达坐标系到机器人坐标系的转换矩阵base_to_laser
+          //sensor_matrix_inv: laser_to_base
+          //sensor_matrix_inv * robot_matrix * sensor_matrix 把机器人坐标系增量转换到雷达坐标系增量矩阵
+          //另外一种理解方式
+          //robot_matrix * sensor_matrix *current_sensor_vector:纠正后的机器人坐标系数据
+          //再左乘机器人坐标系到雷达坐标系矩阵（sensor_matrix_inv） 就是纠正后的雷达坐标系数据
+          //故如果输入的setOdometry 只输入imu数据，即只输入角度值， x，y 设置为固定值， 不用设置雷达相对与机器人的安装位置setLidarPose。
+          //备注：最好不要输入里程计来纠正激光数据， 里程计误差大， 只需输入动态响应好的imu作为纠正， 雷达畸变只要是旋转畸变， 直线速度影响很小。
+          //最好输入的imu频率大于50hz, imu频率越快效果越好。
+
+          lidar_sensor_vector = sensor_matrix_inv * robot_matrix * sensor_matrix *
+                                current_sensor_vector;
+
+          double lx = lidar_sensor_vector(0);
+          double ly = lidar_sensor_vector(1);
+          double new_range = hypot(lx, ly);
+          double new_angle = atan2(ly, lx);
+          int new_index = (new_angle - scan_msg.config.min_angle) /
+                          scan_msg.config.ang_increment;
+
+          if (range < scan_msg.config.min_range) {
+            new_range = 0.0;
+            intensity = 0.0;
+          }
+
+          if (new_index >= 0 && new_index < counts) {
+            scan_msg.ranges[new_index] =  new_range;
+            scan_msg.intensities[new_index] = intensity;
+          }
         }
       }
 
-
-
-
-      double scan_time = (tim_scan_end - tim_scan_start);
-      scan_time /= 1e9;
-      scan_msg.system_time_stamp = tim_scan_start;
-      scan_msg.self_time_stamp = tim_scan_start;
-      scan_msg.config.min_angle = from_degrees(m_MinAngle);
-      scan_msg.config.max_angle = from_degrees(m_MaxAngle);
-
-      if (scan_msg.config.max_angle - scan_msg.config.min_angle == 2 * M_PI) {
-        scan_msg.config.ang_increment = (scan_msg.config.max_angle -
-                                         scan_msg.config.min_angle) /
-                                        (double)counts;
-        scan_msg.config.time_increment = scan_time / (double)counts;
-      } else {
-        scan_msg.config.ang_increment = (scan_msg.config.max_angle -
-                                         scan_msg.config.min_angle) /
-                                        (double)(counts - 1);
-        scan_msg.config.time_increment = scan_time / (double)(counts - 1);
-      }
-
-      scan_msg.config.scan_time = scan_time;
-      scan_msg.config.min_range = m_MinRange;
-      scan_msg.config.max_range = m_MaxRange;
       outscan = scan_msg;
       delete[] angle_compensate_nodes;
       return true;
