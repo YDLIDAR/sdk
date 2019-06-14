@@ -78,7 +78,7 @@
 #define LIDAR_CMD_SET_HEART_BEAT        0xD9
 #define LIDAR_CMD_SET_SETPOINTSFORONERINGFLAG  0xae
 
-#define MAXIMUQUEUE 20
+#define MAXIMUQUEUE 30
 
 #define PackageSampleMaxLngth 0x100
 typedef enum {
@@ -101,12 +101,25 @@ struct odom_t {
   float x;
   float y;
   float theta;
+  odom_t &operator = (const odom_t &data) {
+    time_now = data.time_now;
+    x = data.x;
+    y = data.y;
+    theta = data.theta;
+    return *this;
+  }
 };
 
 struct pose2D_t {
   float x;
   float y;
   float theta;
+  pose2D_t &operator = (const pose2D_t &data) {
+    x = data.x;
+    y = data.y;
+    theta = data.theta;
+    return *this;
+  }
 };
 
 struct node_info {
@@ -228,6 +241,18 @@ struct LaserConfig {
   float max_range;
   //! Range Resolution [m]
   float range_res;
+
+  LaserConfig &operator = (const LaserConfig &data) {
+    min_angle = data.min_angle;
+    max_angle = data.max_angle;
+    ang_increment = data.ang_increment;
+    time_increment = data.time_increment;
+    scan_time = data.scan_time;
+    min_range = data.min_range;
+    max_range = data.max_range;
+    range_res = data.range_res;
+    return *this;
+  }
 };
 
 
@@ -251,4 +276,12 @@ struct LaserScan {
   uint64_t system_time_stamp;
   //! Configuration of scan
   LaserConfig config;
+  LaserScan &operator = (const LaserScan &data) {
+    ranges = data.ranges;
+    intensities = data.intensities;
+    self_time_stamp = data.self_time_stamp;
+    system_time_stamp = data.system_time_stamp;
+    config = data.config;
+    return *this;
+  }
 };

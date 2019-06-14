@@ -98,9 +98,9 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
   // Fill in scan data:
   if (IS_OK(op_result)) {
-    op_result = lidarPtr->ascendScanData(nodes, count);
     tim_scan_start = nodes[0].stamp;
-    tim_scan_end   = nodes[count - 1].stamp;;
+    tim_scan_end   = nodes[count - 1].stamp;
+    op_result = lidarPtr->ascendScanData(nodes, count);
 
     if (IS_OK(op_result) && count > 1) {
       if (!m_FixedResolution) {

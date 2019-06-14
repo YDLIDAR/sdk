@@ -9,6 +9,7 @@
 #include "ydlidar_driver.h"
 #include "common.h"
 #include <math.h>
+#include "angles.h"
 using namespace impl;
 
 namespace ydlidar {
@@ -810,7 +811,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
         int time_diff = (*node).stamp - (*it).time_now;
 
         if (abs(time_diff) < min) {
-          min = fabs(time_diff);
+          min = abs(time_diff);
           last_odom = *it;
         }
       }
@@ -823,7 +824,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
   (*node).dx = last_odom.x - current_odom.x;
   (*node).dy = last_odom.y - current_odom.y;
-  (*node).dth = last_odom.theta - current_odom.theta;
+  (*node).dth = angles::normalize_angle(last_odom.theta - current_odom.theta);
 
   package_Sample_Index++;
 

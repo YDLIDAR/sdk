@@ -102,9 +102,9 @@ class YDLIDAR_API CYdLidar {
   uint8_t Minjor;
   YDlidarDriver *lidarPtr;
 
-  matrix::SquareMatrix<double, 3> sensor_matrix;
-  matrix::SquareMatrix<double, 3> sensor_matrix_inv;
-  matrix::SquareMatrix<double, 3> robot_matrix;
+  matrix::SquareMatrix<double, 3> sensor_matrix;//BASE_TO_LASER
+  matrix::SquareMatrix<double, 3> sensor_matrix_inv;//LASER_TO_BASE
+  matrix::SquareMatrix<double, 3> robot_matrix;//
   matrix::Vector<double, 3> lidar_sensor_vector;
   matrix::Vector<double, 3> current_sensor_vector;
 
