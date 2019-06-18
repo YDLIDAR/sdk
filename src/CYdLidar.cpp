@@ -246,6 +246,10 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
             turnOn
 -------------------------------------------------------------*/
 bool  CYdLidar::turnOn() {
+  if (!lidarPtr) {
+    return false;
+  }
+
   if (isScanning && lidarPtr->isscanning()) {
     return true;
   }
@@ -284,6 +288,8 @@ bool  CYdLidar::turnOn() {
 bool  CYdLidar::turnOff() {
   if (lidarPtr) {
     lidarPtr->stop();
+  } else {
+    return false;
   }
 
   if (isScanning) {
