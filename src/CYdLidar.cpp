@@ -229,6 +229,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
       }
     }
 
+    return true;
+
   } else {
     if (IS_FAIL(op_result)) {
       // Error? Retry connection
