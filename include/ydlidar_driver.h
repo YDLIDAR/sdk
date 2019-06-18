@@ -84,6 +84,13 @@ class YDlidarDriver {
   */
   bool isconnected() const;
 
+
+  /**
+   * @brief getPointTime
+   * @return
+   */
+  uint64_t getPointTime() const;
+
   /**
   * @brief 设置雷达是否带信号质量 \n
   * 连接成功后，必须使用::disconnect函数关闭
@@ -102,11 +109,6 @@ class YDlidarDriver {
   */
   void setAutoReconnect(const bool &enable);
 
-  /**
-   * @brief setOdometry
-   * @param odom
-   */
-  void setOdometry(const odom_t &odom);
 
   /**
   * @brief 获取雷达设备健康状态 \n
@@ -293,12 +295,6 @@ class YDlidarDriver {
   */
   result_t sendData(const uint8_t *data, size_t size);
 
-
-  /**
-  * @brief checkTransDelay
-  */
-  void checkTransDelay();
-
   /**
   * @brief 关闭数据获取通道 \n
   */
@@ -323,6 +319,8 @@ class YDlidarDriver {
    * @brief checkAutoConnecting
    */
   result_t checkAutoConnecting();
+
+  void checkTransDelay();
 
 
  public:
@@ -377,10 +375,7 @@ class YDlidarDriver {
   bool m_intensities;					///< 信号质量状体
   uint32_t m_baudrate;				///< 波特率
   bool isSupportMotorCtrl;			///< 是否支持电机控制
-  uint64_t m_node_time_ns;			///< 时间戳
-  uint64_t m_node_last_time_ns;       ///< 时间戳
-  uint32_t m_pointTime;				///< 激光点直接时间间隔
-  uint32_t trans_delay;				///< 串口传输一个byte时间
+  uint64_t m_pointTime;				///< 激光点直接时间间隔
 
   node_package package;
   node_packages packages;
@@ -397,14 +392,9 @@ class YDlidarDriver {
   uint16_t SampleNumlAndCTCal;
   uint16_t LastSampleAngleCal;
   bool CheckSumResult;
-  bool Last_CheckSum_Result;
   uint16_t Valu8Tou16;
 
   std::string serial_port;///< 雷达端口
-
-  std::list<odom_t> m_odom;
-  odom_t last_odom;
-  odom_t current_odom;
 
 };
 }

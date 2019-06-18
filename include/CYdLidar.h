@@ -30,6 +30,8 @@ class YDLIDAR_API CYdLidar {
                         private) ///< 设置和获取激光端口号
   PropertyBuilderByName(std::vector<float>, IgnoreArray,
                         private) ///< 设置和获取激光剔除点
+  PropertyBuilderByName(float, OffsetTime,
+                        private) ///<
 
 
  public:
@@ -42,7 +44,7 @@ class YDLIDAR_API CYdLidar {
   bool initialize();  //!< Attempts to connect and turns the laser on. Raises an exception on error.
 
   // Return true if laser data acquistion succeeds, If it's not
-  bool doProcessSimple(LaserScan &outscan, bool &hardwareError);
+  bool doProcessSimple(LaserScan &scan_msg, bool &hardwareError);
 
   //Turn on the motor enable
   bool  turnOn();  //!< See base class docs
@@ -94,13 +96,15 @@ class YDLIDAR_API CYdLidar {
 
  private:
   bool    isScanning;
-  int     node_counts ;
-  double  each_angle;
   float   frequencyOffset;
   double  m_ScanFrequency;
   uint8_t Major;
   uint8_t Minjor;
   YDlidarDriver *lidarPtr;
+  uint64_t node_duration;
+  uint64_t last_node_time;
+  std::list<odom_t> imu_queue;
+  Locker queue_lock;
 
   matrix::SquareMatrix<double, 3> sensor_matrix;//BASE_TO_LASER
   matrix::SquareMatrix<double, 3> sensor_matrix_inv;//LASER_TO_BASE
