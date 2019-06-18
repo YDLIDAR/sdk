@@ -305,6 +305,10 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
             turnOn
 -------------------------------------------------------------*/
 bool  CYdLidar::turnOn() {
+  if (lidarPtr == nullptr) {
+    return false;
+  }
+
   if (isScanning && lidarPtr->isscanning()) {
     return true;
   }
@@ -343,6 +347,8 @@ bool  CYdLidar::turnOn() {
 bool  CYdLidar::turnOff() {
   if (lidarPtr) {
     lidarPtr->stop();
+  } else {
+    return false;
   }
 
   if (isScanning) {
@@ -384,7 +390,7 @@ bool CYdLidar::checkLidarAbnormal() {
 
 /** Returns true if the device is connected & operative */
 bool CYdLidar::getDeviceHealth() {
-  if (!lidarPtr) {
+  if (lidarPtr == nullptr) {
     return false;
   }
 
@@ -414,7 +420,7 @@ bool CYdLidar::getDeviceHealth() {
 }
 
 bool CYdLidar::getDeviceInfo() {
-  if (!lidarPtr) {
+  if (lidarPtr == nullptr) {
     return false;
   }
 
@@ -744,11 +750,11 @@ void CYdLidar::saveRobotOffsetAngle() {
             checkCOMMs
 -------------------------------------------------------------*/
 bool  CYdLidar::checkCOMMs() {
-  if (!lidarPtr) {
+  if (lidarPtr == nullptr) {
     // create the driver instance
     lidarPtr = new YDlidarDriver();
 
-    if (!lidarPtr) {
+    if (lidarPtr == nullptr) {
       fprintf(stderr, "Create Driver fail\n");
       return false;
     }
@@ -815,7 +821,7 @@ bool CYdLidar::checkStatus() {
                         checkHardware
 -------------------------------------------------------------*/
 bool CYdLidar::checkHardware() {
-  if (!lidarPtr) {
+  if (lidarPtr == nullptr) {
     return false;
   }
 
