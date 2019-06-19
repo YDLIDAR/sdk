@@ -756,12 +756,18 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
       double angle = (FirstSampleAngle + IntervalSampleAngle * package_Sample_Index) /
                      64.0;
 
-      if (angle < 0) {
-        angle += 360;
-      }
+      angle = 360 - angle;
 
       if (angle >= 360) {
-        angle = angle - 360;
+        angle -= 360;
+      }
+
+      if (angle > 180) {
+        angle -= 180;
+      }
+
+      if (angle < -180) {
+        angle += 180;
       }
 
       for (uint16_t j = 0; j < m_IgnoreArray.size(); j = j + 2) {
