@@ -20,7 +20,7 @@ CYdLidar::CYdLidar(): lidarPtr(0) {
   m_AutoReconnect     = false;
   m_MaxAngle          = 180.f;
   m_MinAngle          = -180.f;
-  m_MaxRange          = 6.0;
+  m_MaxRange          = 12.0;
   m_MinRange          = 0.08;
   m_AbnormalCheckCount = 2;
   isScanning          = false;
@@ -30,7 +30,7 @@ CYdLidar::CYdLidar(): lidarPtr(0) {
   m_OffsetTime        = 0.0;
   m_pointTime         = 1e9 / 3000;
   last_node_time      = getTime();
-  m_FixedSize         = 360;
+  m_FixedSize         = 500;
   m_IgnoreArray.clear();
 }
 
@@ -92,7 +92,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     tim_scan_end -= m_pointTime;
     tim_scan_start = tim_scan_end -  scan_time ;
 
-    if (tim_scan_start - last_node_time < 2e6) {
+    if (tim_scan_start - last_node_time > -2e6 &&
+        tim_scan_start - last_node_time < 0) {
       tim_scan_start = last_node_time;
       tim_scan_end = tim_scan_start + scan_time;
     }
@@ -173,6 +174,10 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
 						turnOn
 -------------------------------------------------------------*/
 bool  CYdLidar::turnOn() {
+  if (!lidarPtr) {
+    return false;
+  }
+
   if (isScanning && lidarPtr->isScanning()) {
     return true;
   }
@@ -213,6 +218,8 @@ bool  CYdLidar::turnOff() {
   if (lidarPtr) {
     lidarPtr->stop();
     lidarPtr->stopMotor();
+  } else {
+    return false;
   }
 
   if (isScanning) {

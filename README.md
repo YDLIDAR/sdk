@@ -1,7 +1,7 @@
 YDLIDAR SDK PACKAGE V1.4.1
 =====================================================================
 
-SDK [test](https://github.com/ydlidar/sdk/tree/S3) application for YDLIDAR
+SDK [test](https://github.com/ydlidar/sdk/tree/X2) application for YDLIDAR
 
 Visit EAI Website for more details about [YDLIDAR](http://www.ydlidar.com/) .
 
@@ -12,7 +12,7 @@ How to build YDLIDAR SDK samples
     
     $ cd sdk
     
-    $ git checkout S3
+    $ git checkout X2
     
     $ cd ..
     
