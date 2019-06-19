@@ -9,6 +9,7 @@ var searchData=
   ['getdsr',['getDSR',['../classserial_1_1_serial.html#a91a00816bce6a163ea022b4cf8d4ce0e',1,'serial::Serial']]],
   ['getflowcontrol',['getFlowcontrol',['../classserial_1_1_serial.html#ad793526755625a59a0bf9d4cc0ea1755',1,'serial::Serial']]],
   ['getparity',['getParity',['../classserial_1_1_serial.html#a80e5d87b1e93b4c5a9d6f2cc7110b3c4',1,'serial::Serial']]],
+  ['getpointtime',['getPointTime',['../classydlidar_1_1_y_dlidar_driver.html#af4d92b72895448edff8a1250eab437a1',1,'ydlidar::YDlidarDriver']]],
   ['getport',['getPort',['../classserial_1_1_serial.html#a56eafe1694c92655d79993ce7139f0bf',1,'serial::Serial']]],
   ['getri',['getRI',['../classserial_1_1_serial.html#a29a1f68b9a238e9a6a833373855708ce',1,'serial::Serial']]],
   ['getsdkversion',['getSDKVersion',['../classydlidar_1_1_y_dlidar_driver.html#a542dc18ac8dbcda2a51657cf9bd44ae0',1,'ydlidar::YDlidarDriver']]],

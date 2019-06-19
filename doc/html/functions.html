@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.11"/>
-<title>YDLIDAR SDK: Class Members</title>
+<title>YDLIDAR S3 SDK: Class Members</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -24,10 +24,9 @@
  <tr style="height: 56px;">
   <td id="projectlogo"><img alt="Logo" src="ydliar.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">YDLIDAR SDK
-   &#160;<span id="projectnumber">V1.3.6</span>
+   <div id="projectname">YDLIDAR S3 SDK
+   &#160;<span id="projectnumber">V1.4.1</span>
    </div>
-   <div id="projectbrief">S2</div>
   </td>
  </tr>
  </tbody>
@@ -136,9 +135,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 
 <h3><a class="anchor" id="index_a"></a>- a -</h3><ul>
-<li>ang_increment
-: <a class="el" href="struct_laser_config.html#a67279ae0f648a129521576f52c321932">LaserConfig</a>
-</li>
 <li>angle_q6_checkbit
 : <a class="el" href="structnode__info.html#a73e1d282a573f3daa74332fe29b90a26">node_info</a>
 </li>
@@ -160,6 +156,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </li>
 <li>checkHardware()
 : <a class="el" href="class_c_yd_lidar.html#ab3c24f8f59fee87aa4e829ca5c8f90d2">CYdLidar</a>
+</li>
+<li>checkLidarAbnormal()
+: <a class="el" href="class_c_yd_lidar.html#af305323871f06007e71cc12ab8a8be9a">CYdLidar</a>
 </li>
 <li>checkStatus()
 : <a class="el" href="class_c_yd_lidar.html#a8b401544eb4c992c7eff8d5fd47e5676">CYdLidar</a>
@@ -183,6 +182,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 
 <h3><a class="anchor" id="index_d"></a>- d -</h3><ul>
+<li>data
+: <a class="el" href="struct_laser_scan.html#abf11524b2bd102dc64e4b5c396a1715a">LaserScan</a>
+</li>
 <li>DEFAULT_HEART_BEAT
 : <a class="el" href="classydlidar_1_1_y_dlidar_driver.html#abbb612f1ac6a9f6dfdcfeafb149dd0daa94033b4717c83f52cd008fe38b712e21">ydlidar::YDlidarDriver</a>
 </li>
@@ -226,6 +228,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </li>
 <li>flush()
 : <a class="el" href="classserial_1_1_serial.html#a45a7676a6e6c775cd549e889e714b5bb">serial::Serial</a>
+, <a class="el" href="classydlidar_1_1_y_dlidar_driver.html#a2bd43715272fc9a4392bd094fb4f8c01">ydlidar::YDlidarDriver</a>
 </li>
 <li>flushInput()
 : <a class="el" href="classserial_1_1_serial.html#aa7432cbada95a7eac6d71a107cf2eaa3">serial::Serial</a>
@@ -267,6 +270,9 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>getParity()
 : <a class="el" href="classserial_1_1_serial.html#a80e5d87b1e93b4c5a9d6f2cc7110b3c4">serial::Serial</a>
 </li>
+<li>getPointTime()
+: <a class="el" href="classydlidar_1_1_y_dlidar_driver.html#af4d92b72895448edff8a1250eab437a1">ydlidar::YDlidarDriver</a>
+</li>
 <li>getPort()
 : <a class="el" href="classserial_1_1_serial.html#a56eafe1694c92655d79993ce7139f0bf">serial::Serial</a>
 </li>
@@ -299,9 +305,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 
 <h3><a class="anchor" id="index_i"></a>- i -</h3><ul>
-<li>intensities
-: <a class="el" href="struct_laser_scan.html#a6e68040137d787ef7ef47580d147c503">LaserScan</a>
-</li>
 <li>inter_byte_timeout
 : <a class="el" href="structserial_1_1_timeout.html#ada15f2a0ae478cbb62ef79d1633b2b81">serial::Timeout</a>
 </li>
@@ -311,17 +314,14 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>isAutoReconnect
 : <a class="el" href="classydlidar_1_1_y_dlidar_driver.html#ab34d9b755bf3e12b929877a6eb531496">ydlidar::YDlidarDriver</a>
 </li>
-<li>isConnected
-: <a class="el" href="classydlidar_1_1_y_dlidar_driver.html#ae836d26be0fb1cff122df74b52563858">ydlidar::YDlidarDriver</a>
-</li>
-<li>isconnected()
-: <a class="el" href="classydlidar_1_1_y_dlidar_driver.html#a918486cdb4f3fbe863ec2e1231168538">ydlidar::YDlidarDriver</a>
+<li>isConnected()
+: <a class="el" href="classydlidar_1_1_y_dlidar_driver.html#ad2564ec209b42c521955ba8c8184ea11">ydlidar::YDlidarDriver</a>
 </li>
 <li>isOpen()
 : <a class="el" href="classserial_1_1_serial.html#a657df1809f2eb966aec5811ed2c70b8c">serial::Serial</a>
 </li>
-<li>isScanning
-: <a class="el" href="classydlidar_1_1_y_dlidar_driver.html#a18327725a3cff45b022c371dd575f6e2">ydlidar::YDlidarDriver</a>
+<li>isScanning()
+: <a class="el" href="classydlidar_1_1_y_dlidar_driver.html#a502c892a239963fbc4c70d6d9cea6e06">ydlidar::YDlidarDriver</a>
 </li>
 </ul>
 
@@ -334,6 +334,12 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 
 <h3><a class="anchor" id="index_m"></a>- m -</h3><ul>
+<li>m_isConnected
+: <a class="el" href="classydlidar_1_1_y_dlidar_driver.html#ae8a25d6674d2fd3c9ab3558ded49eeb9">ydlidar::YDlidarDriver</a>
+</li>
+<li>m_isScanning
+: <a class="el" href="classydlidar_1_1_y_dlidar_driver.html#a1b877285c8195ccda01f92d76c85d186">ydlidar::YDlidarDriver</a>
+</li>
 <li>max_angle
 : <a class="el" href="struct_laser_config.html#a2d09a717415770110787788127ad6b14">LaserConfig</a>
 </li>
@@ -370,12 +376,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 
 <h3><a class="anchor" id="index_r"></a>- r -</h3><ul>
-<li>range_res
-: <a class="el" href="struct_laser_config.html#ae52eb0e0aca41f6dde58700a642e4c80">LaserConfig</a>
-</li>
-<li>ranges
-: <a class="el" href="struct_laser_scan.html#a4d059cb77f0f9f6e558db50c9993f7df">LaserScan</a>
-</li>
 <li>rate
 : <a class="el" href="structsampling__rate.html#a8d860fbedd930d2022fe7bb6cf1f78b6">sampling_rate</a>
 </li>
@@ -409,9 +409,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 </li>
 <li>scan_time
 : <a class="el" href="struct_laser_config.html#af40c5e3902bb931e337ea400682e5636">LaserConfig</a>
-</li>
-<li>self_time_stamp
-: <a class="el" href="struct_laser_scan.html#ad37e2a54c7eff58cad7576d51916b859">LaserScan</a>
 </li>
 <li>sendBreak()
 : <a class="el" href="classserial_1_1_serial.html#ab35e474beb136258cbeb04978be27455">serial::Serial</a>
@@ -460,7 +457,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 : <a class="el" href="classserial_1_1_serial.html#a0c690a31516cd11c521ba3aff4bafc4e">serial::Serial</a>
 </li>
 <li>setTimeout()
-: <a class="el" href="classserial_1_1_serial.html#a4b4be39af3e1c68bc6ac09cb55788c86">serial::Serial</a>
+: <a class="el" href="classserial_1_1_serial.html#a5b1a4e05b1690d29ba1ae14a9079434c">serial::Serial</a>
 </li>
 <li>simpleTimeout()
 : <a class="el" href="structserial_1_1_timeout.html#aa4fbd72e16f47c9aea9fb3c32ca17828">serial::Timeout</a>

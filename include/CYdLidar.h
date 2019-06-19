@@ -28,6 +28,7 @@ class YDLIDAR_API CYdLidar {
                         private) ///< 设置和获取激光最大角度, 最大值180度
   PropertyBuilderByName(float, MinAngle,
                         private) ///< 设置和获取激光最小角度, 最小值-180度
+  PropertyBuilderByName(float, OffsetTime, private)
 
   PropertyBuilderByName(bool, FixedResolution,
                         private) ///< 设置和获取激光是否是固定角度分辨率
@@ -56,12 +57,15 @@ class YDLIDAR_API CYdLidar {
   bool initialize();  //!< Attempts to connect and turns the laser on. Raises an exception on error.
 
   // Return true if laser data acquistion succeeds, If it's not
-  bool doProcessSimple(LaserScan &outscan, bool &hardwareError);
+  bool doProcessSimple(LaserScan &scan_msg, bool &hardwareError);
 
   //Turn on the motor enable
   bool  turnOn();  //!< See base class docs
   //Turn off the motor enable and close the scan
   bool  turnOff(); //!< See base class docs
+
+  //get fixed resolution node size
+  int getFixedSize() const;
 
   /** Returns true if the device is in good health, If it's not*/
   bool getDeviceHealth() const;
@@ -103,9 +107,11 @@ class YDLIDAR_API CYdLidar {
  private:
   bool isScanning;
   bool isConnected;
-  int node_counts ;
-  double each_angle;
   YDlidarDriver *lidarPtr;
+
+  uint32_t m_pointTime;
+  uint64_t last_node_time;
+  int m_FixedSize;
 
 };	// End of class
 

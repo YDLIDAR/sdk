@@ -24,10 +24,8 @@ YDlidarDriver::YDlidarDriver():
   isSupportMotorCtrl  = true;
   scan_node_count     = 0;
 
-  m_pointTime         = 1e9 / 4000;
+  m_pointTime         = 1e9 / 3000;
   trans_delay         = 0;
-  m_node_time_ns      = getTime();
-  m_node_last_time_ns = getTime();
 
   //解析参数
   PackageSampleBytes  = 2;
@@ -41,7 +39,6 @@ YDlidarDriver::YDlidarDriver():
   SampleNumlAndCTCal  = 0;
   LastSampleAngleCal  = 0;
   CheckSumResult      = true;
-  Last_CheckSum_Result = true;
   Valu8Tou16          = 0;
 
 }
@@ -200,6 +197,9 @@ bool YDlidarDriver::isScanning() const {
   return m_isScanning;
 }
 
+uint32_t YDlidarDriver::getPointTime() const {
+  return m_pointTime;
+}
 
 
 result_t YDlidarDriver::sendCommand(uint8_t cmd, const void *payload,
@@ -373,6 +373,8 @@ int YDlidarDriver::cacheScanData() {
   int timeout_count = 0;
 
   while (m_isScanning) {
+    count = 128;
+
     if ((ans = waitScanData(local_buf, count)) != RESULT_OK) {
       if (!IS_TIMEOUT(ans) || timeout_count > DEFAULT_TIMEOUT_COUNT) {
         if (!isAutoReconnect) {
@@ -479,7 +481,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   int  package_recvPos = 0;
   uint8_t package_type = 0;
   uint8_t scan_frequence = 0;
-  bool package_header_error = false;
 
   if (package_Sample_Index == 0) {
     uint8_t *recvBuffer = new uint8_t[size];
@@ -509,7 +510,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
             if (currentByte == (PH & 0xFF)) {
 
             } else {
-              package_header_error = true;
               continue;
             }
 
@@ -521,7 +521,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
             if (currentByte == (PH >> 8)) {
 
             } else {
-              package_header_error = true;
               recvPos = 0;
               continue;
             }
@@ -538,7 +537,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
                 (*node).scan_frequence = scan_frequence;
               }
             } else {
-              package_header_error = true;
               recvPos = 0;
               continue;
             }
@@ -554,7 +552,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
             if (currentByte & LIDAR_RESP_MEASUREMENT_CHECKBIT) {
               FirstSampleAngle = currentByte;
             } else {
-              package_header_error = true;
               recvPos = 0;
               continue;
             }
@@ -571,7 +568,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
             if (currentByte & LIDAR_RESP_MEASUREMENT_CHECKBIT) {
               LastSampleAngle = currentByte;
             } else {
-              package_header_error = true;
               recvPos = 0;
               continue;
             }
@@ -737,44 +733,10 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
 
   uint8_t nowPackageNum = packages.nowPackageNum;
-
-  if ((*node).sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
-    m_node_last_time_ns = m_node_time_ns;
-    uint64_t delay_time_ns = (nowPackageNum * PackageSampleBytes + PackagePaidBytes)
-                             * trans_delay +
-                             (nowPackageNum - 1) * m_pointTime;
-    uint64_t current_time_ns = getTime();
-    m_node_time_ns = current_time_ns - delay_time_ns;
-
-    if (current_time_ns <= delay_time_ns) {
-      m_node_time_ns = current_time_ns;
-    }
-
-    if (m_node_time_ns < m_node_last_time_ns) {
-      if ((m_node_last_time_ns - m_node_time_ns) < 1e9 / 15) {
-        m_node_time_ns = m_node_last_time_ns;
-      }
-    } else {
-      if (m_node_time_ns - m_node_last_time_ns < 8 * 1e6 && CheckSumResult &&
-          Last_CheckSum_Result && !package_header_error) {
-        m_node_time_ns = m_node_last_time_ns;
-
-      } else {
-
-      }
-    }
-
-    Last_CheckSum_Result = CheckSumResult;
-
-  }
-
-  (*node).stamp = m_node_time_ns + package_Sample_Index * m_pointTime;
-
   package_Sample_Index++;
 
   if (package_Sample_Index >= nowPackageNum) {
     package_Sample_Index = 0;
-    m_node_time_ns = (*node).stamp + m_pointTime;
   }
 
   return RESULT_OK;
@@ -800,6 +762,11 @@ result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,
     }
 
     nodebuffer[recvNodeCount++] = node;
+
+    if (node.sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
+      count = recvNodeCount;
+      return RESULT_OK;
+    }
 
     if (recvNodeCount == count) {
       return RESULT_OK;

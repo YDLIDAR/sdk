@@ -80,6 +80,12 @@ class YDlidarDriver {
   bool isScanning() const;
 
   /**
+   * @brief getPointTime
+   * @return
+   */
+  uint32_t getPointTime() const;
+
+  /**
   * @brief 设置雷达异常自动重新连接 \n
   * @param[in] enable    是否开启自动重连:
   *     true	开启
@@ -316,10 +322,7 @@ class YDlidarDriver {
   int         PackageSampleBytes;             ///< 一个包包含的激光点数
   bool        isSupportMotorCtrl;			///< 是否支持电机控制
   bool        CheckSumResult;
-  bool        Last_CheckSum_Result;
   uint32_t    m_baudrate;					///< 波特率
-  uint64_t    m_node_time_ns;						///< 时间戳
-  uint64_t    m_node_last_time_ns;						///< 时间戳
   uint32_t    m_pointTime;			///< 两个激光点时间间隔
   uint32_t    trans_delay;				///< 串口传输一个byte时间
   uint16_t    package_Sample_Index;

@@ -13,7 +13,6 @@ var searchData=
   ['scopedlocker',['ScopedLocker',['../class_scoped_locker.html',1,'']]],
   ['scopedreadlock',['ScopedReadLock',['../classserial_1_1_serial_1_1_scoped_read_lock.html',1,'serial::Serial']]],
   ['scopedwritelock',['ScopedWriteLock',['../classserial_1_1_serial_1_1_scoped_write_lock.html',1,'serial::Serial']]],
-  ['self_5ftime_5fstamp',['self_time_stamp',['../struct_laser_scan.html#ad37e2a54c7eff58cad7576d51916b859',1,'LaserScan']]],
   ['sendbreak',['sendBreak',['../classserial_1_1_serial.html#ab35e474beb136258cbeb04978be27455',1,'serial::Serial']]],
   ['sendcommand',['sendCommand',['../classydlidar_1_1_y_dlidar_driver.html#ab096ecdc3642c04e3e8b000e210c0962',1,'ydlidar::YDlidarDriver']]],
   ['senddata',['sendData',['../classydlidar_1_1_y_dlidar_driver.html#a998ba4b05927d19e8a0d4d29d3d47656',1,'ydlidar::YDlidarDriver']]],
