@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['millisecondtimer',['MillisecondTimer',['../classserial_1_1_millisecond_timer.html',1,'serial']]]
+  ['offset_5fangle',['offset_angle',['../structoffset__angle.html',1,'']]]
 ];

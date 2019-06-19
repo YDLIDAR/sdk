@@ -10,23 +10,16 @@ using namespace ydlidar;
 #endif
 
 int main(int argc, char *argv[]) {
-  printf("__   ______  _     ___ ____    _    ____      ____ ____  \n");
-  printf("\\ \\ / /  _ \\| |   |_ _|  _ \\  / \\  |  _ \\    / ___/ ___| \n");
-  printf(" \\ V /| | | | |    | || | | |/ _ \\ | |_) |___\\___ \\___ \\ \n");
-  printf("  | | | |_| | |___ | || |_| / ___ \\|  _ <_____|__) |__) | \n");
-  printf("  |_| |____/|_____|___|____/_/   \\_\\_| \\_\\   |____/____/  \n");
+  printf("__   ______  _     ___ ____    _    ____  \n");
+  printf("\\ \\ / /  _ \\| |   |_ _|  _ \\  / \\  |  _ \\ \n");
+  printf(" \\ V /| | | | |    | || | | |/ _ \\ | |_) | \n");
+  printf("  | | | |_| | |___ | || |_| / ___ \\|  _ <  \n");
+  printf("  |_| |____/|_____|___|____/_/   \\_\\_| \\_\\ \n");
   printf("\n");
   fflush(stdout);
   std::string port;
-  std::string calibration_filename = "LidarAngleCalibration.ini";
-
-  if (argc > 1) {
-    calibration_filename = (std::string)argv[1];
-  }
-
   ydlidar::init(argc, argv);
 
-  printf("lidar angle calibration file: %s\n", calibration_filename.c_str());
   std::map<std::string, std::string> ports =
     ydlidar::YDlidarDriver::lidarPortList();
   std::map<std::string, std::string>::iterator it;
@@ -108,10 +101,11 @@ int main(int argc, char *argv[]) {
   laser.setSerialBaudrate(230400);
   laser.setIntensities(false);//intensity
   laser.setAutoReconnect(true);//hot plug
+  laser.setReversion(false);
 
   //unit: Deg
-  laser.setMaxAngle(360);
-  laser.setMinAngle(0);
+  laser.setMaxAngle(180);
+  laser.setMinAngle(-180);
 
   //unit: m
   laser.setMinRange(0.1);
@@ -123,14 +117,6 @@ int main(int argc, char *argv[]) {
   //unit: Hz
   laser.setScanFrequency(frequency);
 
-  laser.setCalibrationFileName(calibration_filename);//Zero angle offset filename
-
-  //start correction zero angle and robot zero angle.
-  laser.setStartRobotAngleOffset();
-
-  //Theoretical difference between lidar zero angle and robot zero angle.
-  //unit: Deg
-  laser.setRobotLidarDifference(0);
 
   //set the range of angles that need to be removed.
   //usage: [0, 10, 15,25, 80, 90]
@@ -149,12 +135,12 @@ int main(int argc, char *argv[]) {
     LaserScan scan;
 
     if (laser.doProcessSimple(scan, hardError)) {
-      fprintf(stdout, "Scan received[%llu]: %u ranges is [%f]Hz\n",
+      fprintf(stdout, "Scan received[%llu]: %u ranges(%u) is [%f]Hz\n",
               scan.system_time_stamp,
-              (unsigned int)scan.data.size(), 1.0 / scan.config.scan_time);
+              (unsigned int)scan.data.size(), laser.getFixedSize(),
+              1.0 / scan.config.scan_time);
 
       for (int i = 0; i < scan.data.size(); i++) {
-        uint64_t time_stamp = scan.system_time_stamp + i * scan.config.time_increment*1e9;
         LaserPoint point = scan.data[i];
       }
 

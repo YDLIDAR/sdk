@@ -99,7 +99,6 @@ struct node_info {
   uint16_t   sync_quality;//!intensity
   uint16_t   angle_q6_checkbit; //!angle
   uint16_t   distance_q; //! distance
-  uint64_t   stamp; //! timestamp
   uint8_t    scan_frequence;//! scan frequency
 } __attribute__((packed)) ;
 
@@ -193,12 +192,15 @@ struct lidar_ans_header {
 #endif
 
 struct LaserPoint {
-  //angle[°]
   float angle;
-  //range[m]
-  float distance;
+  float range;
   float intensity;
-//  uint64_t stamp;
+  LaserPoint &operator = (const LaserPoint &data) {
+    angle = data.angle;
+    range = data.range;
+    intensity = data.intensity;
+    return *this;
+  }
 };
 
 //! A struct for returning configuration from the YDLIDAR
@@ -209,19 +211,35 @@ struct LaserConfig {
   float max_angle;
   //! Scan resoltuion [s]
   float time_increment;
-  //! Time between scans[s]
+  //! Time between scans
   float scan_time;
   //! Minimum range [m]
   float min_range;
   //! Maximum range [m]
   float max_range;
+  LaserConfig &operator = (const LaserConfig &data) {
+    min_angle = data.min_angle;
+    max_angle = data.max_angle;
+    time_increment = data.time_increment;
+    scan_time = data.scan_time;
+    min_range = data.min_range;
+    max_range = data.max_range;
+    return *this;
+  }
 };
 
+
 struct LaserScan {
-  //! Array of laser data point
+  //! Array of laser point
   std::vector<LaserPoint> data;
   //! System time when first range was measured in nanoseconds
   uint64_t system_time_stamp;
   //! Configuration of scan
   LaserConfig config;
+  LaserScan &operator = (const LaserScan &data) {
+    this->data = data.data;
+    system_time_stamp = data.system_time_stamp;
+    config = data.config;
+    return *this;
+  }
 };

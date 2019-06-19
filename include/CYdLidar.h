@@ -1,14 +1,11 @@
 ﻿
 #pragma once
-#include "line_feature.h"
 #include "utils.h"
 #include "ydlidar_driver.h"
 #include <math.h>
-#include <SimpleIni.h>
 #include "angles.h"
 
 using namespace ydlidar;
-using namespace line_feature;
 using namespace angles;
 
 class YDLIDAR_API CYdLidar {
@@ -22,10 +19,8 @@ class YDLIDAR_API CYdLidar {
                         private) ///< constrained minimum angle, minmum 0 Deg(Deg)
   PropertyBuilderByName(float, ScanFrequency,
                         private) ///< scan frequency (5HZ~12HZ)(HZ)
-
-  PropertyBuilderByName(float, RobotLidarDifference,
-                        private) ///< lidar zero and robot zero difference(°)
-
+  PropertyBuilderByName(float, OffsetTime, private)
+  PropertyBuilderByName(bool, Reversion, private) ///<
   PropertyBuilderByName(bool, Intensities,
                         private) ///< intensity
   PropertyBuilderByName(bool, AutoReconnect,
@@ -37,8 +32,6 @@ class YDLIDAR_API CYdLidar {
   PropertyBuilderByName(int, SampleRate, private) ///< sampling rate(KHz)
   PropertyBuilderByName(int, AbnormalCheckCount,
                         private) ///< Maximum number of abnormal checks
-  PropertyBuilderByName(std::string, CalibrationFileName,
-                        private) ///< calibration file
   PropertyBuilderByName(std::string, SerialPort, private) ///< serial port
   PropertyBuilderByName(std::vector<float>, IgnoreArray,
                         private) ///< Culling angle list
@@ -59,7 +52,7 @@ class YDLIDAR_API CYdLidar {
   bool checkHardware();
 
   // Return true if laser data acquistion succeeds, If it's not
-  bool doProcessSimple(LaserScan &outscan, bool &hardwareError);
+  bool doProcessSimple(LaserScan &scan_msg, bool &hardwareError);
 
   //Turn on the motor enable
   bool  turnOn();  //!< See base class docs
@@ -70,25 +63,14 @@ class YDLIDAR_API CYdLidar {
   //Turn off lidar connection
   void disconnecting(); //!< Closes the comms with the laser. Shouldn't have to be directly needed by the user
 
-  //lidar pointer
-  YDlidarDriver *getYdlidarDriver();
+  //get fixed resolution node size
+  int getFixedSize() const;
 
   //get zero angle offset value
   float getAngleOffset() const;
 
   //Whether the zero offset angle is corrected?
   bool isAngleOffetCorrected() const;
-
-  // get lidar relative robot offset angle
-  float getRobotAngleOffset() const;
-
-  // start lidar is corrected relative to the robot.
-  void setStartRobotAngleOffset();
-
-  //Whether the lidar relative robot offset angle is corrected?
-  //After the corrrection is started,
-  //the currect interface can be used to datermine when the correction is completed.
-  bool isRobotAngleOffsetCorrected() const;
 
  protected:
   /** Returns true if communication has been established with the device. If it's not,
@@ -112,12 +94,6 @@ class YDLIDAR_API CYdLidar {
    */
   void checkCalibrationAngle(const std::string &serialNumber);
 
-  /**
-   * @brief checkRobotOffsetAngleCorrected
-   * @param serialNumber
-   */
-  void checkRobotOffsetAngleCorrected(const std::string &serialNumber);
-
   /** Returns true if the device is in good health, If it's not*/
   bool getDeviceHealth();
 
@@ -130,26 +106,18 @@ class YDLIDAR_API CYdLidar {
   /** returns true if the lidar data is normal, If it's not*/
   bool checkLidarAbnormal();
 
-  /**
-   * @brief saveRobotOffsetAngle
-   * @return
-   */
-  void saveRobotOffsetAngle();
-
  private:
   bool    isScanning;
   float   frequencyOffset;
   float   m_AngleOffset;
   bool    m_isAngleOffsetCorrected;
-  float   m_LRRAngleOffset;
-  bool    m_isLRRAngleOffsetCorrected;//lidar relative robot angle offset
-  bool    m_startRobotAngleOffset;
   uint8_t Major;
   uint8_t Minjor;
-  CSimpleIniA ini;
   YDlidarDriver *lidarPtr;
-  LineFeature line_feature_;
   std::string m_serial_number;
+  uint32_t m_pointTime;
+  uint64_t last_node_time;
+  int m_FixedSize;
 
 };	// End of class
 

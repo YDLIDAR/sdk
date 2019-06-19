@@ -5,7 +5,7 @@
         <tr><th>File        <td>YDlidarDriver.h
         <tr><th>Author      <td>Tony [code at ydlidar com]
         <tr><th>Source      <td>https://github.com/ydlidar/sdk
-        <tr><th>Version     <td>2.0.8
+        <tr><th>Version     <td>1.4.1
     </table>
 
     Jump to the @link ::ydlidar::YDlidarDriver @endlink and @link ::CYdLidar @endlink interface documentation.
@@ -99,6 +99,12 @@ class YDlidarDriver {
   * @retval false    Non-connected
   */
   bool isconnected() const;
+
+  /**
+   * @brief getPointTime
+   * @return
+   */
+  uint32_t getPointTime() const;
 
   /**
   * @brief Is there intensity \n
@@ -459,7 +465,7 @@ class YDlidarDriver {
     YDLIDAR_X4 = 6,
     YDLIDAR_G4PRO = 7,
     YDLIDAR_F4PRO = 8,
-    YDLIDAR_R2_SS_1 = 9,//230400
+    YDLIDAR_R2 = 9,//230400
     YDLIDAR_G10 = 10, //256000
     YDLIDAR_S4B = 11,//153600
     YDLIDAR_S2 = 12,//115200
@@ -488,8 +494,6 @@ class YDlidarDriver {
   bool m_intensities;					///< intensity
   uint32_t m_baudrate;				///< serial baudrate
   bool isSupportMotorCtrl;			///<
-  uint64_t m_node_time_ns;			///< time stamp
-  uint64_t m_node_last_time_ns;       ///< time stamp
   uint32_t m_pointTime;				///< two laser point time intervals
   uint32_t trans_delay;				///< serial transfer on byte time
   int m_sampling_rate;					///< sample rate
@@ -510,7 +514,6 @@ class YDlidarDriver {
   uint16_t SampleNumlAndCTCal;
   uint16_t LastSampleAngleCal;
   bool CheckSumResult;
-  bool LastCheckSumResult;
   uint16_t Valu8Tou16;
 
   std::string serial_port;///< lidar serial port

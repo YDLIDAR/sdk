@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['filewriter',['FileWriter',['../class_c_simple_ini_templ_1_1_file_writer.html',1,'CSimpleIniTempl']]],
   ['firmware_5fversion',['firmware_version',['../structdevice__info.html#af3d369a410577d85ec6b59ffeeaade48',1,'device_info']]],
   ['flowcontrol_5ft',['flowcontrol_t',['../namespaceserial.html#a93ef57a314b4e562f9eded6c15d34351',1,'serial']]],
   ['flush',['flush',['../classserial_1_1_serial.html#a45a7676a6e6c775cd549e889e714b5bb',1,'serial::Serial']]],

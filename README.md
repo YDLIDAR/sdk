@@ -15,7 +15,7 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.0.8 |   2019-05-20  |
+| SDK     |  1.4.1 |   2019-06-19  |
 
 - [new feature] increase the deviation between correcting the zero angle of the lidar and the zero angle of the robot.
 
@@ -28,15 +28,14 @@ Dataset
 
 | Model      |  Baudrate |  Sampling Frequency | Range(m)  | Scanning Frequency(HZ) | Working temperature(°C) | Laser power max(mW) | voltage(V) | Current(mA)
 | :-------- | --------:|--------:|  --------:| --------:|--------:| --------:| --------:|  :--: |
-| G2-SS-1 |  230400 |   5000  |  0.1-16   |5-12|0-50| ~5|4.8-5.2|400-480|
-| R2-SS-1 |  230400 |   5000  |  0.1-16   |5-12|0-50| ~5|4.8-5.2|400-480|
+| R2 |  230400 |   5000  |  0.1-16   |5-12|0-50| ~5|4.8-5.2|400-480|
 | G4     |  230400 |   9000  |  0.26-16   |5-12|0-50| ~5|4.8-5.2|400-480|
 
 How to build YDLIDAR SDK samples
 ---------------
     $ git clone https://github.com/ydlidar/sdk
     $ cd sdk
-    $ git checkout SS-TS
+    $ git checkout R2
     $ cd ..
     $ mkdir build
     $ cd build
@@ -65,12 +64,10 @@ You should see YDLIDAR's scan result in the console:
 	[YDLIDAR] Connection established in [/dev/ttyUSB0][230400]:
 	Firmware version: 1.2
 	Hardware version: 3
-	Model: R2-SS-1
+	Model: R2
 	Serial: 2018101800011111
 	[YDLIDAR INFO] Current Sampling Rate : 5K
 	[YDLIDAR INFO] Successfully obtained the corrected offset angle[0.0000] from the lidar[2018101800011111]
-	[YDLIDAR INFO] Calibration file[LidarAngleCalibration.ini] does not exist
-	[YDLIDAR INFO] Current uncorrrected RobotAngleOffset : 0.000000°
 	[YDLIDAR INFO] Current AngleOffset : 0.000000°
 	[YDLIDAR INFO] Current Scan Frequency : 8.000000Hz
 	[YDLIDAR INFO] Now YDLIDAR is scanning ......
@@ -87,9 +84,8 @@ data structure:
  	 	//angle[°]
   		float angle;
   		//range[m]
-  		float distance;
+  		float range;
  	 	float intensity;
-		//  uint64_t stamp;
 	};
 
 	//! A struct for returning configuration from the YDLIDAR
@@ -129,106 +125,16 @@ example angle parsing:
       uint64_t time_stamp = scan.system_time_stamp + i * scan.config.time_increment*1e9;
 
       //current angle
-      double distance = point.angle;//°
+      double angle = point.angle;//°
 
       //current distance
-      double distance = point.distance;//meters
+      double distance = point.range;//meters
 
       //current intensity
       double intensity = point.intensity;
 
     }
-    
-
-Upgrade Log
----------------
-
-2019-05-20 version:2.0.8
-
-   1.increase the deviation between correcting the zero angle of the lidar and the zero angle of the robot.
-
-2019-05-07 version:2.0.7
-
-   1.add isAngleOffetCorrected function
-
-   2.fix ignore array
-
-   3.Optimize starting point timestamp
-
-
-2019-04-07 version:2.0.6
-
-   1.Change SDK timestamp clock from system clock to steady clock
-
-2019-03-01 version:2.0.5
-
-   1.fix Large motor resistance at startup issues.
-
-2019-02-13 version:2.0.4
-
-   1.fix ascendScanData timestamp issues.
-
-2019-01-23 version:2.0.3
-
-   1.Change the Lidar coordinate system to clockwise, ranging from 0 to 360 degrees.
-
-2019-01-17 version:2.0.2
-
-   1.check lidar abnormality when turn on lidar.
-
-2019-01-15 version:2.0.1
-
-   1.support G4 lidar
-
-2019-01-03 version:2.0.0
-
-   1.Remove other lidar model interfaces functions.
-
-   2.fix turnOn function.
    
-   3.Lidar supports zero offset angle adjustment.
-
-2018-12-07 version:1.3.9
-
-   1.Remove other lidar model interfaces functions.
-
-   2.Remove heartbeat
-
-2018-11-24 version:1.3.8
-
-   1.Reduce abnormal situation recovery time.
-   
-   2.fix timestamp from zero.
-
-2018-10-26 version:1.3.7
-
-   1.add input angle calibration file.
-   
-   2.remove network.
-
-2018-10-15 version:1.3.6
-
-   1.add network support.
-
-2018-05-23 version:1.3.4
-
-   1.add automatic reconnection if there is an exception
-
-   2.add serial file lock.
-
-2018-05-14 version:1.3.3
-
-   1.add the heart function constraint.
-
-   2.add packet type with scan frequency support.
-
-2018-04-16 version:1.3.2
-
-   1.add multithreading support.
-
-2018-04-16 version:1.3.1
-
-   1.Compensate for each laser point timestamp.
    
    
    Contact EAI
