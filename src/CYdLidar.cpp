@@ -92,7 +92,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     tim_scan_end -= m_pointTime;
     tim_scan_start = tim_scan_end -  scan_time ;
 
-    if (tim_scan_start - last_node_time < 2e6) {
+    if (tim_scan_start - last_node_time > -2e6 && tim_scan_start - last_node_time < 0) {
       tim_scan_start = last_node_time;
       tim_scan_end = tim_scan_start + scan_time;
     }
