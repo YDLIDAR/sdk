@@ -419,7 +419,7 @@ result_t YDlidarDriver::checkAutoConnecting() {
 int YDlidarDriver::cacheScanData() {
   node_info      local_buf[128];
   size_t         count = 128;
-  node_info      local_scan[MAX_SCAN_NODES];
+  node_info      *local_scan = new node_info[MAX_SCAN_NODES];
   size_t         scan_count = 0;
   result_t       ans = RESULT_FAIL;
   memset(local_scan, 0, sizeof(local_scan));
@@ -440,6 +440,7 @@ int YDlidarDriver::cacheScanData() {
           {
             isScanning = false;
           }
+          delete[] local_scan;
           return RESULT_FAIL;
         } else {
           ans = checkAutoConnecting();
@@ -450,6 +451,7 @@ int YDlidarDriver::cacheScanData() {
             local_scan[0].sync_flag = Node_NotSync;
           } else {
             isScanning = false;
+            delete[] local_scan;
             return RESULT_FAIL;
           }
         }
@@ -486,7 +488,7 @@ int YDlidarDriver::cacheScanData() {
   }
 
   isScanning = false;
-
+  delete[] local_scan;
   return RESULT_OK;
 }
 
@@ -760,10 +762,13 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     }
 
     if (m_IgnoreArray.size() != 0) {//eliminate the specified range angle.
-      double angle = (FirstSampleAngle + IntervalSampleAngle * package_Sample_Index)/64.0;
-      if(angle < 0) {
-          angle += 360;
+      double angle = (FirstSampleAngle + IntervalSampleAngle * package_Sample_Index) /
+                     64.0;
+
+      if (angle < 0) {
+        angle += 360;
       }
+
       if (angle >= 360) {
         angle = angle - 360;
       }
@@ -818,7 +823,8 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   if ((*node).sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
     m_node_last_time_ns = m_node_time_ns;
     uint64_t current_time_ns = getTime();
-    uint64_t delay_time_ns = (nowPackageNum * PackageSampleBytes + PackagePaidBytes) * trans_delay +
+    uint64_t delay_time_ns = (nowPackageNum * PackageSampleBytes + PackagePaidBytes)
+                             * trans_delay +
                              (nowPackageNum - 1) * m_pointTime;
     m_node_time_ns = current_time_ns - delay_time_ns;
 
@@ -831,11 +837,12 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
         m_node_time_ns = m_node_last_time_ns;
       }
     } else {//Optimize starting point timestamp
-        if ((m_node_time_ns - m_node_last_time_ns) < 8*1e6 && !data_header_error
-                && CheckSumResult && LastCheckSumResult) {
-            m_node_time_ns = m_node_last_time_ns;
-        }
+      if ((m_node_time_ns - m_node_last_time_ns) < 8 * 1e6 && !data_header_error
+          && CheckSumResult && LastCheckSumResult) {
+        m_node_time_ns = m_node_last_time_ns;
+      }
     }
+
     LastCheckSumResult = CheckSumResult;
 
   }
@@ -1135,7 +1142,7 @@ void YDlidarDriver::setAutoReconnect(const bool &enable) {
  * angle list
  */
 void YDlidarDriver::setIgnoreArray(const std::vector<float> ignore_array) {
-    m_IgnoreArray = ignore_array;
+  m_IgnoreArray = ignore_array;
 }
 
 
