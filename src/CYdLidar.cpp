@@ -95,8 +95,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     return false;
   }
 
-  node_info nodes[2048];
-  size_t   count = _countof(nodes);
+  node_info *nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
+  size_t   count = YDlidarDriver::MAX_SCAN_NODES;
 
   //line feature
   std::vector<double> bearings;
@@ -229,6 +229,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     scan_msg.config.min_range = m_MinRange;
     scan_msg.config.max_range = m_MaxRange;
     outscan = scan_msg;
+    delete[] nodes;
     return true;
 
   } else {
@@ -237,6 +238,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     }
   }
 
+  delete[] nodes;
   return false;
 
 }
@@ -301,8 +303,8 @@ bool  CYdLidar::turnOff() {
 }
 
 bool CYdLidar::checkLidarAbnormal() {
-  node_info nodes[2048];
-  size_t   count = _countof(nodes);
+  node_info *nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
+  size_t   count = YDlidarDriver::MAX_SCAN_NODES;
   int check_abnormal_count = 0;
 
   if (m_AbnormalCheckCount < 2) {
@@ -320,12 +322,14 @@ bool CYdLidar::checkLidarAbnormal() {
     op_result =  lidarPtr->grabScanData(nodes, count);
 
     if (IS_OK(op_result)) {
+      delete[] nodes;
       return false;
     }
 
     check_abnormal_count++;
   }
 
+  delete[] nodes;
   return !IS_OK(op_result);
 }
 
