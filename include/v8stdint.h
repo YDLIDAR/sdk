@@ -60,7 +60,7 @@ typedef uint32_t       _size_t;
 typedef uint64_t       _size_t;
 #define THREAD_PROC    __stdcall
 #elif defined (__GNUC__)
-typedef unsigned long  _size_t;
+typedef unsigned long int  _size_t;
 #define THREAD_PROC
 #elif defined (__ICCARM__)
 typedef uint32_t       _size_t;
@@ -139,7 +139,8 @@ set_signal_handler(int signal_value, signal_handler_t signal_handler)
     int error_status = strerror_r(errno, error_string, error_length);
 
     if (error_status != 0) {
-      throw std::runtime_error("Failed to get error string for errno: " + std::to_string(errno));
+      throw std::runtime_error("Failed to get error string for errno: " +
+                               std::to_string(errno));
     }
 
 #endif
