@@ -60,7 +60,7 @@ typedef uint32_t       _size_t;
 typedef uint64_t       _size_t;
 #define THREAD_PROC    __stdcall
 #elif defined (__GNUC__)
-typedef unsigned long  _size_t;
+typedef unsigned long int _size_t;
 #define THREAD_PROC
 #elif defined (__ICCARM__)
 typedef uint32_t       _size_t;
