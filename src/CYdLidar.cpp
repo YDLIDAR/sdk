@@ -1,6 +1,7 @@
 #include "CYdLidar.h"
 #include "common.h"
 #include <map>
+#include <regex>
 
 using namespace std;
 using namespace ydlidar;
@@ -417,7 +418,7 @@ bool CYdLidar::getDeviceHealth() {
     }
 
   } else {
-    fprintf(stderr, "Error, cannot retrieve Yd Lidar health code: %x\n", op_result);
+    fprintf(stderr, "Error, cannot retrieve YDLidar health code: %x\n", op_result);
     return false;
   }
 
@@ -482,6 +483,14 @@ bool CYdLidar::getDeviceInfo() {
 
   printf("%s\n", serial_number.c_str());
   m_serial_number = serial_number;
+  std::regex
+  rx("^2(\\d{3})(0\\d{1}|1[0-2])(0\\d{1}|[12]\\d{1}|3[01])(\\d{4})(\\d{4})$");
+  std::smatch result;
+
+  if (!regex_match(serial_number, result, rx)) {
+    fprintf(stderr, "Invalid lidar serial number!!!\n");
+    return false;
+  }
 
   if (devinfo.model == YDlidarDriver::YDLIDAR_R2_SS_1) {
     checkCalibrationAngle(serial_number);
@@ -642,6 +651,15 @@ void CYdLidar::checkCalibrationAngle(const std::string &serialNumber) {
     ans = lidarPtr->getZeroOffsetAngle(angle);
 
     if (IS_OK(ans)) {
+      if (angle.angle > 720 || angle.angle < -720) {
+        ans = lidarPtr->getZeroOffsetAngle(angle);
+
+        if (!IS_OK(ans)) {
+          continue;
+          retry++;
+        }
+      }
+
       m_isAngleOffsetCorrected = (angle.angle != 720);
       m_AngleOffset = angle.angle / 4.0;
       printf("[YDLIDAR INFO] Successfully obtained the %s offset angle[%f] from the lidar[%s]\n"
