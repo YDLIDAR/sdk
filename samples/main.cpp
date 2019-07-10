@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 
   if (ports.size() == 1) {
     it = ports.begin();
-    printf("Lidar[%s] detected, whether to select current radar(yes/no)?:",
+    printf("Lidar[%s] detected, whether to select current Lidar(yes/no)?:",
            it->first.c_str());
     std::string ok;
     std::cin >> ok;

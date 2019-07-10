@@ -170,6 +170,7 @@ void YDlidarDriver::flushSerial() {
   }
 
   _serial->flushInput();
+  delay(20);
 
 }
 
@@ -1040,6 +1041,7 @@ result_t YDlidarDriver::getHealth(device_health &health, uint32_t timeout) {
   }
 
   disableDataGrabbing();
+  flushSerial();
   {
     ScopedLocker l(_lock);
 
@@ -1081,6 +1083,7 @@ result_t YDlidarDriver::getDeviceInfo(device_info &info, uint32_t timeout) {
   }
 
   disableDataGrabbing();
+  flushSerial();
   {
     ScopedLocker l(_lock);
 
@@ -1237,8 +1240,9 @@ result_t YDlidarDriver::stopScan(uint32_t timeout) {
 
   ScopedLocker l(_lock);
   sendCommand(LIDAR_CMD_FORCE_STOP);
-  sendCommand(LIDAR_CMD_STOP);
   delay(10);
+  sendCommand(LIDAR_CMD_STOP);
+  delay(30);
   return RESULT_OK;
 }
 
@@ -1340,6 +1344,7 @@ result_t YDlidarDriver::getScanFrequency(scan_frequency &frequency,
   }
 
   disableDataGrabbing();
+  flushSerial();
   {
     ScopedLocker l(_lock);
 
@@ -1382,6 +1387,7 @@ result_t YDlidarDriver::setScanFrequencyAdd(scan_frequency &frequency,
   }
 
   disableDataGrabbing();
+  flushSerial();
   {
     ScopedLocker l(_lock);
 
@@ -1424,6 +1430,7 @@ result_t YDlidarDriver::setScanFrequencyDis(scan_frequency &frequency,
   }
 
   disableDataGrabbing();
+  flushSerial();
   {
     ScopedLocker l(_lock);
 
@@ -1466,6 +1473,7 @@ result_t YDlidarDriver::setScanFrequencyAddMic(scan_frequency &frequency,
   }
 
   disableDataGrabbing();
+  flushSerial();
   {
     ScopedLocker l(_lock);
 
@@ -1508,6 +1516,7 @@ result_t YDlidarDriver::setScanFrequencyDisMic(scan_frequency &frequency,
   }
 
   disableDataGrabbing();
+  flushSerial();
   {
     ScopedLocker l(_lock);
 
@@ -1549,6 +1558,7 @@ result_t YDlidarDriver::getSamplingRate(sampling_rate &rate, uint32_t timeout) {
   }
 
   disableDataGrabbing();
+  flushSerial();
   {
     ScopedLocker l(_lock);
 
@@ -1591,6 +1601,7 @@ result_t YDlidarDriver::setSamplingRate(sampling_rate &rate, uint32_t timeout) {
   }
 
   disableDataGrabbing();
+  flushSerial();
   {
     ScopedLocker l(_lock);
 
@@ -1633,6 +1644,7 @@ result_t YDlidarDriver::getZeroOffsetAngle(offset_angle &angle,
   }
 
   disableDataGrabbing();
+  flushSerial();
   {
     ScopedLocker l(_lock);
 
