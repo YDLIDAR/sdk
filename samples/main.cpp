@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 
   if (ports.size() == 1) {
     it = ports.begin();
-    printf("Lidar[%s] detected, whether to select current radar(yes/no)?:",
+    printf("Lidar[%s] detected, whether to select current lidar(yes/no)?:",
            it->first.c_str());
     std::string ok;
     std::cin >> ok;
@@ -154,7 +154,8 @@ int main(int argc, char *argv[]) {
               (unsigned int)scan.data.size(), 1.0 / scan.config.scan_time);
 
       for (int i = 0; i < scan.data.size(); i++) {
-        uint64_t time_stamp = scan.system_time_stamp + i * scan.config.time_increment*1e9;
+        uint64_t time_stamp = scan.system_time_stamp + i * scan.config.time_increment *
+                              1e9;
         LaserPoint point = scan.data[i];
       }
 
