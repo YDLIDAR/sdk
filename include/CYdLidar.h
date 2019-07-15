@@ -136,6 +136,32 @@ class YDLIDAR_API CYdLidar {
    */
   void saveRobotOffsetAngle();
 
+
+ private:
+
+  void lowSpeed();
+  void hightSpeed();
+
+  void startCorrectionMod();
+  void OnEnter(double frequency);
+  void ActionStateUpdate(double frequency);
+  void setActionState(bool isLowerSpeed = true);
+  bool CheckStateTimeout(bool isLowerSpeed = true);
+
+
+  int m_action_step;
+  bool m_action_startup;
+  bool has_check_flag;
+  int m_action_state;
+  uint64_t action_check_time;
+
+  const int min_check_time = 4.5 * 1e9;
+  const int max_check_time = 13 * 1e9;
+  const int max_action_step = 3;
+  const double m_min_action_frequency = 6.8;
+  const double m_max_action_frequency = 11.7;
+
+
  private:
   bool    isScanning;
   float   frequencyOffset;

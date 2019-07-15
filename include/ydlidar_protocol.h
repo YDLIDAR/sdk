@@ -74,6 +74,9 @@
 #define LIDAR_CMD_ADD_EXPOSURE       	    0x96
 #define LIDAR_CMD_DIS_EXPOSURE       	    0x97
 
+#define LIDAR_CMD_SET_LOW_SPEED            0xf3
+#define LIDAR_CMD_SET_HIGHT_SPEED          0xf2
+#define LIDAR_CMD_SET_START_ADJ_SPEED      0xf0
 
 #define LIDAR_CMD_SET_HEART_BEAT        0xD9
 #define LIDAR_CMD_SET_SETPOINTSFORONERINGFLAG  0xae

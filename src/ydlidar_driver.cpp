@@ -1676,6 +1676,76 @@ result_t YDlidarDriver::getZeroOffsetAngle(offset_angle &angle,
 }
 
 
+result_t YDlidarDriver::setScanLowSpeed(uint32_t timeout) {
+  result_t  ans;
+
+  if (!isConnected) {
+    return RESULT_FAIL;
+  }
+
+  {
+    ScopedLocker l(_lock);
+
+    if ((ans = sendCommand(LIDAR_CMD_SET_HIGHT_SPEED)) != RESULT_OK) {
+      return ans;
+
+    }
+  }
+
+  return RESULT_OK;
+}
+
+
+result_t YDlidarDriver::setScanHightSpeed(uint32_t timeout) {
+  result_t  ans;
+
+  if (!isConnected) {
+    return RESULT_FAIL;
+  }
+
+  {
+    ScopedLocker l(_lock);
+
+    if ((ans = sendCommand(LIDAR_CMD_SET_LOW_SPEED)) != RESULT_OK) {
+      return ans;
+
+    }
+  }
+
+  return RESULT_OK;
+}
+
+result_t YDlidarDriver::setStartAdjSpeed(uint32_t timeout) {
+  result_t  ans;
+
+  if (!isConnected) {
+    return RESULT_FAIL;
+  }
+
+  {
+    ScopedLocker l(_lock);
+
+    if ((ans = sendCommand(LIDAR_CMD_SET_START_ADJ_SPEED)) != RESULT_OK) {
+      return ans;
+    }
+
+    if ((ans = sendCommand(LIDAR_CMD_SET_START_ADJ_SPEED)) != RESULT_OK) {
+      return ans;
+    }
+
+    if ((ans = sendCommand(LIDAR_CMD_SET_START_ADJ_SPEED)) != RESULT_OK) {
+      return ans;
+    }
+
+    if ((ans = sendCommand(LIDAR_CMD_SET_START_ADJ_SPEED)) != RESULT_OK) {
+      return ans;
+    }
+  }
+
+  return RESULT_OK;
+
+}
+
 
 std::string YDlidarDriver::getSDKVersion() {
   return SDKVerision;

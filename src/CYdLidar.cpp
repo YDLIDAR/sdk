@@ -700,6 +700,36 @@ void CYdLidar::saveRobotOffsetAngle() {
 
 }
 
+void CYdLidar::lowSpeed() {
+  if (!lidarPtr) {
+    return;
+  }
+
+  if (!isScanning || !lidarPtr->isscanning()) {
+    return ;
+  }
+
+  lidarPtr->setStartAdjSpeed();
+  lidarPtr->setScanLowSpeed();
+
+}
+
+void CYdLidar::hightSpeed() {
+  if (!lidarPtr) {
+    return;
+  }
+
+  if (!isScanning || !lidarPtr->isscanning()) {
+    return ;
+  }
+
+  lidarPtr->setStartAdjSpeed();
+  lidarPtr->setScanHightSpeed();
+
+
+}
+
+
 /*-------------------------------------------------------------
             checkCOMMs
 -------------------------------------------------------------*/

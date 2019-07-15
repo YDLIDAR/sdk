@@ -295,6 +295,27 @@ class YDlidarDriver {
   result_t getZeroOffsetAngle(offset_angle &angle,
                               uint32_t timeout = DEFAULT_TIMEOUT);
 
+  /**
+   * @brief setScanLowSpeed
+   * @param timeout
+   * @return
+   */
+  result_t setScanLowSpeed(uint32_t timeout = DEFAULT_TIMEOUT);
+
+  /**
+   * @brief setScanHightSpeed
+   * @param timeout
+   * @return
+   */
+  result_t setScanHightSpeed(uint32_t timeout = DEFAULT_TIMEOUT);
+
+  /**
+   * @brief setStartAdjSpeed
+   * @param timeout
+   * @return
+   */
+  result_t setStartAdjSpeed(uint32_t timeout = DEFAULT_TIMEOUT);
+
  protected:
 
   /**
