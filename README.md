@@ -12,7 +12,7 @@ How to build YDLIDAR SDK samples
     
     $ cd sdk
     
-    $ git checkout X2
+    $ git checkout X2L
     
     $ cd ..
     
