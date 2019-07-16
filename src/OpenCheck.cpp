@@ -48,7 +48,7 @@ void CYdLidar::ActionStateUpdate(double frequency) {
         action_check_time = getTime();
 
         if (m_action_step < max_action_step && has_check_flag) {
-          printf("The revised model has been opened\n");
+          printf("The correction model has been opened\n");
           m_action_startup = false;
           return;
         }
@@ -63,7 +63,7 @@ void CYdLidar::ActionStateUpdate(double frequency) {
           m_action_state++;
         } else {
           if (has_check_flag) {
-            printf("Successful Opening of Modification Mod\n");
+            printf("Successful Opening of correction Mod\n");
             m_action_startup = false;
           } else {
 

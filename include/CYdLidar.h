@@ -90,6 +90,7 @@ class YDLIDAR_API CYdLidar {
   //the currect interface can be used to datermine when the correction is completed.
   bool isRobotAngleOffsetCorrected() const;
 
+
  protected:
   /** Returns true if communication has been established with the device. If it's not,
     *  try to create a comms channel.
@@ -136,6 +137,11 @@ class YDLIDAR_API CYdLidar {
    */
   void saveRobotOffsetAngle();
 
+  /**
+   * @brief hangleRobotOffsetAngle
+   */
+  void handleRobotOffsetAngle();
+
 
  private:
 
@@ -163,6 +169,24 @@ class YDLIDAR_API CYdLidar {
 
 
  private:
+  std::vector<double> m_angle_threshold;
+  std::vector<int> check_queue_size,
+      auto_check_sum_queue, auto_check_distance;
+  double current_frequency;
+  double last_frequency;
+  bool has_check_state;
+  CheckState m_state;
+
+  void retSetData();
+  void handleScanData(double angle, double distance);
+  void handleCheckData();
+  void handleCheckStep();
+  void handleCheckDis();
+  void handleLidarDis(int distance);
+  void handleCheckState();
+
+
+ private:
   bool    isScanning;
   float   frequencyOffset;
   float   m_AngleOffset;
@@ -176,6 +200,11 @@ class YDLIDAR_API CYdLidar {
   YDlidarDriver *lidarPtr;
   LineFeature line_feature_;
   std::string m_serial_number;
+
+  std::vector<double> bearings;
+  std::vector<unsigned int> indices;
+  RangeData range_data;
+
 
 };	// End of class
 

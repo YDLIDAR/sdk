@@ -93,6 +93,44 @@ typedef enum {
 #define PackagePaidBytes 10
 #define PH 0x55AA
 
+
+
+
+
+
+#define CHECK_ANGLE_MIN 0
+#define CHECK_ANGLE_MAX 1
+#define SIGMA_ANGLE_MIN 2
+#define SIGMA_ANGLE_MAX 3
+#define SIGN_ANGLE_MIN  4
+#define SIGN_ANGLE_MAX  5
+#define SURE_ANGLE_MIN  6
+#define SURE_ANGLE_MAX  7
+
+#define POSITIVE_VALUE 2000
+#define NEGATIVE_VALUE 1000
+
+
+#define  CHECKINGDISTANCE     0
+#define  FAILEDDISTANCE       2000
+#define  ADJUSTDISTANCE       4000
+#define  SUCCESSDISTANCE      6000
+#define  SAVESUCCESSDISTANCE  8000
+#define  SUREDISTANCE         10000
+#define  MAXDISTANCE          16000
+
+#define MAXCHECKTIMES          4
+#define MAXCHECKIGNOREANGLE    2
+
+enum CheckState {
+  NORMAL,
+  CHECKING,
+  CHECK_FAILED,
+  CHECK_ADJUST,
+  CHECK_SUCCESS,
+  CHECK_FININSHED,
+};
+
 #if defined(_WIN32)
 #pragma pack(1)
 #endif
@@ -101,6 +139,8 @@ struct node_info {
   uint8_t    sync_flag;  //sync flag
   uint16_t   sync_quality;//!intensity
   uint16_t   angle_q6_checkbit; //!angle
+  uint16_t   ori_angle_q6_checkbit; //!angle
+  uint16_t   angle_correct_for_distance; //!angle
   uint16_t   distance_q; //! distance
   uint64_t   stamp; //! timestamp
   uint8_t    scan_frequence;//! scan frequency

@@ -39,6 +39,28 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_IgnoreArray.clear();
   ini.SetUnicode();
   m_serial_number.clear();
+  m_angle_threshold.resize(2 * MAXCHECKTIMES);
+  m_angle_threshold[CHECK_ANGLE_MIN] = (225);
+  m_angle_threshold[CHECK_ANGLE_MAX] = (270);
+  m_angle_threshold[SIGMA_ANGLE_MIN] = (270);
+  m_angle_threshold[SIGMA_ANGLE_MAX] = (295);
+  m_angle_threshold[SIGN_ANGLE_MIN]  = (295);
+  m_angle_threshold[SIGN_ANGLE_MIN]  = (315);
+  m_angle_threshold[SURE_ANGLE_MIN]  = (315);
+  m_angle_threshold[SURE_ANGLE_MAX]  = (335);
+
+  check_queue_size.resize(MAXCHECKTIMES);
+  auto_check_sum_queue.resize(MAXCHECKTIMES);
+  auto_check_distance.resize(MAXCHECKTIMES);
+  m_action_startup = false;
+  has_check_flag = false;
+  current_frequency = 0.0;
+  last_frequency = 0.0;
+  m_action_step = 0;
+  m_action_state = 0;
+  action_check_time = getTime();
+  has_check_state = false;
+  m_state  = NORMAL;
 }
 
 /*-------------------------------------------------------------
@@ -100,11 +122,9 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
   size_t   count = YDlidarDriver::MAX_SCAN_NODES;
 
   //line feature
-  std::vector<double> bearings;
-  std::vector<unsigned int> indices;
   indices.clear();
   bearings.clear();
-  RangeData range_data;
+  range_data.clear();
 
   //wait Scan data:
   result_t op_result =  lidarPtr->grabScanData(nodes, count);
@@ -116,6 +136,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     float range = 0.0;
     float intensity = 0.0;
     float angle = 0.0;
+    float ori_angle = 0.0;
     LaserScan scan_msg;
     LaserPoint point;
 
@@ -125,11 +146,18 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
       m_MaxAngle = temp;
     }
 
+    retSetData();
+
     for (int i = 0; i < count; i++) {
+
+      ori_angle = (float)((nodes[i].ori_angle_q6_checkbit >>
+                           LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f);
       angle = (float)((nodes[i].angle_q6_checkbit >>
                        LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f) +
               m_AngleOffset;
       range = (float)nodes[i].distance_q / 1000.f;
+
+      handleScanData(ori_angle, range);
 
       if (angle > 360) {
         angle -= 360;
@@ -181,56 +209,26 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
     }
 
-    if (m_startRobotAngleOffset) {
-      line_feature_.setCachedRangeData(bearings, indices, range_data);
-      std::vector<gline> glines;
-      line_feature_.extractLines(glines);
-      bool find_line_angle = false;
-      gline max;
-      max.distance = 0.0;
-      double line_angle = 0.0;
-
-      if (glines.size()) {
-        max = glines[0];
-      }
-
-      for (std::vector<gline>::const_iterator it = glines.begin();
-           it != glines.end(); ++it) {
-        line_angle = M_PI_2 - it->angle;
-        line_angle = angles::normalize_angle(line_angle);
-
-        if (fabs(line_angle) < fabs(angles::from_degrees(m_RobotLidarDifference) -
-                                    M_PI / 12)) {
-          if (it->distance > 0.5 && it->distance > max.distance) {
-            max = (*it);
-            find_line_angle = true;
-            line_angle -= angles::from_degrees(m_RobotLidarDifference);
-            m_LRRAngleOffset = angles::to_degrees(line_angle);
-          }
-        }
-      }
-
-      if (find_line_angle) {
-        saveRobotOffsetAngle();
-      }
-    }
+    handleRobotOffsetAngle();
 
     double scan_time = (tim_scan_end - tim_scan_start) / 1e9;
     scan_msg.system_time_stamp = tim_scan_start;
     scan_msg.config.min_angle = (m_MinAngle);
     scan_msg.config.max_angle = (m_MaxAngle);
-
-    if (scan_msg.config.max_angle - scan_msg.config.min_angle == 360) {
-      scan_msg.config.time_increment = scan_time / (double)count;
-    } else {
-      scan_msg.config.time_increment = scan_time / (double)(count - 1);
-    }
-
+    scan_msg.config.time_increment = scan_time / (double)count;
     scan_msg.config.scan_time = scan_time;
     scan_msg.config.min_range = m_MinRange;
     scan_msg.config.max_range = m_MaxRange;
     outscan = scan_msg;
     delete[] nodes;
+    {
+      current_frequency = 1.0 / scan_time;
+      handleCheckData();
+      OnEnter(current_frequency);
+      last_frequency = current_frequency;
+    }
+
+
     return true;
 
   } else {
@@ -242,6 +240,42 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
   delete[] nodes;
   return false;
 
+}
+
+void CYdLidar::handleRobotOffsetAngle() {
+  if (m_startRobotAngleOffset) {
+    line_feature_.setCachedRangeData(bearings, indices, range_data);
+    std::vector<gline> glines;
+    line_feature_.extractLines(glines);
+    bool find_line_angle = false;
+    gline max;
+    max.distance = 0.0;
+    double line_angle = 0.0;
+
+    if (glines.size()) {
+      max = glines[0];
+    }
+
+    for (std::vector<gline>::const_iterator it = glines.begin();
+         it != glines.end(); ++it) {
+      line_angle = M_PI_2 - it->angle;
+      line_angle = angles::normalize_angle(line_angle);
+
+      if (fabs(line_angle) < fabs(angles::from_degrees(m_RobotLidarDifference) -
+                                  M_PI / 12)) {
+        if (it->distance > 0.5 && it->distance > max.distance) {
+          max = (*it);
+          find_line_angle = true;
+          line_angle -= angles::from_degrees(m_RobotLidarDifference);
+          m_LRRAngleOffset = angles::to_degrees(line_angle);
+        }
+      }
+    }
+
+    if (find_line_angle) {
+      saveRobotOffsetAngle();
+    }
+  }
 }
 
 
