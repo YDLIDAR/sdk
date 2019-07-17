@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.11"/>
-<title>YDLIDAR S3 SDK: CYdLidar Class Reference</title>
+<title>YDLIDAR S4-EB-1 SDK: CYdLidar Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -24,7 +24,7 @@
  <tr style="height: 56px;">
   <td id="projectlogo"><img alt="Logo" src="ydliar.png"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
-   <div id="projectname">YDLIDAR S3 SDK
+   <div id="projectname">YDLIDAR S4-EB-1 SDK
    &#160;<span id="projectnumber">V1.4.1</span>
    </div>
   </td>
@@ -41,7 +41,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
-      <li><a href="namespaces.html"><span>Namespaces</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
       <li>
@@ -103,6 +102,13 @@ Protected Member Functions</h2></td></tr>
 <tr class="separator:ab3c24f8f59fee87aa4e829ca5c8f90d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af305323871f06007e71cc12ab8a8be9a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_c_yd_lidar.html#af305323871f06007e71cc12ab8a8be9a">checkLidarAbnormal</a> ()</td></tr>
 <tr class="separator:af305323871f06007e71cc12ab8a8be9a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a242c377e2958d04814621019013fe8cc"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_c_yd_lidar.html#a242c377e2958d04814621019013fe8cc">getDeviceHealth</a> ()</td></tr>
+<tr class="separator:a242c377e2958d04814621019013fe8cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a17998bc48c0aa98cb414736d4683cb0e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_c_yd_lidar.html#a17998bc48c0aa98cb414736d4683cb0e">getDeviceInfo</a> ()</td></tr>
+<tr class="separator:a17998bc48c0aa98cb414736d4683cb0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa7015917646c15379bbee3d563a01c30"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa7015917646c15379bbee3d563a01c30"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>handleDeviceStatus</b> ()</td></tr>
+<tr class="separator:aa7015917646c15379bbee3d563a01c30"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a class="anchor" id="ab43ca6b1d054aa464a36bea0d4b7934c"></a>
@@ -198,6 +204,54 @@ Protected Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 <p>Returns true if health status and device information has been obtained with the device. If it's not, </p><dl class="section return"><dt>Returns</dt><dd>false on error. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a242c377e2958d04814621019013fe8cc"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool CYdLidar::getDeviceHealth </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Returns true if the device is in good health, If it's not </p>
+
+</div>
+</div>
+<a class="anchor" id="a17998bc48c0aa98cb414736d4683cb0e"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool CYdLidar::getDeviceInfo </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Returns true if the device information is correct, If it's not </p>
 
 </div>
 </div>

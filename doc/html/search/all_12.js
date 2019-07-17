@@ -1,13 +1,14 @@
 var searchData=
 [
-  ['waitbytetimes',['waitByteTimes',['../classserial_1_1_serial.html#a35c0f6ff20c142a5210dde288731f954',1,'serial::Serial']]],
-  ['waitforchange',['waitForChange',['../classserial_1_1_serial.html#a9d889dc0ec2cec50a620650f10cf8e83',1,'serial::Serial']]],
-  ['waitfordata',['waitfordata',['../classserial_1_1_serial.html#aa94e4ca3b2b803e3145c99fe063ae09b',1,'serial::Serial::waitfordata()'],['../classydlidar_1_1_y_dlidar_driver.html#a13f404b44f51941d1642bfe250de3522',1,'ydlidar::YDlidarDriver::waitForData()']]],
-  ['waitpackage',['waitPackage',['../classydlidar_1_1_y_dlidar_driver.html#aaf78903693f58c7f739dfa493573b3b1',1,'ydlidar::YDlidarDriver']]],
-  ['waitreadable',['waitReadable',['../classserial_1_1_serial.html#a59bd8d40309769e8eed91dd3684e0000',1,'serial::Serial']]],
-  ['waitresponseheader',['waitResponseHeader',['../classydlidar_1_1_y_dlidar_driver.html#a0e089d615193ccef4bf488f63ff8130e',1,'ydlidar::YDlidarDriver']]],
-  ['waitscandata',['waitScanData',['../classydlidar_1_1_y_dlidar_driver.html#a574996217284ce34191a2f3675a9f17b',1,'ydlidar::YDlidarDriver']]],
-  ['write',['write',['../classserial_1_1_serial.html#a3275e8456850998c0ac46b2768ab9258',1,'serial::Serial::write(const uint8_t *data, size_t size)'],['../classserial_1_1_serial.html#a9c2827088d82ee82f245ffa106fa7d10',1,'serial::Serial::write(const std::vector&lt; uint8_t &gt; &amp;data)'],['../classserial_1_1_serial.html#a7c92c0307b86a935f6623953eec66460',1,'serial::Serial::write(const std::string &amp;data)'],['../classserial_1_1serial_1_1_serial_1_1_serial_impl.html#adb5572ca568cd0186dec4bc4af28f13b',1,'serial::Serial::SerialImpl::write()']]],
-  ['write_5ftimeout_5fconstant',['write_timeout_constant',['../structserial_1_1_timeout.html#accf01b97f83564f4ce3d6e5f63e21006',1,'serial::Timeout']]],
-  ['write_5ftimeout_5fmultiplier',['write_timeout_multiplier',['../structserial_1_1_timeout.html#a31ddae32907cff9c3d27fa763981317d',1,'serial::Timeout']]]
+  ['ydlidar_20sdk_20package_20v1_2e4_2e1',['YDLIDAR SDK PACKAGE V1.4.1',['../md__home_yang_gitlab_sdk_README.html',1,'']]],
+  ['ydlidar_5ff2',['YDLIDAR_F2',['../classydlidar_1_1_y_dlidar_driver.html#a1edd5634ea00ca122a0882d875f42853a7d64a3d3e3d3ef6d1db5c0a8740a523a',1,'ydlidar::YDlidarDriver']]],
+  ['ydlidar_5ff4',['YDLIDAR_F4',['../classydlidar_1_1_y_dlidar_driver.html#a1edd5634ea00ca122a0882d875f42853a3303d67e56b0dd5a36397a5326965713',1,'ydlidar::YDlidarDriver']]],
+  ['ydlidar_5ff4pro',['YDLIDAR_F4PRO',['../classydlidar_1_1_y_dlidar_driver.html#a1edd5634ea00ca122a0882d875f42853a700fca9e58a191c0d1a4d13ae67927e8',1,'ydlidar::YDlidarDriver']]],
+  ['ydlidar_5fg4',['YDLIDAR_G4',['../classydlidar_1_1_y_dlidar_driver.html#a1edd5634ea00ca122a0882d875f42853a6bd6fb5e1f3ddd4e36ab12e53c114039',1,'ydlidar::YDlidarDriver']]],
+  ['ydlidar_5fg4c',['YDLIDAR_G4C',['../classydlidar_1_1_y_dlidar_driver.html#a1edd5634ea00ca122a0882d875f42853a55a9d7236d51f9d1d38d41cd102be527',1,'ydlidar::YDlidarDriver']]],
+  ['ydlidar_5fs4',['YDLIDAR_S4',['../classydlidar_1_1_y_dlidar_driver.html#a1edd5634ea00ca122a0882d875f42853ab1d9ab224053d610e97ebee7236345ba',1,'ydlidar::YDlidarDriver']]],
+  ['ydlidar_5ft1',['YDLIDAR_T1',['../classydlidar_1_1_y_dlidar_driver.html#a1edd5634ea00ca122a0882d875f42853a6ea5ed1cde351e4b5df40d1bbd697212',1,'ydlidar::YDlidarDriver']]],
+  ['ydlidar_5fx4',['YDLIDAR_X4',['../classydlidar_1_1_y_dlidar_driver.html#a1edd5634ea00ca122a0882d875f42853a5065807c3aa6a4a731858dda599667b7',1,'ydlidar::YDlidarDriver']]],
+  ['ydlidardriver',['YDlidarDriver',['../classydlidar_1_1_y_dlidar_driver.html#a19e20b6aa35834507a0dacc8a3c510e6',1,'ydlidar::YDlidarDriver']]],
+  ['ydlidardriver',['YDlidarDriver',['../classydlidar_1_1_y_dlidar_driver.html',1,'ydlidar']]]
 ];

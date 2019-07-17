@@ -1,6 +1,4 @@
 var searchData=
 [
-  ['node_5finfo',['node_info',['../structnode__info.html',1,'']]],
-  ['node_5fpackage',['node_package',['../structnode__package.html',1,'']]],
-  ['node_5fpackages',['node_packages',['../structnode__packages.html',1,'']]]
+  ['open',['open',['../classserial_1_1_serial.html#aa4403ddb51e9d209fd86ed316f0ee9b4',1,'serial::Serial']]]
 ];

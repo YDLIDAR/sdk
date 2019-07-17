@@ -1,15 +1,13 @@
 var searchData=
 [
-  ['cachescandata',['cacheScanData',['../classydlidar_1_1_y_dlidar_driver.html#ab462b22dc3a4d39fef4f722345a87d5e',1,'ydlidar::YDlidarDriver']]],
-  ['checkcomms',['checkCOMMs',['../class_c_yd_lidar.html#ab43ca6b1d054aa464a36bea0d4b7934c',1,'CYdLidar']]],
-  ['checkhardware',['checkHardware',['../class_c_yd_lidar.html#ab3c24f8f59fee87aa4e829ca5c8f90d2',1,'CYdLidar']]],
-  ['checklidarabnormal',['checkLidarAbnormal',['../class_c_yd_lidar.html#af305323871f06007e71cc12ab8a8be9a',1,'CYdLidar']]],
-  ['checkstatus',['checkStatus',['../class_c_yd_lidar.html#a8b401544eb4c992c7eff8d5fd47e5676',1,'CYdLidar']]],
-  ['cleardtr',['clearDTR',['../classydlidar_1_1_y_dlidar_driver.html#a67fe00d7458cdb52b4160d745b8ecd32',1,'ydlidar::YDlidarDriver']]],
-  ['closeport',['closePort',['../classserial_1_1_serial.html#afb659db0159a6f4bcefe760fa20df18e',1,'serial::Serial']]],
-  ['cmd_5fpacket',['cmd_packet',['../structcmd__packet.html',1,'']]],
-  ['config',['config',['../struct_laser_scan.html#a5c7dd0b85432e62cf319f2ad4ec058b4',1,'LaserScan']]],
-  ['connect',['connect',['../classydlidar_1_1_y_dlidar_driver.html#a2c5eeecccaa6ed874635de1617e8d7d8',1,'ydlidar::YDlidarDriver']]],
-  ['createthread',['createThread',['../classydlidar_1_1_y_dlidar_driver.html#a2d2b317fa6381009222e03670812e917',1,'ydlidar::YDlidarDriver']]],
-  ['cydlidar',['CYdLidar',['../class_c_yd_lidar.html',1,'']]]
+  ['data',['data',['../struct_laser_scan.html#abf11524b2bd102dc64e4b5c396a1715a',1,'LaserScan']]],
+  ['default_5fheart_5fbeat',['DEFAULT_HEART_BEAT',['../classydlidar_1_1_y_dlidar_driver.html#abbb612f1ac6a9f6dfdcfeafb149dd0daa94033b4717c83f52cd008fe38b712e21',1,'ydlidar::YDlidarDriver']]],
+  ['default_5ftimeout',['DEFAULT_TIMEOUT',['../classydlidar_1_1_y_dlidar_driver.html#abbb612f1ac6a9f6dfdcfeafb149dd0daa07c79ce96f468ff4b40495ef84584442',1,'ydlidar::YDlidarDriver']]],
+  ['description',['description',['../structserial_1_1_port_info.html#a2ba37dd33d47b554aef5c15c1fe8b872',1,'serial::PortInfo']]],
+  ['device_5fhealth',['device_health',['../structdevice__health.html',1,'']]],
+  ['device_5fid',['device_id',['../structserial_1_1_port_info.html#af6a8211d14bccb07b538ac584d195466',1,'serial::PortInfo']]],
+  ['device_5finfo',['device_info',['../structdevice__info.html',1,'']]],
+  ['disabledatagrabbing',['disableDataGrabbing',['../classydlidar_1_1_y_dlidar_driver.html#ae66565bee3cdb8b74698b691f2ab1e63',1,'ydlidar::YDlidarDriver']]],
+  ['disconnect',['disconnect',['../classydlidar_1_1_y_dlidar_driver.html#aa26790ae49d33936229fa67739a8ff5f',1,'ydlidar::YDlidarDriver']]],
+  ['distance_5fq2',['distance_q2',['../structnode__info.html#a82eaf27a6196e803d3618c83b052f78c',1,'node_info']]]
 ];

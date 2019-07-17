@@ -307,11 +307,11 @@ bool CYdLidar::getDeviceInfo() {
     return false;
   }
 
-  std::string model = "S3";
+  std::string model = "S4-EB-1";
 
   switch (devinfo.model) {
     case YDlidarDriver::YDLIDAR_S4:
-      model = "S3";
+      model = "S4-EB-1";
       break;
 
     default:
