@@ -20,7 +20,7 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  1.4.1 |   2019-07-16  |
+| SDK     |  1.4.2 |   2019-07-16  |
 
 
 - [feature] support G4Pro.
@@ -71,14 +71,14 @@ windows:
 
 You should see YDLIDAR's scan result in the console:
 
-	[YDLIDAR]:SDK Version: 1.4.1
+	[YDLIDAR]:SDK Version: 1.4.2
 	[YDLIDAR]:Lidar running correctly ! The health status: good
 	[YDLIDAR] Connection established in [/dev/ttyUSB0][230400]:
 	Firmware version: 1.2
 	Hardware version: 3
 	Model: G4
 	Serial: 2018101800011111
-	[YDLIDAR INFO] Current Sampling Rate : 5K
+	[YDLIDAR INFO] Current Sampling Rate : 9K
 	[YDLIDAR INFO] Current Scan Frequency : 8.000000Hz
 	[YDLIDAR INFO] Now YDLIDAR is scanning ......
 	Scan received: 625 ranges

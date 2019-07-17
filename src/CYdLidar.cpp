@@ -349,10 +349,12 @@ bool CYdLidar::getDeviceInfo() {
   switch (devinfo.model) {
     case YDlidarDriver::YDLIDAR_G4PRO:
       model = "G4Pro";
+      frequencyOffset     = 0.0;
       break;
 
     case YDlidarDriver::YDLIDAR_G4:
       model = "G4";
+      frequencyOffset     = 0.4;
       break;
 
     default:
