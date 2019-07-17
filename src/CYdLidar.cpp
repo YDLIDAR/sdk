@@ -27,7 +27,7 @@ CYdLidar::CYdLidar() : lidarPtr(nullptr) {
   isScanning          = false;
   node_counts         = 2400;
   each_angle          = 0.15;
-  m_FrequencyOffset   = 0.4;
+  m_FrequencyOffset   = 0.0;
   m_AbnormalCheckCount = 2;
   m_IgnoreArray.clear();
 }
@@ -62,7 +62,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
   // Bound?
   if (!checkHardware()) {
-    delay(1000 / m_ScanFrequency);
+    delay(1000 / (2 * m_ScanFrequency));
     hardwareError = true;
     return false;
   }

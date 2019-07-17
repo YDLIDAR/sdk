@@ -1238,6 +1238,7 @@ result_t YDlidarDriver::stop() {
   {
     ScopedLocker l(_lock);
     sendCommand(LIDAR_CMD_FORCE_STOP);
+    delay(10);
     sendCommand(LIDAR_CMD_STOP);
   }
 
