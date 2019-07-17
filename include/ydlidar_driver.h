@@ -16,6 +16,7 @@
 using namespace std;
 using namespace serial;
 
+
 namespace ydlidar {
 
 class YDlidarDriver {
@@ -57,6 +58,24 @@ class YDlidarDriver {
     * @return 返回当前SKD 版本号
     */
   static std::string getSDKVersion();
+
+
+  /**
+   * @brief getHealth
+   * @param health
+   * @param timeout
+   * @return
+   */
+  result_t getHealth(device_health &health, uint32_t timeout = DEFAULT_TIMEOUT);
+
+  /**
+   * @brief getDeviceInfo
+   * @param info
+   * @param timeout
+   * @return
+   */
+
+  result_t getDeviceInfo(device_info &info, uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
    * @brief 获取雷达列表
@@ -246,6 +265,15 @@ class YDlidarDriver {
   result_t waitForData(size_t data_count, uint32_t timeout = DEFAULT_TIMEOUT,
                        size_t *returned_size = NULL);
 
+
+  /**
+   * @brief checkDeviceStatus
+   * @param byte
+   * @return
+   */
+  result_t checkDeviceStatus(uint8_t *recvBuffer, uint8_t byte, int recvPos,
+                             int recvSize, int pos);
+
   /**
   * @brief 获取串口数据 \n
     * @param[in] data 	 数据指针
@@ -333,6 +361,18 @@ class YDlidarDriver {
   uint16_t    SampleNumlAndCTCal;
   uint16_t    LastSampleAngleCal;
   uint16_t    Valu8Tou16;
+  uint8_t     last_byte;
+  int         asyncRecvPos;
+  uint16_t    async_size;
+
+  device_info info_;
+  device_health health_;
+  lidar_ans_header header_;
+  uint8_t  *headerBuffer;
+  uint8_t  *infoBuffer;
+  uint8_t  *healthBuffer;
+  bool     get_device_info_success;
+  bool     get_device_health_success;
 
   std::string serial_port;///< 雷达端口
 

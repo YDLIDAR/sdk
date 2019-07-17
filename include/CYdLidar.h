@@ -67,18 +67,6 @@ class YDLIDAR_API CYdLidar {
   //get fixed resolution node size
   int getFixedSize() const;
 
-  /** Returns true if the device is in good health, If it's not*/
-  bool getDeviceHealth() const;
-
-  /** Returns true if the device information is correct, If it's not*/
-  bool getDeviceInfo(int &type);
-
-  /** Retruns true if the heartbeat function is set to heart is successful, If it's not*/
-  bool checkHeartBeat() const;
-
-  /** Retruns true if the scan frequency is set to user's frequency is successful, If it's not*/
-  bool checkScanFrequency();
-
   //Turn off lidar connection
   void disconnecting(); //!< Closes the comms with the laser. Shouldn't have to be directly needed by the user
 
@@ -102,12 +90,20 @@ class YDLIDAR_API CYdLidar {
   /** returns true if the lidar data is normal, If it's not*/
   bool checkLidarAbnormal();
 
+  /** Returns true if the device is in good health, If it's not*/
+  bool getDeviceHealth();
+
+  /** Returns true if the device information is correct, If it's not*/
+  bool getDeviceInfo();
+
+
+  bool handleDeviceStatus();
 
 
  private:
   bool isScanning;
   bool isConnected;
-  YDlidarDriver *lidarPtr;
+  ydlidar::YDlidarDriver *lidarPtr;
 
   uint32_t m_pointTime;
   uint64_t last_node_time;

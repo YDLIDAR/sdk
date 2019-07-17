@@ -62,13 +62,13 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
 
   // Bound?
   if (!checkHardware()) {
-    delay(50);
+    delay(20);
     hardwareError = true;
     return false;
   }
 
-  node_info nodes[2048];
-  size_t   count = _countof(nodes);
+  node_info *nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
+  size_t   count = YDlidarDriver::MAX_SCAN_NODES;
   //  wait Scan data:
   uint64_t tim_scan_start = getTime();
   result_t op_result =  lidarPtr->grabScanData(nodes, count);
@@ -92,7 +92,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     tim_scan_end -= m_pointTime;
     tim_scan_start = tim_scan_end -  scan_time ;
 
-    if (tim_scan_start - last_node_time > -2e6 && tim_scan_start - last_node_time < 0) {
+    if (tim_scan_start - last_node_time > -2e6 &&
+        tim_scan_start - last_node_time < 0) {
       tim_scan_start = last_node_time;
       tim_scan_end = tim_scan_start + scan_time;
     }
@@ -156,6 +157,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     }
 
     scan_msg.system_time_stamp = tim_scan_start + min_index * m_pointTime;
+    delete[] nodes;
     return true;
 
   } else {
@@ -164,6 +166,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     }
   }
 
+  delete[] nodes;
   return false;
 
 }
@@ -184,6 +187,7 @@ bool  CYdLidar::turnOn() {
     op_result = lidarPtr->startScan();
 
     if (!IS_OK(op_result)) {
+      lidarPtr->stop();
       fprintf(stderr, "[CYdLidar] Failed to start scan mode: %x\n", op_result);
       isScanning = false;
       return false;
@@ -196,6 +200,10 @@ bool  CYdLidar::turnOn() {
             "[CYdLidar] Failed to turn on the Lidar, because the lidar is blocked or the lidar hardware is faulty.\n");
     isScanning = false;
     return false;
+  }
+
+  {
+    handleDeviceStatus();
   }
 
   isScanning = true;
@@ -228,8 +236,8 @@ bool  CYdLidar::turnOff() {
             checkLidarAbnormal
 -------------------------------------------------------------*/
 bool CYdLidar::checkLidarAbnormal() {
-  node_info nodes[2048];
-  size_t   count = _countof(nodes);
+  node_info *nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
+  size_t   count = YDlidarDriver::MAX_SCAN_NODES;
   int check_abnormal_count = 0;
 
   if (m_AbnormalCheckCount < 2) {
@@ -247,14 +255,101 @@ bool CYdLidar::checkLidarAbnormal() {
     op_result =  lidarPtr->grabScanData(nodes, count);
 
     if (IS_OK(op_result)) {
+      delete[] nodes;
       return false;
     }
 
     check_abnormal_count++;
   }
 
+  delete[] nodes;
   return !IS_OK(op_result);
 }
+
+bool CYdLidar::getDeviceHealth() {
+  if (!lidarPtr) {
+    return false;
+  }
+
+  result_t op_result;
+  device_health healthinfo;
+  printf("[YDLIDAR]:SDK Version: %s\n", YDlidarDriver::getSDKVersion().c_str());
+  op_result = lidarPtr->getHealth(healthinfo);
+
+  if (IS_OK(op_result)) {
+    printf("[YDLIDAR]:Lidar running correctly ! The health status: %s\n",
+           (int)healthinfo.status == 0 ? "good" : "bad");
+
+    if (healthinfo.status == 2) {
+      fprintf(stderr,
+              "Error, Yd Lidar internal error detected. Please reboot the device to retry.\n");
+      return false;
+    } else {
+      return true;
+    }
+
+  } else {
+    fprintf(stderr, "Error, cannot retrieve Yd Lidar health code: %x\n", op_result);
+    return false;
+  }
+}
+
+bool CYdLidar::getDeviceInfo() {
+  if (!lidarPtr) {
+    return false;
+  }
+
+  device_info devinfo;
+  result_t op_result = lidarPtr->getDeviceInfo(devinfo);
+
+  if (!IS_OK(op_result)) {
+    fprintf(stderr, "get Device Information Error\n");
+    return false;
+  }
+
+  std::string model = "S3";
+
+  switch (devinfo.model) {
+    case YDlidarDriver::YDLIDAR_S4:
+      model = "S3";
+      break;
+
+    default:
+      break;
+  }
+
+  uint8_t Major = (uint8_t)(devinfo.firmware_version >> 8);
+  uint8_t Minjor = (uint8_t)(devinfo.firmware_version & 0xff);
+  printf("[YDLIDAR] Device Info:\n"
+         "Firmware version: %u.%u\n"
+         "Hardware version: %u\n"
+         "Model: %s\n"
+         "Serial: ",
+         Major,
+         Minjor,
+         (unsigned int)devinfo.hardware_version,
+         model.c_str());
+
+  for (int i = 0; i < 16; i++) {
+    printf("%01X", devinfo.serialnum[i] & 0xff);
+  }
+
+  printf("\n");
+  printf("[YDLIDAR INFO] Current Sampling Rate : 3K\n");
+  return true;
+}
+
+bool CYdLidar::handleDeviceStatus() {
+  if (!lidarPtr) {
+    return false;
+  }
+
+  bool ret = getDeviceHealth();
+  ret |= getDeviceInfo();
+
+  return ret;
+}
+
 /*-------------------------------------------------------------
 						checkCOMMs
 -------------------------------------------------------------*/

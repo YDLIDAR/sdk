@@ -41,6 +41,15 @@ YDlidarDriver::YDlidarDriver():
   CheckSumResult      = true;
   Valu8Tou16          = 0;
 
+  last_byte           = 0;
+  asyncRecvPos        = 0;
+  async_size          = 0;
+  headerBuffer = reinterpret_cast<uint8_t *>(&header_);
+  infoBuffer = reinterpret_cast<uint8_t *>(&info_);
+  healthBuffer = reinterpret_cast<uint8_t *>(&health_);
+  get_device_health_success = false;
+  get_device_info_success = false;
+
 }
 
 YDlidarDriver::~YDlidarDriver() {
@@ -100,7 +109,6 @@ void YDlidarDriver::setDTR() {
   }
 
   if (_serial) {
-    _serial->flush();
     _serial->setDTR(1);
   }
 
@@ -112,7 +120,6 @@ void YDlidarDriver::clearDTR() {
   }
 
   if (_serial) {
-    _serial->flush();
     _serial->setDTR(0);
   }
 }
@@ -199,6 +206,32 @@ bool YDlidarDriver::isScanning() const {
 
 uint32_t YDlidarDriver::getPointTime() const {
   return m_pointTime;
+}
+
+result_t YDlidarDriver::getHealth(device_health &health, uint32_t timeout) {
+  if (!m_isConnected) {
+    return RESULT_FAIL;
+  }
+
+  if (!get_device_health_success) {
+    return RESULT_FAIL;
+  }
+
+  health = this->health_;
+  return RESULT_OK;
+}
+
+result_t YDlidarDriver::getDeviceInfo(device_info &info, uint32_t timeout) {
+  if (!m_isConnected) {
+    return RESULT_FAIL;
+  }
+
+  if (!get_device_info_success) {
+    return RESULT_FAIL;
+  }
+
+  info = this->info_;
+  return RESULT_OK;
 }
 
 
@@ -366,7 +399,6 @@ int YDlidarDriver::cacheScanData() {
   node_info      local_scan[MAX_SCAN_NODES];
   size_t         scan_count = 0;
   result_t       ans = RESULT_FAIL;
-  flush();
   memset(local_scan, 0, sizeof(local_scan));
   waitScanData(local_buf, count);
 
@@ -434,6 +466,7 @@ int YDlidarDriver::cacheScanData() {
 
       } else {
         timeout_count++;
+        printf("timeout: %d\n", timeout_count);
         local_buf[0].sync_flag =  Node_NotSync;
       }
     } else {
@@ -470,8 +503,153 @@ int YDlidarDriver::cacheScanData() {
   return RESULT_OK;
 }
 
+result_t YDlidarDriver::checkDeviceStatus(uint8_t *recvBuffer, uint8_t byte,
+    int recvPos, int recvSize, int pos) {
+  if (asyncRecvPos == sizeof(lidar_ans_header)) {
+    if ((((pos < recvSize - 1) && byte == LIDAR_ANS_SYNC_BYTE1) ||
+         (last_byte == LIDAR_ANS_SYNC_BYTE1 && byte == LIDAR_ANS_SYNC_BYTE2)) &&
+        recvPos == 0) {
+      if ((last_byte == LIDAR_ANS_SYNC_BYTE1 &&
+           byte == LIDAR_ANS_SYNC_BYTE2)) {
+        asyncRecvPos = 0;
+        async_size = 0;
+        headerBuffer[asyncRecvPos] = last_byte;
+        asyncRecvPos++;
+        headerBuffer[asyncRecvPos] = byte;
+        asyncRecvPos++;
+        last_byte = byte;
+        return RESULT_OK;
+      } else {
+        if (pos < recvSize - 1) {
+          if (recvBuffer[pos + 1] == LIDAR_ANS_SYNC_BYTE2) {
+            asyncRecvPos = 0;
+            async_size = 0;
+            headerBuffer[asyncRecvPos] = byte;
+            asyncRecvPos++;
+            last_byte = byte;
+            return RESULT_OK;
+          }
+        }
+
+      }
+
+    }
+
+    last_byte = byte;
+
+    if (header_.type == LIDAR_ANS_TYPE_DEVINFO ||
+        header_.type == LIDAR_ANS_TYPE_DEVHEALTH) {
+      if (header_.size < 1) {
+        asyncRecvPos = 0;
+        async_size = 0;
+      } else {
+
+        if (header_.type == LIDAR_ANS_TYPE_DEVHEALTH) {
+          if (async_size < sizeof(health_)) {
+            healthBuffer[async_size] = byte;
+            async_size++;
+
+            if (async_size == sizeof(health_)) {
+              asyncRecvPos = 0;
+              async_size = 0;
+              get_device_health_success = true;
+              last_byte = byte;
+              return RESULT_OK;
+            }
+
+          } else {
+            asyncRecvPos = 0;
+            async_size = 0;
+          }
+
+        } else {
+
+          if (async_size < sizeof(info_)) {
+            infoBuffer[async_size] = byte;
+            async_size++;
+
+            if (async_size == sizeof(info_)) {
+              asyncRecvPos = 0;
+              async_size = 0;
+              get_device_info_success = true;
+
+              last_byte = byte;
+              return RESULT_OK;
+            }
+
+          } else {
+            asyncRecvPos = 0;
+            async_size = 0;
+          }
+        }
+      }
+    } else if (header_.type == LIDAR_ANS_TYPE_MEASUREMENT) {
+      asyncRecvPos = 0;
+      async_size = 0;
+
+    }
+
+  } else {
+
+    switch (asyncRecvPos) {
+      case 0:
+        if (byte == LIDAR_ANS_SYNC_BYTE1 && recvPos == 0) {
+          headerBuffer[asyncRecvPos] = byte;
+          last_byte = byte;
+          asyncRecvPos++;
+        }
+
+        break;
+
+      case 1:
+        if (byte == LIDAR_ANS_SYNC_BYTE2 && recvPos == 0) {
+          headerBuffer[asyncRecvPos] = byte;
+          asyncRecvPos++;
+          last_byte = byte;
+          return RESULT_OK;
+        } else {
+          asyncRecvPos = 0;
+        }
+
+        break;
+
+      default:
+        break;
+    }
+
+    if (asyncRecvPos >= 2) {
+      if (((pos < recvSize - 1 && byte == LIDAR_ANS_SYNC_BYTE1) ||
+           (last_byte == LIDAR_ANS_SYNC_BYTE1 && byte == LIDAR_ANS_SYNC_BYTE2)) &&
+          recvPos == 0) {
+        if ((last_byte == LIDAR_ANS_SYNC_BYTE1 &&
+             byte == LIDAR_ANS_SYNC_BYTE2)) {
+          asyncRecvPos = 0;
+          async_size = 0;
+          headerBuffer[asyncRecvPos] = last_byte;
+          asyncRecvPos++;
+        } else {
+          if (pos < recvSize - 2) {
+            if (recvBuffer[pos + 1] == LIDAR_ANS_SYNC_BYTE2) {
+              asyncRecvPos = 0;
+            }
+          }
+        }
+      }
+
+      headerBuffer[asyncRecvPos] = byte;
+      asyncRecvPos++;
+      last_byte = byte;
+      return RESULT_OK;
+    }
+  }
+
+  return RESULT_FAIL;
+
+}
+
 result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   int recvPos = 0;
+  asyncRecvPos = 0;
   uint32_t startTs = getms();
   uint32_t size = sizeof(node_packages);
   uint32_t waitTime = 0;
@@ -481,6 +659,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   int  package_recvPos = 0;
   uint8_t package_type = 0;
   uint8_t scan_frequence = 0;
+  async_size = 0;
 
   if (package_Sample_Index == 0) {
     uint8_t *recvBuffer = new uint8_t[size];
@@ -504,6 +683,13 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
       for (size_t pos = 0; pos < recvSize; ++pos) {
         uint8_t currentByte = recvBuffer[pos];
+
+        if (checkDeviceStatus(recvBuffer, currentByte, recvPos, recvSize,
+                              pos) == RESULT_OK) {
+          continue;
+        }
+
+
 
         switch (recvPos) {
           case 0:
@@ -1006,6 +1192,7 @@ result_t YDlidarDriver::stop() {
   {
     ScopedLocker l(_lock);
     sendCommand(LIDAR_CMD_FORCE_STOP);
+    delay(10);
     sendCommand(LIDAR_CMD_STOP);
   }
   delay(10);
