@@ -72,11 +72,11 @@ bool Serial::open() {
   return pimpl_->open();
 }
 
-void Serial::close() {
+void Serial::closePort() {
   pimpl_->close();
 }
 
-bool Serial::isOpen() const {
+bool Serial::isOpen() {
   return pimpl_->isOpen();
 }
 
@@ -96,6 +96,7 @@ void Serial::waitByteTimes(size_t count) {
 int Serial::waitfordata(size_t data_count, uint32_t timeout, size_t *returned_size) {
   return pimpl_->waitfordata(data_count, timeout, returned_size);
 }
+
 
 size_t Serial::read_(uint8_t *buffer, size_t size) {
   return this->pimpl_->read(buffer, size);
@@ -230,7 +231,7 @@ void Serial::setPort(const string &port) {
   bool was_open = pimpl_->isOpen();
 
   if (was_open) {
-    close();
+    closePort();
   }
 
   pimpl_->setPort(port);
@@ -344,7 +345,7 @@ bool Serial::getCD() {
   return pimpl_->getCD();
 }
 
-uint32_t Serial::getByteTime() {
+int Serial::getByteTime() {
   return pimpl_->getByteTime();
 }
 }
