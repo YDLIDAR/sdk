@@ -712,7 +712,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
                                                   *node).distance_q2 / 2.0))) * 180.0 / 3.1415) * 64.0);
     } else {
       AngleCorrectForDistance = 0;
-      (*node).sync_flag = 0;
+      (*node).sync_quality = 0;
     }
 
     if ((FirstSampleAngle + IntervalSampleAngle * package_Sample_Index +
