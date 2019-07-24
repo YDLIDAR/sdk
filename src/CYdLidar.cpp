@@ -22,11 +22,11 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_MinAngle          = -180.f;
   m_MaxRange          = 16.0;
   m_MinRange          = 0.08;
-  m_SampleRate        = 5;
+  m_SampleRate        = 10;
   m_ScanFrequency     = 10;
   isScanning          = false;
-  node_counts         = 720;
-  each_angle          = 0.5;
+  node_counts         = 1440;
+  each_angle          = 0.25;
   frequencyOffset     = 0.4;
   m_AbnormalCheckCount  = 4;
   Major               = 0;
@@ -207,14 +207,13 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
         scan_msg.config.ang_increment = (scan_msg.config.max_angle -
                                          scan_msg.config.min_angle) /
                                         (double)counts;
-        scan_msg.config.time_increment = scan_time / (double)counts;
       } else {
         scan_msg.config.ang_increment = (scan_msg.config.max_angle -
                                          scan_msg.config.min_angle) /
                                         (double)(counts - 1);
-        scan_msg.config.time_increment = scan_time / (double)(counts - 1);
       }
 
+      scan_msg.config.time_increment = scan_time / (double)counts;
       scan_msg.config.scan_time = scan_time;
       scan_msg.config.min_range = m_MinRange;
       scan_msg.config.max_range = m_MaxRange;
@@ -367,11 +366,11 @@ bool CYdLidar::getDeviceInfo() {
     return false;
   }
 
-  std::string model = "G4B";
+  std::string model = "G10B";
 
   switch (devinfo.model) {
     case YDlidarDriver::YDLIDAR_G4B:
-      model = "G4B";
+      model = "G10B";
       break;
 
     default:
@@ -405,9 +404,9 @@ bool CYdLidar::getDeviceInfo() {
 
 
 void CYdLidar::checkSampleRate() {
-  node_counts = 720;
-  each_angle = 0.5;
-  m_SampleRate = 5;
+  node_counts = 1440;
+  each_angle = 0.25;
+  m_SampleRate = 10;
 }
 
 /*-------------------------------------------------------------
