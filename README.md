@@ -20,10 +20,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  1.4.2 |   2019-07-16  |
+| SDK     |  1.4.2 |   2019-07-29  |
 
 
-- [feature] support G4Pro.
+- [feature] support G2A.
 
 
 
@@ -34,7 +34,7 @@ Dataset
 
 | Model      |  Baudrate |  Sampling Frequency | Range(m)  | Scanning Frequency(HZ) | Working temperature(°C) | Laser power max(mW) | voltage(V) | Current(mA)
 | :-------- | --------:|--------:|  --------:| --------:|--------:| --------:| --------:|  :--: |
-| G2-SS-1 |  230400 |   5000  |  0.1-16   |5-12|0-50| ~5|4.8-5.2|400-480|
+| G2A    |  230400 |   5000  |  0.1-16   |5-12|0-50| ~5|4.8-5.2|400-480|
 | G4     |  230400 |   9000  |  0.26-16   |5-12|0-50| ~5|4.8-5.2|400-480|
 | G4Pro  |  230400 |   9000  |  0.26-16   |5-12|0-50| ~5|4.8-5.2|400-480|
 | X4     |  128000 |   5000  |  0.12-10   |5-12|0-40| ~5|4.8-5.2|330-380|
@@ -46,7 +46,7 @@ How to build YDLIDAR SDK samples
 ---------------
     $ git clone https://github.com/ydlidar/sdk
     $ cd sdk
-    $ git checkout gaussian
+    $ git checkout G2A
     $ cd ..
     $ mkdir build
     $ cd build
@@ -76,51 +76,15 @@ You should see YDLIDAR's scan result in the console:
 	[YDLIDAR] Connection established in [/dev/ttyUSB0][230400]:
 	Firmware version: 1.2
 	Hardware version: 3
-	Model: G4
-	Serial: 2018101800011111
-	[YDLIDAR INFO] Current Sampling Rate : 9K
-	[YDLIDAR INFO] Current Scan Frequency : 8.000000Hz
+	Model: G2A
+	Serial: 2019071800011111
+	[YDLIDAR INFO] Current Sampling Rate : 5K
+	[YDLIDAR INFO] Current Scan Frequency : 10.000000Hz
 	[YDLIDAR INFO] Now YDLIDAR is scanning ......
-	Scan received: 625 ranges
-	Scan received: 626 ranges
+	Scan received: 500 ranges
+	Scan received: 503 ranges
 	
 	
-code:
-        
-        void ParseScan(node_info* data, const size_t& size) {
-
-            double current_frequence, current_distance, current_angle, current_intensity;
-
-            uint64_t current_time_stamp;
-
-            for (size_t i = 0; i < size; i++ ) {
-
-                if( data[i].scan_frequence != 0) {
-                
-                    current_frequence =  data[i].scan_frequence;//or current_frequence = data[0].scan_frequence
-                    
-                }
-
-                current_time_stamp = data[i].stamp;
-                
-                current_angle = ((data[i].angle_q6_checkbit>>LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT)/64.0f);//LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT equals 8
-
-                current_distance =  data[i].distance_q2/4.f;
-
-                current_intensity = (float)(data[i].sync_quality);
-
-            }
-
-            if (current_frequence != 0 ) {
-
-                printf("current lidar scan frequency: %f\n", current_frequence);
-
-            } else {
-
-                printf("Current lidar does not support return scan frequency\n");
-
-            }
-        }
 
 
 

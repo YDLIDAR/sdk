@@ -50,7 +50,7 @@ YDlidarDriver::YDlidarDriver():
   isSupportMotorCtrl  = true;
   scan_node_count     = 0;
 
-  m_pointTime         = 1e9 / 9000;
+  m_pointTime         = 1e9 / 5000;
   trans_delay         = 0;
   scan_frequence      = 0;
   m_sampling_rate     = -1;
@@ -420,6 +420,7 @@ int YDlidarDriver::cacheScanData() {
   int timeout_count   = 0;
 
   while (isScanning) {
+    count = 128;
     ans = waitScanData(local_buf, count);
 
     if (!IS_OK(ans)) {
@@ -808,6 +809,11 @@ result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,
 
     nodebuffer[recvNodeCount++] = node;
 
+    if (node.sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
+      count = recvNodeCount;
+      return RESULT_OK;
+    }
+
     if (recvNodeCount == count) {
       return RESULT_OK;
     }
@@ -1068,37 +1074,7 @@ void YDlidarDriver::setAutoReconnect(const bool &enable) {
 void YDlidarDriver::checkTransDelay() {
   //calc stamp
   trans_delay = _serial->getByteTime();
-  m_pointTime = 1e9 / 9000;
-
-  switch (model) {
-    case YDLIDAR_G4PRO:
-    case YDLIDAR_G4://g4
-      if (m_sampling_rate == -1) {
-        sampling_rate _rate;
-        getSamplingRate(_rate);
-        m_sampling_rate = _rate.rate;
-      }
-
-      switch (m_sampling_rate) {
-        case 0:
-          m_pointTime = 1e9 / 4000;
-          break;
-
-        case 1:
-          m_pointTime = 1e9 / 8000;
-          break;
-
-        case 2:
-          m_pointTime = 1e9 / 9000;
-          break;
-      }
-
-      trans_delay = _serial->getByteTime();
-      break;
-
-    default:
-      break;
-  }
+  m_pointTime = 1e9 / 5000;
 }
 
 /************************************************************************/

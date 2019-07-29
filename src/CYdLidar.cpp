@@ -49,22 +49,22 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_SerialPort        = "";
   m_SerialBaudrate    = 230400;
   m_FixedResolution   = true;
-  m_Reversion         = false;
+  m_Reversion         = true;
   m_AutoReconnect     = true;
   m_MaxAngle          = 180.f;
   m_MinAngle          = -180.f;
   m_MaxRange          = 16.0;
   m_MinRange          = 0.08;
-  m_SampleRate        = 9;
+  m_SampleRate        = 5;
   m_ScanFrequency     = 10;
   isScanning          = false;
-  node_counts         = 1440;
+  node_counts         = 720;
   frequencyOffset     = 0.4;
   m_AbnormalCheckCount  = 4;
   Major               = 0;
   Minjor              = 0;
   m_IgnoreArray.clear();
-  node_duration = 1e9 / 9000;
+  node_duration = 1e9 / 5000;
   m_OffsetTime = 0.0;
   last_node_time = getTime();
 }
@@ -95,7 +95,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
   // Bound?
   if (!checkHardware()) {
     hardwareError = true;
-    delay(1000 / m_ScanFrequency);
+    delay(500 / m_ScanFrequency);
     return false;
   }
 
@@ -337,23 +337,17 @@ bool CYdLidar::getDeviceInfo() {
     return false;
   }
 
-  if (devinfo.model != YDlidarDriver::YDLIDAR_G4 &&
-      devinfo.model != YDlidarDriver::YDLIDAR_G4PRO) {
+  if (devinfo.model != YDlidarDriver::YDLIDAR_G2A) {
     printf("[YDLIDAR INFO] Current SDK does not support current lidar models[%d]\n",
            devinfo.model);
     return false;
   }
 
-  std::string model = "G4";
+  std::string model = "G2A";
 
   switch (devinfo.model) {
-    case YDlidarDriver::YDLIDAR_G4PRO:
-      model = "G4Pro";
-      frequencyOffset     = 0.0;
-      break;
-
-    case YDlidarDriver::YDLIDAR_G4:
-      model = "G4";
+    case YDlidarDriver::YDLIDAR_G2A:
+      model = "G2A";
       frequencyOffset     = 0.4;
       break;
 
@@ -380,74 +374,9 @@ bool CYdLidar::getDeviceInfo() {
   }
 
   printf("\n");
-  checkSampleRate();
   printf("[YDLIDAR INFO] Current Sampling Rate : %dK\n", m_SampleRate);
   checkScanFrequency();
   return true;
-}
-
-
-void CYdLidar::checkSampleRate() {
-  sampling_rate _rate;
-  int _samp_rate = 9;
-  int try_count;
-  node_counts = 1440;
-  result_t ans = lidarPtr->getSamplingRate(_rate);
-
-  if (IS_OK(ans)) {
-    switch (m_SampleRate) {
-      case 4:
-        _samp_rate = YDlidarDriver::YDLIDAR_RATE_4K;
-        break;
-
-      case 8:
-        _samp_rate = YDlidarDriver::YDLIDAR_RATE_8K;
-        break;
-
-      case 9:
-        _samp_rate = YDlidarDriver::YDLIDAR_RATE_9K;
-        break;
-
-      default:
-        _samp_rate = _rate.rate;
-        break;
-    }
-
-    while (_samp_rate != _rate.rate) {
-      ans = lidarPtr->setSamplingRate(_rate);
-
-      if (!IS_OK(ans)) {
-        try_count++;
-
-        if (try_count > 3) {
-          break;
-        }
-      }
-    }
-
-    switch (_rate.rate) {
-      case YDlidarDriver::YDLIDAR_RATE_4K:
-        _samp_rate = 4;
-        node_counts = 720;
-        break;
-
-      case YDlidarDriver::YDLIDAR_RATE_8K:
-        node_counts = 1440;
-        _samp_rate = 8;
-        break;
-
-      case YDlidarDriver::YDLIDAR_RATE_9K:
-        node_counts = 1440;
-        _samp_rate = 9;
-        break;
-
-      default:
-        break;
-    }
-  }
-
-  m_SampleRate = _samp_rate;
-
 }
 
 /*-------------------------------------------------------------

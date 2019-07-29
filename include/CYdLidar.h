@@ -57,8 +57,6 @@ class YDLIDAR_API CYdLidar {
                         private) ///< 设置异常是否开启重新连接
   PropertyBuilderByName(int, SerialBaudrate,
                         private) ///< 设置和获取激光通讯波特率
-  PropertyBuilderByName(int, SampleRate,
-                        private) ///< 设置和获取激光采样频率(KHz)
   PropertyBuilderByName(int, AbnormalCheckCount,
                         private) ///< Maximum number of abnormal checks
   PropertyBuilderByName(std::string, SerialPort,
@@ -107,11 +105,6 @@ class YDLIDAR_API CYdLidar {
     */
   bool checkHardware();
 
-  /**
-   * @brief checkSampleRate
-   */
-  void checkSampleRate();
-
   /** Returns true if the device is in good health, If it's not*/
   bool getDeviceHealth();
 
@@ -133,6 +126,7 @@ class YDLIDAR_API CYdLidar {
   YDlidarDriver *lidarPtr;
   uint64_t node_duration;
   uint64_t last_node_time;
+  int m_SampleRate;
 
 };	// End of class
 
