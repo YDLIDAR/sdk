@@ -24,7 +24,7 @@ YDlidarDriver::YDlidarDriver():
   isSupportMotorCtrl  = true;
   scan_node_count     = 0;
 
-  m_pointTime         = 1e9 / 3000;
+  m_pointTime         = 1e9 / 2000;
   trans_delay         = 0;
 
   //解析参数
@@ -94,6 +94,7 @@ result_t YDlidarDriver::connect(const char *port_path, uint32_t baudrate) {
   {
     ScopedLocker l(_lock);
     sendCommand(LIDAR_CMD_FORCE_STOP);
+    delay(10);
     sendCommand(LIDAR_CMD_STOP);
   }
   delay(50);
@@ -684,10 +685,10 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
       for (size_t pos = 0; pos < recvSize; ++pos) {
         uint8_t currentByte = recvBuffer[pos];
 
-        if (checkDeviceStatus(recvBuffer, currentByte, recvPos, recvSize,
-                              pos) == RESULT_OK) {
-          continue;
-        }
+//        if (checkDeviceStatus(recvBuffer, currentByte, recvPos, recvSize,
+//                              pos) == RESULT_OK) {
+//          continue;
+//        }
 
 
 

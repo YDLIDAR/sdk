@@ -90,16 +90,6 @@ class YDLIDAR_API CYdLidar {
   /** returns true if the lidar data is normal, If it's not*/
   bool checkLidarAbnormal();
 
-  /** Returns true if the device is in good health, If it's not*/
-  bool getDeviceHealth();
-
-  /** Returns true if the device information is correct, If it's not*/
-  bool getDeviceInfo();
-
-
-  bool handleDeviceStatus();
-
-
  private:
   bool isScanning;
   bool isConnected;

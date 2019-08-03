@@ -28,7 +28,7 @@ CYdLidar::CYdLidar(): lidarPtr(0) {
   m_GlassNoise        = true;
   m_SunNoise          = true;
   m_OffsetTime        = 0.0;
-  m_pointTime         = 1e9 / 3000;
+  m_pointTime         = 1e9 / 2000;
   last_node_time      = getTime();
   m_FixedSize         = 360;
   m_IgnoreArray.clear();
@@ -202,10 +202,6 @@ bool  CYdLidar::turnOn() {
     return false;
   }
 
-  {
-    handleDeviceStatus();
-  }
-
   isScanning = true;
   m_pointTime = lidarPtr->getPointTime();
   lidarPtr->setAutoReconnect(m_AutoReconnect);
@@ -264,90 +260,6 @@ bool CYdLidar::checkLidarAbnormal() {
 
   delete[] nodes;
   return !IS_OK(op_result);
-}
-
-bool CYdLidar::getDeviceHealth() {
-  if (!lidarPtr) {
-    return false;
-  }
-
-  result_t op_result;
-  device_health healthinfo;
-  printf("[YDLIDAR]:SDK Version: %s\n", YDlidarDriver::getSDKVersion().c_str());
-  op_result = lidarPtr->getHealth(healthinfo);
-
-  if (IS_OK(op_result)) {
-    printf("[YDLIDAR]:Lidar running correctly ! The health status: %s\n",
-           (int)healthinfo.status == 0 ? "good" : "bad");
-
-    if (healthinfo.status == 2) {
-      fprintf(stderr,
-              "Error, Yd Lidar internal error detected. Please reboot the device to retry.\n");
-      return false;
-    } else {
-      return true;
-    }
-
-  } else {
-    fprintf(stderr, "Error, cannot retrieve Yd Lidar health code: %x\n", op_result);
-    return false;
-  }
-}
-
-bool CYdLidar::getDeviceInfo() {
-  if (!lidarPtr) {
-    return false;
-  }
-
-  device_info devinfo;
-  result_t op_result = lidarPtr->getDeviceInfo(devinfo);
-
-  if (!IS_OK(op_result)) {
-    fprintf(stderr, "get Device Information Error\n");
-    return false;
-  }
-
-  std::string model = "S3";
-
-  switch (devinfo.model) {
-    case YDlidarDriver::YDLIDAR_S4:
-      model = "S3";
-      break;
-
-    default:
-      break;
-  }
-
-  uint8_t Major = (uint8_t)(devinfo.firmware_version >> 8);
-  uint8_t Minjor = (uint8_t)(devinfo.firmware_version & 0xff);
-  printf("[YDLIDAR] Device Info:\n"
-         "Firmware version: %u.%u\n"
-         "Hardware version: %u\n"
-         "Model: %s\n"
-         "Serial: ",
-         Major,
-         Minjor,
-         (unsigned int)devinfo.hardware_version,
-         model.c_str());
-
-  for (int i = 0; i < 16; i++) {
-    printf("%01X", devinfo.serialnum[i] & 0xff);
-  }
-
-  printf("\n");
-  printf("[YDLIDAR INFO] Current Sampling Rate : 3K\n");
-  return true;
-}
-
-bool CYdLidar::handleDeviceStatus() {
-  if (!lidarPtr) {
-    return false;
-  }
-
-  bool ret = getDeviceHealth();
-  ret |= getDeviceInfo();
-
-  return ret;
 }
 
 /*-------------------------------------------------------------
