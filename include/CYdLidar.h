@@ -47,6 +47,15 @@ class YDLIDAR_API CYdLidar {
  public:
   CYdLidar(); //!< Constructor
   virtual ~CYdLidar();  //!< Destructor: turns the laser off.
+  enum CheckStateError {
+    NOERROR = 0,//No Error
+    FREQUENCYOUT = 1, //Frequency out of range
+    JUMPFREQUENCY = 2, // jump frequency.
+    MINFREQERROR = 3, //min frequency error....
+    MAXFREQERROR = 4,//max frequency error....
+
+
+  };
   /**
    * @brief initialize
    * @return
@@ -176,6 +185,16 @@ class YDLIDAR_API CYdLidar {
   double last_frequency;
   bool has_check_state;
   CheckState m_state;
+  CheckStateError m_check_state_error;
+
+  const int MAXSTARTCHECKCOUNT = 5;
+  int start_check_count;
+
+  std::vector<double> m_Calibration_angle, m_Calibration_distance,
+      m_last_check_distance, m_percentage;
+  std::vector<std::vector<double>> m_distance_queue, m_mean_distance_queue;
+  const double MaxStdDev = 120;
+  const double MaxEntryDiff = 500;
 
   void retSetData();
   void handleScanData(double angle, double distance);
@@ -184,6 +203,7 @@ class YDLIDAR_API CYdLidar {
   void handleCheckDis();
   void handleLidarDis(int distance);
   void handleCheckState();
+  void handleCalibrationState();
 
 
  private:

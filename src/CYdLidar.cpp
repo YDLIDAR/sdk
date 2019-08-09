@@ -52,6 +52,17 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   check_queue_size.resize(MAXCHECKTIMES);
   auto_check_sum_queue.resize(MAXCHECKTIMES);
   auto_check_distance.resize(MAXCHECKTIMES);
+  m_Calibration_angle.resize(MAXCALIBRATIONRANGE);
+  m_Calibration_distance.resize(MAXCALIBRATIONRANGE);
+  m_distance_queue.resize(MAXCALIBRATIONRANGE);
+  m_last_check_distance.resize(MAXCALIBRATIONRANGE);
+  m_percentage.resize(MAXCALIBRATIONRANGE);
+  m_mean_distance_queue.resize(MAXCALIBRATIONRANGE);
+  m_Calibration_angle[0] = 0;
+  m_Calibration_angle[1] = 10;
+  m_Calibration_distance[0] = 3000.0;
+  m_Calibration_distance[1] = 8000.0;
+
   m_action_startup = false;
   has_check_flag = false;
   current_frequency = 0.0;
@@ -61,6 +72,7 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   action_check_time = getTime();
   has_check_state = false;
   m_state  = NORMAL;
+  m_check_state_error = NOERROR;
 }
 
 /*-------------------------------------------------------------

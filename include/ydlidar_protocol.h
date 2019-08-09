@@ -121,6 +121,7 @@ typedef enum {
 
 #define MAXCHECKTIMES          4
 #define MAXCHECKIGNOREANGLE    2
+#define MAXCALIBRATIONRANGE    2
 
 enum CheckState {
   NORMAL,
