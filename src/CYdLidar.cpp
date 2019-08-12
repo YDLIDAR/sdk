@@ -53,8 +53,8 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_AutoReconnect     = true;
   m_MaxAngle          = 180.f;
   m_MinAngle          = -180.f;
-  m_MaxRange          = 16.0;
-  m_MinRange          = 0.08;
+  m_MaxRange          = 12.0;
+  m_MinRange          = 0.1;
   m_SampleRate        = 5;
   m_ScanFrequency     = 10;
   isScanning          = false;
@@ -337,24 +337,41 @@ bool CYdLidar::getDeviceInfo() {
     return false;
   }
 
-  if (devinfo.model != YDlidarDriver::YDLIDAR_G2A) {
+  if (devinfo.model != YDlidarDriver::YDLIDAR_G2A &&
+      devinfo.model != YDlidarDriver::YDLIDAR_G2B &&
+      devinfo.model != YDlidarDriver::YDLIDAR_G2C) {
     printf("[YDLIDAR INFO] Current SDK does not support current lidar models[%d]\n",
            devinfo.model);
     return false;
   }
 
-  std::string model = "G2A";
+  bool intensity = true;
+  frequencyOffset     = 0.4;
+  m_SampleRate = 5;
+  std::string model = "G2";
 
   switch (devinfo.model) {
     case YDlidarDriver::YDLIDAR_G2A:
       model = "G2A";
-      frequencyOffset     = 0.4;
+      intensity = false;
+      break;
+
+    case YDlidarDriver::YDLIDAR_G2B:
+      model = "G2";
+      intensity = true;
+      break;
+
+    case YDlidarDriver::YDLIDAR_G2C:
+      model = "G2C";
+      m_SampleRate = 4;
+      intensity = false;
       break;
 
     default:
       break;
   }
 
+  lidarPtr->setIntensities(intensity);
   Major = (uint8_t)(devinfo.firmware_version >> 8);
   Minjor = (uint8_t)(devinfo.firmware_version & 0xff);
   printf("[YDLIDAR] Connection established in [%s][%d]:\n"

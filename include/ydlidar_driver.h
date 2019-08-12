@@ -512,6 +512,7 @@ class YDlidarDriver {
   uint32_t trans_delay;				///< 串口传输一个byte时间
   int m_sampling_rate;					///< 采样频率
   int model; ///< 雷达型号
+  int sample_rate;
 
   node_package package;
   node_packages packages;

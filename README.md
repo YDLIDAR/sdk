@@ -20,10 +20,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  1.4.2 |   2019-07-29  |
+| SDK     |  1.4.2 |   2019-08-12  |
 
 
-- [feature] support G2A.
+- [feature] support G2 G2A G2C.
 
 
 
@@ -32,21 +32,17 @@ Dataset
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-| Model      |  Baudrate |  Sampling Frequency | Range(m)  | Scanning Frequency(HZ) | Working temperature(°C) | Laser power max(mW) | voltage(V) | Current(mA)
-| :-------- | --------:|--------:|  --------:| --------:|--------:| --------:| --------:|  :--: |
-| G2A    |  230400 |   5000  |  0.1-16   |5-12|0-50| ~5|4.8-5.2|400-480|
-| G4     |  230400 |   9000  |  0.26-16   |5-12|0-50| ~5|4.8-5.2|400-480|
-| G4Pro  |  230400 |   9000  |  0.26-16   |5-12|0-50| ~5|4.8-5.2|400-480|
-| X4     |  128000 |   5000  |  0.12-10   |5-12|0-40| ~5|4.8-5.2|330-380|
-| F4     | 115200 |   4000 |  0.1-12        |5-12|0-40| ~5|4.8-5.2|400-480|
-| S4     |  115200|    4000 |  0.1-8        |6-12|0-40| ~5|4.8-5.2|330-380|
-| S4Pro |  153600|    4000 |  0.1-8        |6-12|0-40| ~5|4.8-5.2|330-380|
+| Model      |  Baudrate |  Sampling Frequency | Range(m)  | Scanning Frequency(HZ) | Working temperature(°C) | Laser power max(mW) | voltage(V) | Current(mA) | Intensity
+| :-------- | --------:|--------:|  --------:| --------:|--------:| --------:| --------:| --------:| :--: |
+| G2A    |  230400 |   5000  |  0.12-12   |5-12|0-50| ~5|4.8-5.2|400-480| false |
+| G2      |  230400 |   5000  |  0.12-12   |5-12|0-50| ~5|4.8-5.2|400-480| true |
+| G2C   |  230400 |   4000  |  0.12-12   |5-12|0-50| ~5|4.8-5.2|400-480| false |
 
 How to build YDLIDAR SDK samples
 ---------------
     $ git clone https://github.com/ydlidar/sdk
     $ cd sdk
-    $ git checkout G2A
+    $ git checkout G2
     $ cd ..
     $ mkdir build
     $ cd build
@@ -74,9 +70,9 @@ You should see YDLIDAR's scan result in the console:
 	[YDLIDAR]:SDK Version: 1.4.2
 	[YDLIDAR]:Lidar running correctly ! The health status: good
 	[YDLIDAR] Connection established in [/dev/ttyUSB0][230400]:
-	Firmware version: 1.2
-	Hardware version: 3
-	Model: G2A
+	Firmware version: 1.1
+	Hardware version: 1
+	Model: G2
 	Serial: 2019071800011111
 	[YDLIDAR INFO] Current Sampling Rate : 5K
 	[YDLIDAR INFO] Current Scan Frequency : 10.000000Hz
@@ -175,6 +171,10 @@ Coordinate System
 
 Upgrade Log
 ---------------
+
+2019-08-12 version 1.4.2
+
+   1.support G2 G2A G2C.
 
 2019-05-10 version:1.4.1
 

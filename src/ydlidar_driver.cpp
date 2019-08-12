@@ -43,13 +43,13 @@ YDlidarDriver::YDlidarDriver():
   isConnected         = false;
   isScanning          = false;
   //串口配置参数
-  m_intensities       = false;
+  m_intensities       = true;
   isAutoReconnect     = true;
   isAutoconnting      = false;
   m_baudrate          = 230400;
   isSupportMotorCtrl  = true;
   scan_node_count     = 0;
-
+  sample_rate         = 5000;
   m_pointTime         = 1e9 / 5000;
   trans_delay         = 0;
   scan_frequence      = 0;
@@ -1074,7 +1074,18 @@ void YDlidarDriver::setAutoReconnect(const bool &enable) {
 void YDlidarDriver::checkTransDelay() {
   //calc stamp
   trans_delay = _serial->getByteTime();
-  m_pointTime = 1e9 / 5000;
+  sample_rate = 5000;
+
+  switch (model) {
+    case YDLIDAR_G2C:
+      sample_rate = 4000;
+      break;
+
+    default:
+      break;
+  }
+
+  m_pointTime = 1e9 / sample_rate;
 }
 
 /************************************************************************/

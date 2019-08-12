@@ -126,7 +126,7 @@ int main(int argc, char *argv[]) {
 
   //unit: m
   laser.setMinRange(0.1);
-  laser.setMaxRange(16.0);
+  laser.setMaxRange(12.0);
 
   //unit: Hz
   laser.setScanFrequency(frequency);
