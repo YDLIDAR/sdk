@@ -54,11 +54,11 @@ YDlidarDriver::YDlidarDriver():
   m_intensities       = false;
   isAutoReconnect     = true;
   isAutoconnting      = false;
-  m_baudrate          = 230400;
+  m_baudrate          = 115200;
   isSupportMotorCtrl  = true;
   scan_node_count     = 0;
 
-  m_pointTime         = 1e9 / 5000;
+  m_pointTime         = 1e9 / 4000;
   trans_delay         = 0;
   scan_frequence      = 0;
   m_sampling_rate     = -1;
@@ -717,7 +717,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     package_CT = packages.package_CT;
   }
 
-  if (package_CT == CT_Normal) {
+  if ((package_CT & 0x01) == CT_Normal) {
     (*node).sync_flag = Node_NotSync;
   } else {
     (*node).sync_flag = Node_Sync;
@@ -1119,10 +1119,10 @@ void YDlidarDriver::setIgnoreArray(const std::vector<float> ignore_array) {
 void YDlidarDriver::checkTransferDelay() {
   //calc stamp
   trans_delay = _serial->getByteTime();
-  m_pointTime = 1e9 / 5000;
+  m_pointTime = 1e9 / 4000;
 
   switch (model) {
-    case YDLIDAR_G4://g4
+    case YDLIDAR_G4C://g4
       if (m_sampling_rate == -1) {
         sampling_rate _rate;
         getSamplingRate(_rate);

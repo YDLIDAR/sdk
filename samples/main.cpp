@@ -98,8 +98,7 @@ int main(int argc, char *argv[]) {
 
   CYdLidar laser;
   laser.setSerialPort(port);
-  laser.setSerialBaudrate(230400);
-  laser.setIntensities(false);//intensity
+  laser.setSerialBaudrate(115200);
   laser.setAutoReconnect(true);//hot plug
   laser.setReversion(false);
 
@@ -110,9 +109,6 @@ int main(int argc, char *argv[]) {
   //unit: m
   laser.setMinRange(0.1);
   laser.setMaxRange(16.0);
-
-  //unit: K
-  laser.setSampleRate(5);
 
   //unit: Hz
   laser.setScanFrequency(frequency);

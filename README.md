@@ -17,7 +17,7 @@ Release Notes
 | :-------- | --------:|  :--: |
 | SDK     |  1.4.1 |   2019-06-19  |
 
-- [new feature] increase the deviation between correcting the zero angle of the lidar and the zero angle of the robot.
+- [new feature] support G4C.
 
 
 
@@ -28,14 +28,14 @@ Dataset
 
 | Model      |  Baudrate |  Sampling Frequency | Range(m)  | Scanning Frequency(HZ) | Working temperature(°C) | Laser power max(mW) | voltage(V) | Current(mA)
 | :-------- | --------:|--------:|  --------:| --------:|--------:| --------:| --------:|  :--: |
-| R2 |  230400 |   5000  |  0.1-16   |5-12|0-50| ~5|4.8-5.2|400-480|
+| G4C    |  115200 |   4000  |  0.1-16   |5-12|0-50| ~5|4.8-5.2|400-480|
 | G4     |  230400 |   9000  |  0.26-16   |5-12|0-50| ~5|4.8-5.2|400-480|
 
 How to build YDLIDAR SDK samples
 ---------------
     $ git clone https://github.com/ydlidar/sdk
     $ cd sdk
-    $ git checkout R2
+    $ git checkout G4C
     $ cd ..
     $ mkdir build
     $ cd build
@@ -59,20 +59,18 @@ windows:
 
 You should see YDLIDAR's scan result in the console:
 
-	[YDLIDAR]:SDK Version: 2.0.8
+	[YDLIDAR]:SDK Version: 1.4.1
 	[YDLIDAR]:Lidar running correctly ! The health status: good
-	[YDLIDAR] Connection established in [/dev/ttyUSB0][230400]:
+	[YDLIDAR] Connection established in [/dev/ttyUSB0][115200]:
 	Firmware version: 1.2
 	Hardware version: 3
-	Model: R2
+	Model: G4C
 	Serial: 2018101800011111
-	[YDLIDAR INFO] Current Sampling Rate : 5K
-	[YDLIDAR INFO] Successfully obtained the corrected offset angle[0.0000] from the lidar[2018101800011111]
-	[YDLIDAR INFO] Current AngleOffset : 0.000000°
-	[YDLIDAR INFO] Current Scan Frequency : 8.000000Hz
+	[YDLIDAR INFO] Current Sampling Rate : 4K
+	[YDLIDAR INFO] Current Scan Frequency : 10.000000Hz
 	[YDLIDAR INFO] Now YDLIDAR is scanning ......
-	Scan received: 625 ranges
-	Scan received: 626 ranges
+	Scan received: 401 ranges
+	Scan received: 402 ranges
 	
 
 Data structure

@@ -12,19 +12,13 @@ using namespace impl;
 -------------------------------------------------------------*/
 CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_SerialPort        = "";
-  m_SerialBaudrate    = 230400;
-  m_Intensities       = false;
+  m_SerialBaudrate    = 115200;
   m_AutoReconnect     = false;
   m_MaxAngle          = 360.f;
   m_MinAngle          = 0.f;
   m_MaxRange          = 16.0;
   m_MinRange          = 0.08;
-  m_SampleRate        = 5;
   m_ScanFrequency     = 7;
-  m_AngleOffset       = 0.0;
-  m_isAngleOffsetCorrected = false;
-  m_GlassNoise        = true;
-  m_SunNoise          = true;
   isScanning          = false;
   frequencyOffset     = 0.4;
   m_AbnormalCheckCount  = 2;
@@ -32,11 +26,11 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_OffsetTime        = 0.0;
   Major               = 0;
   Minjor              = 0;
-  m_pointTime         = 1e9 / 5000;
+  m_pointTime         = 1e9 / 4000;
   last_node_time      = getTime();
-  m_FixedSize         = 500;
+  m_FixedSize         = 600;
+  m_SampleRate        = 4;
   m_IgnoreArray.clear();
-  m_serial_number.clear();
 }
 
 /*-------------------------------------------------------------
@@ -60,15 +54,6 @@ int CYdLidar::getFixedSize() const {
   return m_FixedSize;
 }
 
-//get zero angle offset value
-float CYdLidar::getAngleOffset() const {
-  return m_AngleOffset;
-}
-
-bool CYdLidar::isAngleOffetCorrected() const {
-  return m_isAngleOffsetCorrected;
-}
-
 /*-------------------------------------------------------------
 						doProcessSimple
 -------------------------------------------------------------*/
@@ -79,11 +64,11 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
   // Bound?
   if (!checkHardware()) {
     hardwareError = true;
-    delay(1000 / m_ScanFrequency);
+    delay(500 / m_ScanFrequency);
     return false;
   }
 
-  node_info nodes[2048];
+  node_info nodes[1024];
   size_t   count = _countof(nodes);
 
 
@@ -129,7 +114,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
 
     for (int i = 0; i < count; i++) {
       angle = (float)((nodes[i].angle_q6_checkbit >>
-                       LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f) + m_AngleOffset;
+                       LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f);
       range = (float)nodes[i].distance_q / 1000.f;
 
       angle = angles::from_degrees(angle);
@@ -146,18 +131,9 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
                                       LIDAR_RESP_MEASUREMENT_QUALITY_SHIFT);
       intensity = (float)intensities;
 
-      if (m_GlassNoise && intensities == GLASSNOISEINTENSITY) {
-        intensity = 0.0;
-        range     = 0.0;
-      }
-
-      if (m_SunNoise && intensities == SUNNOISEINTENSITY) {
-        intensity = 0.0;
-        range     = 0.0;
-      }
-
       if (range > m_MaxRange || range < m_MinRange) {
         range = 0.0;
+        intensity = 0.0;
       }
 
       if (angle >= scan_msg.config.min_angle && angle <= scan_msg.config.max_angle) {
@@ -206,6 +182,7 @@ bool  CYdLidar::turnOn() {
     op_result = lidarPtr->startScan();
 
     if (!IS_OK(op_result)) {
+      lidarPtr->stop();
       fprintf(stderr, "[CYdLidar] Failed to start scan mode: %x\n", op_result);
       isScanning = false;
       return false;
@@ -247,7 +224,7 @@ bool  CYdLidar::turnOff() {
 }
 
 bool CYdLidar::checkLidarAbnormal() {
-  node_info nodes[2048];
+  node_info nodes[1024];
   size_t   count = _countof(nodes);
   int check_abnormal_count = 0;
 
@@ -319,25 +296,17 @@ bool CYdLidar::getDeviceInfo() {
     return false;
   }
 
-  if (devinfo.model != YDlidarDriver::YDLIDAR_R2 &&
-      devinfo.model != YDlidarDriver::YDLIDAR_G4) {
+  if (devinfo.model != YDlidarDriver::YDLIDAR_G4C) {
     printf("[YDLIDAR INFO] Current SDK does not support current lidar models[%d]\n",
            devinfo.model);
     return false;
   }
 
-  std::string model = "R2";
-  int m_samp_rate = 5;
+  std::string model = "G4C";
 
   switch (devinfo.model) {
-    case YDlidarDriver::YDLIDAR_G4:
-      model = "G4";
-      break;
-
-    case YDlidarDriver::YDLIDAR_R2:
-      model = "R2";
-      m_samp_rate = 5;
-      m_SampleRate = m_samp_rate;
+    case YDlidarDriver::YDLIDAR_G4C:
+      model = "G4C";
       break;
 
     default:
@@ -364,15 +333,7 @@ bool CYdLidar::getDeviceInfo() {
   }
 
   printf("%s\n", serial_number.c_str());
-  m_serial_number = serial_number;
-
-  if (devinfo.model == YDlidarDriver::YDLIDAR_R2) {
-    checkCalibrationAngle(serial_number);
-  } else {
-    m_isAngleOffsetCorrected = true;
-    checkSampleRate();
-  }
-
+  checkSampleRate();
   printf("[YDLIDAR INFO] Current Sampling Rate : %dK\n", m_SampleRate);
   checkScanFrequency();
   return true;
@@ -381,7 +342,7 @@ bool CYdLidar::getDeviceInfo() {
 
 void CYdLidar::checkSampleRate() {
   sampling_rate _rate;
-  int _samp_rate = 9;
+  int _samp_rate = 4;
   int try_count;
   result_t ans = lidarPtr->getSamplingRate(_rate);
 
@@ -435,7 +396,6 @@ void CYdLidar::checkSampleRate() {
   }
 
   m_SampleRate = _samp_rate;
-
 }
 
 /*-------------------------------------------------------------
@@ -500,33 +460,6 @@ bool CYdLidar::checkScanFrequency() {
   return true;
 }
 
-/*-------------------------------------------------------------
-                        checkCalibrationAngle
--------------------------------------------------------------*/
-void CYdLidar::checkCalibrationAngle(const std::string &serialNumber) {
-  m_AngleOffset = 0.0;
-  result_t ans;
-  offset_angle angle;
-  int retry = 0;
-  m_isAngleOffsetCorrected = false;
-
-  while (retry < 2) {
-    ans = lidarPtr->getZeroOffsetAngle(angle);
-
-    if (IS_OK(ans)) {
-      m_isAngleOffsetCorrected = (angle.angle != 720);
-      m_AngleOffset = angle.angle / 4.0;
-      printf("[YDLIDAR INFO] Successfully obtained the %s offset angle[%f] from the lidar[%s]\n"
-             , m_isAngleOffsetCorrected ? "corrected" : "uncorrrected", m_AngleOffset,
-             serialNumber.c_str());
-      return;
-    }
-
-    retry++;
-  }
-
-  fprintf(stderr, "[YDLIDAR ERROR] Failed to obtained AngleOffset\n");
-}
 
 /*-------------------------------------------------------------
             checkCOMMs
@@ -594,7 +527,6 @@ bool CYdLidar::checkStatus() {
     }
   }
 
-  lidarPtr->setIntensities(m_Intensities);
   lidarPtr->setIgnoreArray(m_IgnoreArray);
   return true;
 }

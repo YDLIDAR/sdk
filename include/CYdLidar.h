@@ -21,15 +21,9 @@ class YDLIDAR_API CYdLidar {
                         private) ///< scan frequency (5HZ~12HZ)(HZ)
   PropertyBuilderByName(float, OffsetTime, private)
   PropertyBuilderByName(bool, Reversion, private) ///<
-  PropertyBuilderByName(bool, Intensities,
-                        private) ///< intensity
   PropertyBuilderByName(bool, AutoReconnect,
                         private) ///< whether to support hot swap
-  PropertyBuilderByName(bool, GlassNoise,
-                        private) ///< whether to close glass noise
-  PropertyBuilderByName(bool, SunNoise, private) ///< whether to close sun noise
   PropertyBuilderByName(int, SerialBaudrate, private) ///< serial baudrate
-  PropertyBuilderByName(int, SampleRate, private) ///< sampling rate(KHz)
   PropertyBuilderByName(int, AbnormalCheckCount,
                         private) ///< Maximum number of abnormal checks
   PropertyBuilderByName(std::string, SerialPort, private) ///< serial port
@@ -66,12 +60,6 @@ class YDLIDAR_API CYdLidar {
   //get fixed resolution node size
   int getFixedSize() const;
 
-  //get zero angle offset value
-  float getAngleOffset() const;
-
-  //Whether the zero offset angle is corrected?
-  bool isAngleOffetCorrected() const;
-
  protected:
   /** Returns true if communication has been established with the device. If it's not,
     *  try to create a comms channel.
@@ -89,11 +77,6 @@ class YDLIDAR_API CYdLidar {
    */
   void checkSampleRate();
 
-  /**
-   * @brief checkCalibrationAngle
-   */
-  void checkCalibrationAngle(const std::string &serialNumber);
-
   /** Returns true if the device is in good health, If it's not*/
   bool getDeviceHealth();
 
@@ -109,15 +92,13 @@ class YDLIDAR_API CYdLidar {
  private:
   bool    isScanning;
   float   frequencyOffset;
-  float   m_AngleOffset;
-  bool    m_isAngleOffsetCorrected;
   uint8_t Major;
   uint8_t Minjor;
   YDlidarDriver *lidarPtr;
-  std::string m_serial_number;
   uint32_t m_pointTime;
   uint64_t last_node_time;
   int m_FixedSize;
+  int m_SampleRate;
 
 };	// End of class
 
