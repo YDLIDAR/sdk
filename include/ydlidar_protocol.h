@@ -98,7 +98,7 @@ struct node_info {
   uint8_t    sync_flag;  //sync flag
   uint16_t   sync_quality;//!intensity
   uint16_t   angle_q6_checkbit; //!angle
-  uint16_t   distance_q; //! distance
+  uint16_t   distance_q2; //! distance
   uint64_t   stamp; //! timestamp
   uint8_t    scan_frequence;//! scan frequency
 } __attribute__((packed)) ;
@@ -199,6 +199,7 @@ struct LaserPoint {
   float distance;
   float intensity;
 //  uint64_t stamp;
+  uint64_t stamp;
 };
 
 //! A struct for returning configuration from the YDLIDAR
