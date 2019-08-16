@@ -741,22 +741,20 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
                                            package.packageSample[package_Sample_Index].PakageSampleDistance
                                            & 0x03) << LIDAR_RESP_MEASUREMENT_ANGLE_SAMPLE_SHIFT) |
                               (package.packageSample[package_Sample_Index].PakageSampleQuality));
-      (*node).distance_q =
-        package.packageSample[package_Sample_Index].PakageSampleDistance >>
-        LIDAR_RESP_MEASUREMENT_DISTANCE_SHIFT;
+      (*node).distance_q2 =
+        package.packageSample[package_Sample_Index].PakageSampleDistance;
     } else {
-      (*node).distance_q = packages.packageSampleDistance[package_Sample_Index] >>
-                           LIDAR_RESP_MEASUREMENT_DISTANCE_SHIFT;
+      (*node).distance_q2 = packages.packageSampleDistance[package_Sample_Index];
       (*node).sync_quality = ((uint16_t)(0xfc |
                                          packages.packageSampleDistance[package_Sample_Index] &
                                          0x0003)) << LIDAR_RESP_MEASUREMENT_QUALITY_SHIFT;
 
     }
 
-    if ((*node).distance_q != 0) {
+    if ((*node).distance_q2 != 0) {
       AngleCorrectForDistance = (int32_t)(((atan(((21.8 * (155.3 - ((
-                                              *node).distance_q))) / 155.3) / ((
-                                                  *node).distance_q))) * 180.0 / 3.1415) * 64.0);
+                                              *node).distance_q2 / 4.0))) / 155.3) / ((
+                                                  *node).distance_q2 / 4.0))) * 180.0 / 3.1415) * 64.0);
     } else {
       AngleCorrectForDistance = 0;
       (*node).sync_quality = 0;
@@ -776,7 +774,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
       for (uint16_t j = 0; j < m_IgnoreArray.size(); j = j + 2) {
         if ((m_IgnoreArray[j] <= angle) && (angle <= m_IgnoreArray[j + 1])) {
-          (*node).distance_q = 0;
+          (*node).distance_q2 = 0;
           (*node).sync_quality = 0;
           break;
         }
@@ -808,10 +806,9 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     (*node).sync_flag       = Node_NotSync;
     (*node).sync_quality    = 0;
     (*node).angle_q6_checkbit = LIDAR_RESP_MEASUREMENT_CHECKBIT;
-    (*node).distance_q      = 0;
+    (*node).distance_q2      = 0;
     (*node).scan_frequence  = 0;
   }
-
 
   uint8_t nowPackageNum;
 
@@ -926,7 +923,7 @@ result_t YDlidarDriver::ascendScanData(node_info *nodebuffer, size_t count) {
   int i = 0;
 
   for (i = 0; i < (int)count; i++) {
-    if (nodebuffer[i].distance_q == 0) {
+    if (nodebuffer[i].distance_q2 == 0) {
       continue;
     } else {
       while (i != 0) {
@@ -954,7 +951,7 @@ result_t YDlidarDriver::ascendScanData(node_info *nodebuffer, size_t count) {
   }
 
   for (i = (int)count - 1; i >= 0; i--) {
-    if (nodebuffer[i].distance_q == 0) {
+    if (nodebuffer[i].distance_q2 == 0) {
       continue;
     } else {
       while (i != ((int)count - 1)) {
@@ -981,7 +978,7 @@ result_t YDlidarDriver::ascendScanData(node_info *nodebuffer, size_t count) {
                       LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f;
 
   for (i = 1; i < (int)count; i++) {
-    if (nodebuffer[i].distance_q == 0) {
+    if (nodebuffer[i].distance_q2 == 0) {
       float expect_angle =  frontAngle + i * inc_origin_angle;
 
       if (expect_angle > 360.0f) {

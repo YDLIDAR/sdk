@@ -92,7 +92,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
   // Bound?
   if (!checkHardware()) {
     hardwareError = true;
-    delay(1000 / m_ScanFrequency);
+    delay(1000 / (2 * m_ScanFrequency));
     return false;
   }
 
@@ -118,6 +118,10 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     float angle = 0.0;
     LaserScan scan_msg;
     LaserPoint point;
+    LaserPoint last_point;
+    std::vector<LaserPoint> last_data;
+    last_data.clear();
+    bool frist_data = false;
 
     if (m_MaxAngle < m_MinAngle) {
       float temp = m_MinAngle;
@@ -125,11 +129,14 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
       m_MaxAngle = temp;
     }
 
+    double scan_time = (tim_scan_end - tim_scan_start) / 1e9;
+    scan_msg.system_time_stamp = tim_scan_start;
+    scan_msg.config.time_increment = scan_time / (double)count;
+
     for (int i = 0; i < count; i++) {
       angle = (float)((nodes[i].angle_q6_checkbit >>
-                       LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f) +
-              m_AngleOffset;
-      range = (float)nodes[i].distance_q / 1000.f;
+                       LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f) + m_AngleOffset;
+      range = (float)nodes[i].distance_q2 / 4 / 1000.f;
 
       if (angle > 360) {
         angle -= 360;
@@ -156,10 +163,55 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
       }
 
       if (angle >= m_MinAngle && angle <= m_MaxAngle) {
+
         point.angle = angle;
         point.distance = range;
         point.intensity = intensity;
-        scan_msg.data.push_back(point);
+        point.stamp = tim_scan_start + i * scan_msg.config.time_increment;
+
+        //filter duplicated data
+        if (!frist_data) {
+          last_point = point;
+          frist_data = true;
+        }
+
+        if (point.angle < last_point.angle &&
+            fabs(point.angle - last_point.angle) < 20) {
+          last_data.push_back(point);
+        } else {
+          last_point = point;
+
+          if (last_data.size() > 1)  {
+            bool insert = false;
+
+            if (scan_msg.data.size() > last_data.size()) {
+              double end_angle = scan_msg.data[scan_msg.data.size() - 1].angle;
+
+              for (int i = 0; i < last_data.size(); i++) {
+                if (fabs(end_angle - scan_msg.data[scan_msg.data.size() - 1 - i].angle) > ((
+                      last_data.size() - 1) * 360.0 / count)) {
+                  insert = true;
+                  break;
+                }
+
+                end_angle = scan_msg.data[scan_msg.data.size() - 1 - i].angle;
+              }
+            } else {
+              insert = true;
+            }
+
+            if (insert) {
+              scan_msg.data.insert(scan_msg.data.end(), last_data.begin(), last_data.end());
+            } else {
+
+            }
+
+            last_data.clear();
+          }
+
+          scan_msg.data.push_back(point);
+        }
+
       }
 
       if (range >= m_MinRange) {
@@ -215,18 +267,12 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
       }
     }
 
-    double scan_time = (tim_scan_end - tim_scan_start) / 1e9;
+    scan_time = (tim_scan_end - tim_scan_start) / 1e9;
     scan_msg.system_time_stamp = tim_scan_start;
+    scan_msg.config.time_increment = scan_time / (double)count;
+    scan_msg.config.scan_time = scan_time;
     scan_msg.config.min_angle = (m_MinAngle);
     scan_msg.config.max_angle = (m_MaxAngle);
-
-    if (scan_msg.config.max_angle - scan_msg.config.min_angle == 360) {
-      scan_msg.config.time_increment = scan_time / (double)count;
-    } else {
-      scan_msg.config.time_increment = scan_time / (double)(count - 1);
-    }
-
-    scan_msg.config.scan_time = scan_time;
     scan_msg.config.min_range = m_MinRange;
     scan_msg.config.max_range = m_MaxRange;
     outscan = scan_msg;
