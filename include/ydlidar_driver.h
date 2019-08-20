@@ -5,7 +5,7 @@
         <tr><th>File        <td>YDlidarDriver.h
         <tr><th>Author      <td>Tony [code at ydlidar com]
         <tr><th>Source      <td>https://github.com/ydlidar/sdk
-        <tr><th>Version     <td>2.0.8
+        <tr><th>Version     <td>2.0.9
     </table>
 
     Jump to the @link ::ydlidar::YDlidarDriver @endlink and @link ::CYdLidar @endlink interface documentation.
@@ -107,6 +107,12 @@ class YDlidarDriver {
   *	  false no intensity
   */
   void setIntensities(const bool &isintensities);
+
+  /**
+   * @brief isIntensity
+   * @return
+   */
+  bool isIntensity() const;
 
   /**
   * @brief whether to support hot plug \n
@@ -512,6 +518,7 @@ class YDlidarDriver {
   bool CheckSumResult;
   bool LastCheckSumResult;
   uint16_t Valu8Tou16;
+  uint8_t *globalRecvBuffer;
 
   std::string serial_port;///< lidar serial port
   std::vector<float> m_IgnoreArray;//

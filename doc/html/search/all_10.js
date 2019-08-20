@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['readme',['README',['../md__home_yang_gitlab_sdk_README.html',1,'']]],
+  ['readme',['README',['../md__home_yang_git_sdk_README.html',1,'']]],
   ['rangedata',['RangeData',['../structline__extraction_1_1_range_data.html',1,'line_extraction']]],
   ['rate',['rate',['../structsampling__rate.html#a8d860fbedd930d2022fe7bb6cf1f78b6',1,'sampling_rate']]],
   ['read',['read',['../classserial_1_1_serial.html#a01fc2e3d77cb7d70069de87eca1400e9',1,'serial::Serial::read(uint8_t *buffer, size_t size)'],['../classserial_1_1_serial.html#a3ecd4645c76548ba079eab6f2f46adfb',1,'serial::Serial::read(std::vector&lt; uint8_t &gt; &amp;buffer, size_t size=1)'],['../classserial_1_1_serial.html#ad6c6637fdf8edd85c3a6a63d98fc18f7',1,'serial::Serial::read(std::string &amp;buffer, size_t size=1)'],['../classserial_1_1_serial.html#aa52fbf7d23fb761a46e2400829d2b77a',1,'serial::Serial::read(size_t size=1)']]],

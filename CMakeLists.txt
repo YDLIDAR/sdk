@@ -33,3 +33,4 @@ target_link_libraries(ydlidar_driver setupapi Winmm)
 ELSE()
 target_link_libraries(ydlidar_driver rt pthread)
 ENDIF()                    
+

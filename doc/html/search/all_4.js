@@ -11,5 +11,5 @@ var searchData=
   ['device_5finfo',['device_info',['../structdevice__info.html',1,'']]],
   ['disabledatagrabbing',['disableDataGrabbing',['../classydlidar_1_1_y_dlidar_driver.html#ae66565bee3cdb8b74698b691f2ab1e63',1,'ydlidar::YDlidarDriver']]],
   ['disconnect',['disconnect',['../classydlidar_1_1_y_dlidar_driver.html#aa26790ae49d33936229fa67739a8ff5f',1,'ydlidar::YDlidarDriver']]],
-  ['distance_5fq',['distance_q',['../structnode__info.html#ae7e8612af1b450934939094806752963',1,'node_info']]]
+  ['distance_5fq2',['distance_q2',['../structnode__info.html#a82eaf27a6196e803d3618c83b052f78c',1,'node_info']]]
 ];

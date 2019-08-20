@@ -150,6 +150,7 @@ class YDLIDAR_API CYdLidar {
   YDlidarDriver *lidarPtr;
   LineFeature line_feature_;
   std::string m_serial_number;
+  node_info *global_nodes;
 
 };	// End of class
 

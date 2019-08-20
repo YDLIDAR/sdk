@@ -24,6 +24,11 @@ struct RangeData {
   std::vector<double> ranges;
   std::vector<double> xs;
   std::vector<double> ys;
+  void clear() {
+    ranges.clear();
+    xs.clear();
+    ys.clear();
+  }
 };
 
 struct Params {

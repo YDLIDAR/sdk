@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
     it = ports.begin();
     printf("Lidar[%s] detected, whether to select current lidar(yes/no)?:",
            it->first.c_str());
-    std::string ok;
+    std::string ok = "yes";
     std::cin >> ok;
 
     for (size_t i = 0; i < ok.size(); i++) {

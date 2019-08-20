@@ -11,7 +11,7 @@ using namespace impl;
 /*-------------------------------------------------------------
 						Constructor
 -------------------------------------------------------------*/
-CYdLidar::CYdLidar(): lidarPtr(nullptr) {
+CYdLidar::CYdLidar(): lidarPtr(nullptr), global_nodes(nullptr) {
   m_SerialPort        = "";
   m_SerialBaudrate    = 230400;
   m_Intensities       = false;
@@ -39,6 +39,8 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_IgnoreArray.clear();
   ini.SetUnicode();
   m_serial_number.clear();
+  global_nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
+
 }
 
 /*-------------------------------------------------------------
@@ -53,6 +55,11 @@ void CYdLidar::disconnecting() {
     lidarPtr->disconnect();
     delete lidarPtr;
     lidarPtr = nullptr;
+  }
+
+  if (global_nodes) {
+    delete[] global_nodes;
+    global_nodes = nullptr;
   }
 
   isScanning = false;
@@ -96,23 +103,24 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     return false;
   }
 
-  node_info *nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
   size_t   count = YDlidarDriver::MAX_SCAN_NODES;
-
   //line feature
   std::vector<double> bearings;
   std::vector<unsigned int> indices;
   indices.clear();
   bearings.clear();
   RangeData range_data;
+  range_data.clear();
 
   //wait Scan data:
-  result_t op_result =  lidarPtr->grabScanData(nodes, count);
+  uint64_t sys_scan_start_time = getTime();
+  result_t op_result =  lidarPtr->grabScanData(global_nodes, count);
+  uint64_t sys_scan_end_time = getTime();
 
   // Fill in scan data:
   if (IS_OK(op_result)) {
-    uint64_t tim_scan_start = nodes[0].stamp;
-    uint64_t tim_scan_end   = nodes[count - 1].stamp;
+    uint64_t tim_scan_start = global_nodes[0].stamp;
+    uint64_t tim_scan_end   = global_nodes[count - 1].stamp;
     float range = 0.0;
     float intensity = 0.0;
     float angle = 0.0;
@@ -132,11 +140,17 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     double scan_time = (tim_scan_end - tim_scan_start) / 1e9;
     scan_msg.system_time_stamp = tim_scan_start;
     scan_msg.config.time_increment = scan_time / (double)count;
+    double sys_scan_time = (sys_scan_end_time - sys_scan_start_time) / 1e9;
 
-    for (int i = 0; i < count; i++) {
-      angle = (float)((nodes[i].angle_q6_checkbit >>
+    if (fabs(sys_scan_time - scan_time) > (1.0 / m_ScanFrequency)) {
+      fprintf(stderr,
+              "[CYdLidar] Abnormal lidar data or lidar rotating surface contact object.\n");
+    }
+
+    for (size_t i = 0; i < count; i++) {
+      angle = (float)((global_nodes[i].angle_q6_checkbit >>
                        LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f) + m_AngleOffset;
-      range = (float)nodes[i].distance_q2 / 4 / 1000.f;
+      range = (float)global_nodes[i].distance_q2 / 4 / 1000.f;
 
       if (angle > 360) {
         angle -= 360;
@@ -144,7 +158,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
         angle += 360;
       }
 
-      uint8_t intensities = (uint8_t)(nodes[i].sync_quality >>
+      uint8_t intensities = (uint8_t)(global_nodes[i].sync_quality >>
                                       LIDAR_RESP_MEASUREMENT_QUALITY_SHIFT);
       intensity = (float)intensities;
 
@@ -187,7 +201,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
             if (scan_msg.data.size() > last_data.size()) {
               double end_angle = scan_msg.data[scan_msg.data.size() - 1].angle;
 
-              for (int i = 0; i < last_data.size(); i++) {
+              for (size_t i = 0; i < last_data.size(); i++) {
                 if (fabs(end_angle - scan_msg.data[scan_msg.data.size() - 1 - i].angle) > ((
                       last_data.size() - 1) * 360.0 / count)) {
                   insert = true;
@@ -223,12 +237,12 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
         range_data.ys.push_back(sin(feature_angle)*range);
       }
 
-      if (nodes[i].stamp < tim_scan_start) {
-        tim_scan_start = nodes[i].stamp;
+      if (global_nodes[i].stamp < tim_scan_start) {
+        tim_scan_start = global_nodes[i].stamp;
       }
 
-      if (nodes[i].stamp > tim_scan_end) {
-        tim_scan_end = nodes[i].stamp;
+      if (global_nodes[i].stamp > tim_scan_end) {
+        tim_scan_end = global_nodes[i].stamp;
       }
 
     }
@@ -276,7 +290,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     scan_msg.config.min_range = m_MinRange;
     scan_msg.config.max_range = m_MaxRange;
     outscan = scan_msg;
-    delete[] nodes;
     return true;
 
   } else {
@@ -285,7 +298,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     }
   }
 
-  delete[] nodes;
   return false;
 
 }
@@ -351,7 +363,6 @@ bool  CYdLidar::turnOff() {
 }
 
 bool CYdLidar::checkLidarAbnormal() {
-  node_info *nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
   size_t   count = YDlidarDriver::MAX_SCAN_NODES;
   int check_abnormal_count = 0;
 
@@ -367,17 +378,15 @@ bool CYdLidar::checkLidarAbnormal() {
       delay(check_abnormal_count * 1000);
     }
 
-    op_result =  lidarPtr->grabScanData(nodes, count);
+    op_result =  lidarPtr->grabScanData(global_nodes, count);
 
     if (IS_OK(op_result)) {
-      delete[] nodes;
       return false;
     }
 
     check_abnormal_count++;
   }
 
-  delete[] nodes;
   return !IS_OK(op_result);
 }
 

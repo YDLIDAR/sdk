@@ -186,7 +186,7 @@ int LineFeature::findline(const int index) {
            1 + a * a))) < params_.least_thresh) {
       m_least = leastsquare(index, index2, 2);
 
-      if (index2 < (point_num_.size() - 1)) {
+      if (index2 < int(point_num_.size() - 1)) {
         index2 = index2 + 1;
         a = m_least.a;
         b = m_least.b;
@@ -231,7 +231,7 @@ int LineFeature::findline(const int index) {
   m_temp.b = m_result.b;
   m_temp.c = m_result.c;
 
-  if ((index2 - index1) > params_.min_line_points) {
+  if ((index2 - index1) > (int)params_.min_line_points) {
     if (delete_short_line(index1, index2)) {
       m_line.push_back(m_temp);
     }

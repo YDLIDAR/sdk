@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['readme',['README',['../md__home_yang_gitlab_sdk_README.html',1,'']]]
+  ['readme',['README',['../md__home_yang_git_sdk_README.html',1,'']]]
 ];

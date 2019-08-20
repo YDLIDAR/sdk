@@ -15,9 +15,11 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.0.8 |   2019-05-20  |
+| SDK     |  2.0.9 |   2019-08-20  |
 
-- [new feature] increase the deviation between correcting the zero angle of the lidar and the zero angle of the robot.
+- [new feature] Data anomaly check.
+
+- [fit] Pre-allocated memory.
 
 
 
@@ -60,7 +62,7 @@ windows:
 
 You should see YDLIDAR's scan result in the console:
 
-	[YDLIDAR]:SDK Version: 2.0.8
+	[YDLIDAR]:SDK Version: 2.0.9
 	[YDLIDAR]:Lidar running correctly ! The health status: good
 	[YDLIDAR] Connection established in [/dev/ttyUSB0][230400]:
 	Firmware version: 1.2
@@ -142,6 +144,12 @@ example angle parsing:
 
 Upgrade Log
 ---------------
+
+2019-08-20 version: 2.0.9
+
+   1.Data anomaly check.
+
+   2.Pre-allocted memory.
 
 2019-05-20 version:2.0.8
 
