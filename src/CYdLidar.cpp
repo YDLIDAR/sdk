@@ -139,7 +139,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
     double scan_time = (tim_scan_end - tim_scan_start) / 1e9;
     scan_msg.system_time_stamp = tim_scan_start;
-    scan_msg.config.time_increment = scan_time / (double)count;
+    scan_msg.config.time_increment = (tim_scan_end - tim_scan_start) /
+                                     (double)count;
     double sys_scan_time = (sys_scan_end_time - sys_scan_start_time) / 1e9;
 
     if (fabs(sys_scan_time - scan_time) > (1.0 / m_ScanFrequency)) {
@@ -181,7 +182,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
         point.angle = angle;
         point.distance = range;
         point.intensity = intensity;
-        point.stamp = tim_scan_start + i * scan_msg.config.time_increment;
+        point.stamp = tim_scan_start + scan_msg.config.time_increment * scan_time;
 
         //filter duplicated data
         if (!frist_data) {
