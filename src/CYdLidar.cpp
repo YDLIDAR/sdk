@@ -194,7 +194,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
         point.angle = angle;
         point.distance = range;
         point.intensity = intensity;
-        point.stamp = tim_scan_start + scan_msg.config.time_increment * scan_time;
+        point.stamp = tim_scan_start + scan_msg.config.time_increment * i;
 
         //filter duplicated data
         if (!frist_data) {
