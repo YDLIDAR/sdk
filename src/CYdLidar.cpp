@@ -499,7 +499,7 @@ bool CYdLidar::getDeviceInfo() {
 
   if (!regex_match(serial_number, result, rx)) {
     fprintf(stderr, "Invalid lidar serial number!!!\n");
-//    return false;
+    return false;
   }
 
   if (devinfo.model == YDlidarDriver::YDLIDAR_R2_SS_1) {
