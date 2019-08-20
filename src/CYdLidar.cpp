@@ -143,9 +143,21 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
                                      (double)count;
     double sys_scan_time = (sys_scan_end_time - sys_scan_start_time) / 1e9;
 
+    double min_time = 1.0 / (m_ScanFrequency + 1.0);
+    double max_time = 1.0 / (m_ScanFrequency - 1.0);
+    bool abnormal = false;
+
     if (fabs(sys_scan_time - scan_time) > (1.0 / m_ScanFrequency)) {
       fprintf(stderr,
               "[CYdLidar] Abnormal lidar data or lidar rotating surface contact object.\n");
+      abnormal = true;
+    }
+
+    if (!abnormal && ((scan_time > max_time && sys_scan_time > max_time) ||
+                      (scan_time < min_time &&
+                       sys_scan_time < min_time))) {
+      fprintf(stderr,
+              "[CYdLidar] Lidar shaking or lidar rotating surface contact object.\n");
     }
 
     for (size_t i = 0; i < count; i++) {
@@ -487,7 +499,7 @@ bool CYdLidar::getDeviceInfo() {
 
   if (!regex_match(serial_number, result, rx)) {
     fprintf(stderr, "Invalid lidar serial number!!!\n");
-    return false;
+//    return false;
   }
 
   if (devinfo.model == YDlidarDriver::YDLIDAR_R2_SS_1) {

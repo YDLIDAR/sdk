@@ -499,7 +499,7 @@ class YDlidarDriver {
   uint32_t m_pointTime;				///< two laser point time intervals
   uint32_t trans_delay;				///< serial transfer on byte time
   int m_sampling_rate;					///< sample rate
-  int model; ///< lidar model
+  device_info model; ///< lidar model
 
   node_package package;
   node_packages packages;
@@ -522,6 +522,10 @@ class YDlidarDriver {
 
   std::string serial_port;///< lidar serial port
   std::vector<float> m_IgnoreArray;//
+
+#ifdef DEBUG
+  FILE *fd;
+#endif
 
 };
 }

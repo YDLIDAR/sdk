@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 include_directories(include)
 include_directories(src)
+add_definitions(-DDEBUG)
 
 IF (WIN32)
 FILE(GLOB SDK_SRC 
