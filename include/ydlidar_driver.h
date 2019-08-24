@@ -119,6 +119,12 @@ class YDlidarDriver {
   bool isIntensity() const;
 
   /**
+   * @brief getPointTime
+   * @return
+   */
+  uint32_t getPointTime() const;
+
+  /**
   * @brief whether to support hot plug \n
   * @param[in] enable    hot plug :
   *   true	support

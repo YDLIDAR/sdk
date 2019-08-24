@@ -474,6 +474,7 @@ int YDlidarDriver::cacheScanData() {
   uint64_t sys_time = getTime();
 
   while (isScanning) {
+    count = 128;
     ans = waitScanData(local_buf, count);
 
     if (!IS_OK(ans)) {
@@ -1027,6 +1028,11 @@ result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,
 
     nodebuffer[recvNodeCount++] = node;
 
+    if (node.sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
+      count = recvNodeCount;
+      return RESULT_OK;
+    }
+
     if (recvNodeCount == count) {
       return RESULT_OK;
     }
@@ -1287,6 +1293,10 @@ bool YDlidarDriver::isIntensity() const {
   return m_intensities;
 }
 
+uint32_t YDlidarDriver::getPointTime() const {
+  return m_pointTime;
+}
+
 /**
 * @brief 设置雷达异常自动重新连接 \n
 * @param[in] enable    是否开启自动重连:
@@ -1343,6 +1353,7 @@ void YDlidarDriver::checkTransferDelay() {
     default:
       break;
   }
+
 
 #ifdef DEBUG
 
