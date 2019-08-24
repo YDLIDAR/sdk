@@ -151,6 +151,8 @@ class YDLIDAR_API CYdLidar {
   LineFeature line_feature_;
   std::string m_serial_number;
   node_info *global_nodes;
+  uint32_t m_pointTime;
+  uint64_t last_node_time;
 
 };	// End of class
 

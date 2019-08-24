@@ -40,6 +40,8 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr), global_nodes(nullptr) {
   ini.SetUnicode();
   m_serial_number.clear();
   global_nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
+  m_pointTime = 1e9 / 5000;
+  last_node_time = getTime();
 
 }
 
@@ -48,6 +50,11 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr), global_nodes(nullptr) {
 -------------------------------------------------------------*/
 CYdLidar::~CYdLidar() {
   disconnecting();
+
+  if (global_nodes) {
+    delete[] global_nodes;
+    global_nodes = nullptr;
+  }
 }
 
 void CYdLidar::disconnecting() {
@@ -55,11 +62,6 @@ void CYdLidar::disconnecting() {
     lidarPtr->disconnect();
     delete lidarPtr;
     lidarPtr = nullptr;
-  }
-
-  if (global_nodes) {
-    delete[] global_nodes;
-    global_nodes = nullptr;
   }
 
   isScanning = false;
@@ -119,8 +121,26 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
   // Fill in scan data:
   if (IS_OK(op_result)) {
-    uint64_t tim_scan_start = global_nodes[0].stamp;
-    uint64_t tim_scan_end   = global_nodes[count - 1].stamp;
+
+    double sys_scan_time = static_cast<double>((sys_scan_end_time -
+                           sys_scan_start_time) * 1.0 / 1e9);
+    uint32_t scan_time = m_pointTime * (count - 1);
+    sys_scan_end_time -= m_pointTime;
+    sys_scan_start_time = sys_scan_end_time -  scan_time ;
+
+    if (static_cast<int>(sys_scan_start_time - last_node_time) > -20e6 &&
+        static_cast<int>(sys_scan_start_time - last_node_time) < 0) {
+      sys_scan_start_time = last_node_time + m_pointTime;
+      sys_scan_end_time = sys_scan_start_time + scan_time;
+    }
+
+    if (static_cast<int>(sys_scan_start_time + scan_time  - sys_scan_end_time) >
+        0) {
+      sys_scan_end_time = sys_scan_end_time - m_pointTime;
+      sys_scan_start_time = sys_scan_end_time -  scan_time ;
+    }
+
+    last_node_time = sys_scan_end_time;
     float range = 0.0;
     float intensity = 0.0;
     float angle = 0.0;
@@ -137,33 +157,28 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
       m_MaxAngle = temp;
     }
 
-    double scan_time = (tim_scan_end - tim_scan_start) / 1e9;
-    scan_msg.system_time_stamp = tim_scan_start;
-    scan_msg.config.time_increment = (tim_scan_end - tim_scan_start) /
-                                     (double)count;
-    double sys_scan_time = (sys_scan_end_time - sys_scan_start_time) / 1e9;
-
+    double lidar_scan_time = static_cast<double>(scan_time * 1.0 / 1e9);
     double min_time = 1.0 / (m_ScanFrequency + 1.0);
     double max_time = 1.0 / (m_ScanFrequency - 1.0);
     bool abnormal = false;
 
-    if (fabs(sys_scan_time - scan_time) > (1.0 / m_ScanFrequency)) {
+    if (fabs(sys_scan_time - lidar_scan_time) > (1.0 / m_ScanFrequency)) {
       fprintf(stderr,
               "[CYdLidar] Abnormal lidar data or lidar rotating surface contact object.\n");
       abnormal = true;
     }
 
-    if (!abnormal && ((scan_time > max_time && sys_scan_time > max_time) ||
-                      (scan_time < min_time &&
+    if (!abnormal && ((lidar_scan_time > max_time && sys_scan_time > max_time) ||
+                      (lidar_scan_time < min_time &&
                        sys_scan_time < min_time))) {
       fprintf(stderr,
               "[CYdLidar] Lidar shaking or lidar rotating surface contact object.\n");
     }
 
     for (size_t i = 0; i < count; i++) {
-      angle = (float)((global_nodes[i].angle_q6_checkbit >>
-                       LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f) + m_AngleOffset;
-      range = (float)global_nodes[i].distance_q2 / 4 / 1000.f;
+      angle = static_cast<float>((global_nodes[i].angle_q6_checkbit >>
+                                  LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f) + m_AngleOffset;
+      range = static_cast<float>(global_nodes[i].distance_q2 / 4 / 1000.f);
 
       if (angle > 360) {
         angle -= 360;
@@ -171,9 +186,9 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
         angle += 360;
       }
 
-      uint8_t intensities = (uint8_t)(global_nodes[i].sync_quality >>
-                                      LIDAR_RESP_MEASUREMENT_QUALITY_SHIFT);
-      intensity = (float)intensities;
+      uint8_t intensities = static_cast<uint8_t>(global_nodes[i].sync_quality >>
+                            LIDAR_RESP_MEASUREMENT_QUALITY_SHIFT);
+      intensity = static_cast<float>(intensities);
 
       if (m_GlassNoise && intensities == GLASSNOISEINTENSITY) {
         intensity = 0.0;
@@ -194,7 +209,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
         point.angle = angle;
         point.distance = range;
         point.intensity = intensity;
-        point.stamp = tim_scan_start + static_cast<uint64_t>(scan_msg.config.time_increment * i);
+        point.stamp = sys_scan_start_time + static_cast<uint64_t>(m_pointTime * i);
 
         //filter duplicated data
         if (!frist_data) {
@@ -250,14 +265,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
         range_data.ys.push_back(sin(feature_angle)*range);
       }
 
-      if (global_nodes[i].stamp < tim_scan_start) {
-        tim_scan_start = global_nodes[i].stamp;
-      }
-
-      if (global_nodes[i].stamp > tim_scan_end) {
-        tim_scan_end = global_nodes[i].stamp;
-      }
-
     }
 
     if (m_startRobotAngleOffset) {
@@ -294,10 +301,9 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
       }
     }
 
-    scan_time = (tim_scan_end - tim_scan_start) / 1e9;
-    scan_msg.system_time_stamp = tim_scan_start;
-    scan_msg.config.time_increment = scan_time / (double)count;
-    scan_msg.config.scan_time = scan_time;
+    scan_msg.system_time_stamp = sys_scan_start_time;
+    scan_msg.config.time_increment = static_cast<double>(m_pointTime * 1.0 / 1e9);
+    scan_msg.config.scan_time = static_cast<double>(scan_time * 1.0 / 1e9);
     scan_msg.config.min_angle = (m_MinAngle);
     scan_msg.config.max_angle = (m_MaxAngle);
     scan_msg.config.min_range = m_MinRange;
@@ -351,6 +357,7 @@ bool  CYdLidar::turnOn() {
   }
 
   isScanning = true;
+  m_pointTime = lidarPtr->getPointTime();
   lidarPtr->setAutoReconnect(m_AutoReconnect);
   printf("[YDLIDAR INFO] Now YDLIDAR is scanning ......\n");
   fflush(stdout);
