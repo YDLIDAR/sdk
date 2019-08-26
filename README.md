@@ -15,11 +15,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.0.9 |   2019-08-20  |
+| SDK     |  2.0.9 |   2019-08-26  |
 
-- [new feature] Data anomaly check.
+- [fixed] Fixed G4Pro.
 
-- [fit] Pre-allocated memory.
 
 
 
@@ -38,7 +37,7 @@ How to build YDLIDAR SDK samples
 ---------------
     $ git clone https://github.com/ydlidar/sdk
     $ cd sdk
-    $ git checkout SS-TS
+    $ git checkout SS_TS_Debug
     $ cd ..
     $ mkdir build
     $ cd build
@@ -91,7 +90,7 @@ data structure:
   		//range[m]
   		float distance;
  	 	float intensity;
-		//  uint64_t stamp;
+		uint64_t stamp;
 	};
 
 	//! A struct for returning configuration from the YDLIDAR
@@ -144,6 +143,10 @@ example angle parsing:
 
 Upgrade Log
 ---------------
+
+2019-08-26 version: 2.0.9
+	   
+   1.Fixed G4Pro.
 
 2019-08-20 version: 2.0.9
 
