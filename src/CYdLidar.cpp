@@ -90,7 +90,7 @@ void CYdLidar::setStartRobotAngleOffset() {
 }
 
 bool CYdLidar::isRobotAngleOffsetCorrected() const {
-	return m_isLRRAngleOffsetCorrected && !m_startRobotAngleOffset;
+  return m_isLRRAngleOffsetCorrected && !m_startRobotAngleOffset;
 }
 /*-------------------------------------------------------------
 						doProcessSimple
@@ -137,7 +137,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     if (static_cast<int>(sys_scan_start_time + scan_time  - sys_scan_end_time) >
         0) {
       sys_scan_end_time = sys_scan_end_time - m_pointTime;
-      sys_scan_start_time = sys_scan_end_time -  scan_time ;
+      sys_scan_start_time = sys_scan_end_time -  scan_time;
     }
 
     last_node_time = sys_scan_end_time;
@@ -163,16 +163,16 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     bool abnormal = false;
 
     if (fabs(sys_scan_time - lidar_scan_time) > (1.0 / m_ScanFrequency)) {
-      fprintf(stderr,
-              "[CYdLidar] Abnormal lidar data or lidar rotating surface contact object.\n");
+//      fprintf(stderr,
+//              "[CYdLidar] Abnormal lidar data or lidar rotating surface contact object.\n");
       abnormal = true;
     }
 
     if (!abnormal && ((lidar_scan_time > max_time && sys_scan_time > max_time) ||
                       (lidar_scan_time < min_time &&
                        sys_scan_time < min_time))) {
-      fprintf(stderr,
-              "[CYdLidar] Lidar shaking or lidar rotating surface contact object.\n");
+//      fprintf(stderr,
+//              "[CYdLidar] Lidar shaking or lidar rotating surface contact object.\n");
     }
 
     for (size_t i = 0; i < count; i++) {
@@ -455,7 +455,8 @@ bool CYdLidar::getDeviceInfo() {
   }
 
   if (devinfo.model != YDlidarDriver::YDLIDAR_R2_SS_1 &&
-      devinfo.model != YDlidarDriver::YDLIDAR_G4) {
+      devinfo.model != YDlidarDriver::YDLIDAR_G4 &&
+      devinfo.model != YDlidarDriver::YDLIDAR_G4PRO) {
     printf("[YDLIDAR INFO] Current SDK does not support current lidar models[%d]\n",
            devinfo.model);
     return false;
@@ -467,6 +468,10 @@ bool CYdLidar::getDeviceInfo() {
   switch (devinfo.model) {
     case YDlidarDriver::YDLIDAR_G4:
       model = "G4";
+      break;
+
+    case YDlidarDriver::YDLIDAR_G4PRO:
+      model = "G4.";
       break;
 
     case YDlidarDriver::YDLIDAR_R2_SS_1:
@@ -526,8 +531,9 @@ bool CYdLidar::getDeviceInfo() {
 
 void CYdLidar::checkSampleRate() {
   sampling_rate _rate;
+  _rate.rate = YDlidarDriver::YDLIDAR_RATE_9K;
   int _samp_rate = 9;
-  int try_count;
+  int try_count = 0;
   result_t ans = lidarPtr->getSamplingRate(_rate);
 
   if (IS_OK(ans)) {

@@ -2,8 +2,11 @@
 #include "CYdLidar.h"
 #include <iostream>
 #include <string>
+#include "common.h"
+
 using namespace std;
 using namespace ydlidar;
+using namespace impl;
 
 #if defined(_MSC_VER)
 #pragma comment(lib, "ydlidar_driver.lib")

@@ -471,7 +471,9 @@ int YDlidarDriver::cacheScanData() {
   flushSerial();
   waitScanData(local_buf, count);
   int timeout_count   = 0;
+#ifdef DEBUG
   uint64_t sys_time = getTime();
+#endif
 
   while (isScanning) {
     count = 128;
@@ -535,8 +537,9 @@ int YDlidarDriver::cacheScanData() {
             fprintf(fd, "scan count: %lu\n", scan_count);
           }
 
-#endif
           sys_time = getTime();
+
+#endif
           _lock.lock();//timeout lock, wait resource copy
           memcpy(scan_node_buf, local_scan, scan_count * sizeof(node_info));
           scan_node_count = scan_count;
@@ -1325,6 +1328,7 @@ void YDlidarDriver::checkTransferDelay() {
 
   switch (model.model) {
     case YDLIDAR_G4://g4
+    case YDLIDAR_G4PRO://G4Pro
       if (m_sampling_rate == -1) {
         sampling_rate _rate;
         getSamplingRate(_rate);
@@ -1360,7 +1364,8 @@ void YDlidarDriver::checkTransferDelay() {
   if (NULL != fd) {
     fprintf(fd, "start scan time: %llu\n", getTime());
     fprintf(fd, "lidar model[%d]: %s\n", model.model,
-            model.model == YDLIDAR_G4 ? "G4" : "R2-SS-1");
+            model.model == YDLIDAR_G4 ? (model.model == YDLIDAR_G4PRO ? "G4." : "G4") :
+            "R2-SS-1");
     fprintf(fd, "Hardware: %d, Firmware: %d.%d\n", model.hardware_version,
             model.firmware_version >> 8, model.firmware_version & 0xff);
     fprintf(fd, "sample rate: %d\n", m_sampling_rate);
