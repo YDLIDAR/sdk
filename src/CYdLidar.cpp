@@ -32,6 +32,7 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_IgnoreArray.clear();
   m_pointTime         = 1e9 / 4000;
   last_node_time = getTime();
+  print = false;
   global_nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
 }
 
@@ -359,7 +360,11 @@ bool CYdLidar::getDeviceHealth() {
     }
 
   } else {
-    fprintf(stderr, "Error, cannot retrieve Yd Lidar health code: %x\n", op_result);
+    if (print) {
+      fprintf(stderr, "Error, cannot retrieve Yd Lidar health code: %x\n",
+              op_result);
+    }
+
     return false;
   }
 
@@ -374,7 +379,10 @@ bool CYdLidar::getDeviceInfo() {
   result_t op_result = lidarPtr->getDeviceInfo(devinfo);
 
   if (!IS_OK(op_result)) {
-    fprintf(stderr, "get Device Information Error\n");
+    if (print) {
+      fprintf(stderr, "get Device Information Error\n");
+    }
+
     return false;
   }
 
@@ -397,9 +405,9 @@ bool CYdLidar::getDeviceInfo() {
   }
 
   if (lidarPtr->isSingleChannel()) {
-    model = "S2";
+    model = "S2K";
     printf("[YDLIDAR] Connection established in [%s][%d]:\n"
-           "Model: %s\n",
+           "Model: %s",
            m_SerialPort.c_str(),
            m_SerialBaudrate,
            model.c_str());
@@ -480,9 +488,12 @@ bool CYdLidar::checkStatus() {
     return false;
   }
 
+  print = false;
   bool ret = getDeviceHealth();
 
   if (!ret) {
+    delay(500);
+    print = true;
     ret = getDeviceHealth();
 
     if (!ret) {
@@ -490,8 +501,11 @@ bool CYdLidar::checkStatus() {
     }
   }
 
+  print = false;
+
   if (!getDeviceInfo()) {
     delay(2000);
+    print = true;
     ret = getDeviceInfo();
 
     if (!ret) {

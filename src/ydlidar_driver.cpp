@@ -49,7 +49,7 @@ YDlidarDriver::YDlidarDriver():
   m_isSingleChannel = false;
   has_start_header = false;
   last_byte = 0x00;
-  globalRecvBuffer = new uint8_t(sizeof(node_packages));
+  globalRecvBuffer = new uint8_t[sizeof(node_packages)];
 }
 
 YDlidarDriver::~YDlidarDriver() {
@@ -136,13 +136,14 @@ void YDlidarDriver::flushSerial() {
     return;
   }
 
+  delay(10);
   size_t len = _serial->available();
 
   if (len) {
     _serial->read(len);
   }
 
-  delay(10);
+  delay(20);
 }
 
 
@@ -480,8 +481,6 @@ int YDlidarDriver::cacheScanData() {
 result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   int recvPos         = 0;
   uint32_t startTs    = getms();
-  uint32_t size       = (m_intensities) ? sizeof(node_package) : sizeof(
-                          node_packages);
 
   uint32_t waitTime   = 0;
   uint8_t  *packageBuffer = (m_intensities) ? (uint8_t *)&package.package_Head :

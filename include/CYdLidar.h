@@ -91,6 +91,7 @@ class YDLIDAR_API CYdLidar {
   node_info *global_nodes;
   uint32_t m_pointTime;
   uint64_t last_node_time;
+  bool print;
 
 
 };	// End of class
