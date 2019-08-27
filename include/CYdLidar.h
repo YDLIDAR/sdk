@@ -88,6 +88,10 @@ class YDLIDAR_API CYdLidar {
   uint8_t Major;
   uint8_t Minjor;
   YDlidarDriver *lidarPtr;
+  node_info *global_nodes;
+  uint32_t m_pointTime;
+  uint64_t last_node_time;
+
 
 };	// End of class
 

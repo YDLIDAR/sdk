@@ -87,10 +87,6 @@ int main(int argc, char *argv[]) {
 
   bool ret = laser.initialize();
 
-  if (ret) {
-    ret = laser.turnOn();
-  }
-
   while (ret && ydlidar::ok()) {
     bool hardError;
     LaserScan scan;

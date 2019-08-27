@@ -84,6 +84,18 @@ class YDlidarDriver {
   bool isconnected() const;
 
   /**
+   * @brief isSingleChannel
+   * @return
+   */
+  bool isSingleChannel() const;
+
+  /**
+   * @brief getPointTime
+   * @return
+   */
+  uint32_t getPointTime() const;
+
+  /**
   * @brief 设置雷达是否带信号质量 \n
   * 连接成功后，必须使用::disconnect函数关闭
   * @param[in] isintensities    是否带信号质量:
@@ -92,6 +104,12 @@ class YDlidarDriver {
   * @note只有S4B(波特率是153600)雷达支持带信号质量, 别的型号雷达暂不支持
   */
   void setIntensities(const bool &isintensities);
+
+  /**
+   * @brief isIntensity
+   * @return
+   */
+  bool isIntensity() const;
 
   /**
   * @brief 设置雷达异常自动重新连接 \n
@@ -393,6 +411,10 @@ class YDlidarDriver {
   uint16_t Valu8Tou16;
 
   std::string serial_port;///< 雷达端口
+  bool m_isSingleChannel;
+  bool has_start_header;
+  uint8_t last_byte;
+  uint8_t *globalRecvBuffer;
 
 };
 }
