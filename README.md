@@ -15,10 +15,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  1.4.1 |   2019-05-10  |
+| SDK     |  1.4.1 |   2019-08-27  |
 
 
-- [bug] fix memory leak.
+- [feature] support S4 and S2K
 
 
 
@@ -30,13 +30,13 @@ Dataset
 | Model      |  Baudrate |  Sampling Frequency | Range(m)  | Scanning Frequency(HZ) | Working temperature(°C) | Laser power max(mW) | voltage(V) | Current(mA)
 | :-------- | --------:|--------:|  --------:| --------:|--------:| --------:| --------:|  :--: |
 | S4     |  115200|    4000 |  0.1-8        |6-12|0-40| ~5|4.8-5.2|330-380|
-| S4Pro |  153600|    4000 |  0.1-8        |6-12|0-40| ~5|4.8-5.2|330-380|
+| S2K    |  115200|    2000 |  0.1-8        |4-8|0-40| ~5|4.8-5.2|330-380|
 
 How to build YDLIDAR SDK samples
 ---------------
     $ git clone https://github.com/ydlidar/sdk
     $ cd sdk
-    $ git checkout S4
+    $ git checkout AD
     $ cd ..
     $ mkdir build
     $ cd build
@@ -202,7 +202,7 @@ Upgrade Log
 
 2019-05-10 version:1.4.1
 
-  1.fix memory leak
+  1.support S4 and S2K
 
 2019-03-25 version:1.4.0
 
