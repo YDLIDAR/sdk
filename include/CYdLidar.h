@@ -90,6 +90,8 @@ class YDLIDAR_API CYdLidar {
   //the currect interface can be used to datermine when the correction is completed.
   bool isRobotAngleOffsetCorrected() const;
 
+  int getFixedSize() const;
+
  protected:
   /** Returns true if communication has been established with the device. If it's not,
     *  try to create a comms channel.
@@ -153,6 +155,7 @@ class YDLIDAR_API CYdLidar {
   node_info *global_nodes;
   uint32_t m_pointTime;
   uint64_t last_node_time;
+  int     node_counts ;
 
 };	// End of class
 

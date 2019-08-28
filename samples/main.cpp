@@ -157,8 +157,6 @@ int main(int argc, char *argv[]) {
               (unsigned int)scan.data.size(), 1.0 / scan.config.scan_time);
 
       for (int i = 0; i < scan.data.size(); i++) {
-        uint64_t time_stamp = scan.system_time_stamp + i * scan.config.time_increment *
-                              1e9;
         LaserPoint point = scan.data[i];
       }
 

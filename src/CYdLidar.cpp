@@ -42,6 +42,7 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr), global_nodes(nullptr) {
   global_nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
   m_pointTime = 1e9 / 5000;
   last_node_time = getTime();
+  node_counts         = 720;
 
 }
 
@@ -92,6 +93,11 @@ void CYdLidar::setStartRobotAngleOffset() {
 bool CYdLidar::isRobotAngleOffsetCorrected() const {
   return m_isLRRAngleOffsetCorrected && !m_startRobotAngleOffset;
 }
+
+int CYdLidar::getFixedSize() const {
+  return node_counts;
+}
+
 /*-------------------------------------------------------------
 						doProcessSimple
 -------------------------------------------------------------*/
@@ -532,6 +538,7 @@ bool CYdLidar::getDeviceInfo() {
 void CYdLidar::checkSampleRate() {
   sampling_rate _rate;
   _rate.rate = YDlidarDriver::YDLIDAR_RATE_9K;
+  node_counts = 1440;
   int _samp_rate = 9;
   int try_count = 0;
   result_t ans = lidarPtr->getSamplingRate(_rate);
@@ -646,6 +653,7 @@ bool CYdLidar::checkScanFrequency() {
   }
 
   m_ScanFrequency -= frequencyOffset;
+  node_counts = m_SampleRate * 1000 / (m_ScanFrequency - 0.1);
   printf("[YDLIDAR INFO] Current Scan Frequency: %fHz\n", m_ScanFrequency);
   return true;
 }
