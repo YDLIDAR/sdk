@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
 
   CYdLidar laser;
   laser.setSerialPort(port);
-  laser.setSerialBaudrate(230400);
+  laser.setSerialBaudrate(115200);
   laser.setFixedResolution(false);
   laser.setReversion(true); //
   laser.setAutoReconnect(true);//hot plug

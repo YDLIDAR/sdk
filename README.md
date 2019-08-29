@@ -42,7 +42,7 @@ How to build YDLIDAR SDK samples
 ---------------
     $ git clone https://github.com/ydlidar/sdk
     $ cd sdk
-    $ git checkout G2
+    $ git checkout G2C
     $ cd ..
     $ mkdir build
     $ cd build
@@ -69,16 +69,16 @@ You should see YDLIDAR's scan result in the console:
 
 	[YDLIDAR]:SDK Version: 1.4.2
 	[YDLIDAR]:Lidar running correctly ! The health status: good
-	[YDLIDAR] Connection established in [/dev/ttyUSB0][230400]:
+	[YDLIDAR] Connection established in [/dev/ttyUSB0][115200]:
 	Firmware version: 1.1
 	Hardware version: 1
-	Model: G2
+	Model: G2C
 	Serial: 2019071800011111
-	[YDLIDAR INFO] Current Sampling Rate : 5K
+	[YDLIDAR INFO] Current Sampling Rate : 4K
 	[YDLIDAR INFO] Current Scan Frequency : 10.000000Hz
 	[YDLIDAR INFO] Now YDLIDAR is scanning ......
-	Scan received: 500 ranges
-	Scan received: 503 ranges
+	Scan received: 400 ranges
+	Scan received: 403 ranges
 	
 	
 

@@ -48,7 +48,7 @@ using namespace angles;
 -------------------------------------------------------------*/
 CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_SerialPort        = "";
-  m_SerialBaudrate    = 230400;
+  m_SerialBaudrate    = 115200;
   m_FixedResolution   = true;
   m_Reversion         = true;
   m_AutoReconnect     = true;
