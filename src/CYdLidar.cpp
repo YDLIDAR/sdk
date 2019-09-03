@@ -69,6 +69,9 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   node_duration = 1e9 / 9000;
   m_OffsetTime = 0.0;
   last_node_time = getTime();
+  nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
+  isIntenstiy = false;
+  isHalf = false;
 }
 
 /*-------------------------------------------------------------
@@ -76,6 +79,11 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
 -------------------------------------------------------------*/
 CYdLidar::~CYdLidar() {
   disconnecting();
+
+  if (nodes) {
+    delete[] nodes;
+    nodes = NULL;
+  }
 }
 
 void CYdLidar::disconnecting() {
@@ -108,9 +116,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     return false;
   }
 
-  node_info *nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
   size_t   count = YDlidarDriver::MAX_SCAN_NODES;
-
   //wait Scan data:
   uint64_t tim_scan_start = getTime();
   result_t op_result =  lidarPtr->grabScanData(nodes, count);
@@ -123,11 +129,18 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     tim_scan_end -= node_duration;
     tim_scan_start = tim_scan_end -  scan_time ;
 
-    if (tim_scan_start - last_node_time > -2e6 &&
+    if (tim_scan_start - last_node_time > -20e6 &&
         tim_scan_start - last_node_time < 0) {
       tim_scan_start = last_node_time;
       tim_scan_end = tim_scan_start + scan_time;
     }
+
+    if (static_cast<int>(tim_scan_start + scan_time  - tim_scan_end) >
+        0) {
+      tim_scan_end = tim_scan_end - node_duration;
+      tim_scan_start = tim_scan_end -  scan_time ;
+    }
+
 
     last_node_time = tim_scan_end;
 
@@ -143,8 +156,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     outscan.system_time_stamp = tim_scan_start;
     outscan.config.min_angle = angles::from_degrees(m_MinAngle);
     outscan.config.max_angle =  angles::from_degrees(m_MaxAngle);
-    outscan.config.scan_time =  scan_time / 1e9;
-    outscan.config.time_increment = outscan.config.scan_time / (double)count;
+    outscan.config.scan_time =  static_cast<float>(scan_time / 1e9);
+    outscan.config.time_increment = static_cast<float>(node_duration / 1e9);
     outscan.config.min_range = m_MinRange;
     outscan.config.max_range = m_MaxRange;
 
@@ -165,10 +178,16 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
 
     for (int i = 0; i < count; i++) {
-      angle = (float)((nodes[i].angle_q6_checkbit >>
-                       LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f);
-      range = (float)nodes[i].distance_q2 / 4000.f;
-      intensity = (float)(nodes[i].sync_quality);
+      angle = static_cast<float>((nodes[i].angle_q6_checkbit >>
+                                  LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f);
+
+      if (isHalf) {
+        range = static_cast<float>(nodes[i].distance_q2 / 2000.f);
+      } else {
+        range = static_cast<float>(nodes[i].distance_q2 / 4000.f);
+      }
+
+      intensity = static_cast<float>(nodes[i].sync_quality);
       angle = angles::from_degrees(angle);
 
       if (m_Reversion) {
@@ -198,13 +217,17 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
                           outscan.config.angle_increment);
 
         if (index >= 0 && index < all_node_count) {
+          if (range < outscan.config.min_range) {
+            range = std::numeric_limits<float>::infinity();
+            intensity = 0.0;
+          }
+
           outscan.ranges[index] = range;
           outscan.intensities[index] = intensity;
         }
       }
     }
 
-    delete[] nodes;
     return true;
   } else {
     if (IS_FAIL(op_result)) {
@@ -212,7 +235,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     }
   }
 
-  delete[] nodes;
   return false;
 
 }
@@ -272,7 +294,6 @@ bool  CYdLidar::turnOff() {
 }
 
 bool CYdLidar::checkLidarAbnormal() {
-  node_info *nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
   size_t   count = YDlidarDriver::MAX_SCAN_NODES;
   int check_abnormal_count = 0;
 
@@ -291,14 +312,12 @@ bool CYdLidar::checkLidarAbnormal() {
     op_result =  lidarPtr->grabScanData(nodes, count);
 
     if (IS_OK(op_result)) {
-      delete[] nodes;
       return false;
     }
 
     check_abnormal_count++;
   }
 
-  delete[] nodes;
   return !IS_OK(op_result);
 }
 
@@ -347,13 +366,17 @@ bool CYdLidar::getDeviceInfo() {
   }
 
   if (devinfo.model != YDlidarDriver::YDLIDAR_G4 &&
-      devinfo.model != YDlidarDriver::YDLIDAR_G4PRO) {
+      devinfo.model != YDlidarDriver::YDLIDAR_G4PRO &&
+      devinfo.model != YDlidarDriver::YDLIDAR_G4B &&
+      devinfo.model != YDlidarDriver::YDLIDAR_G2A) {
     printf("[YDLIDAR INFO] Current SDK does not support current lidar models[%d]\n",
            devinfo.model);
     return false;
   }
 
   std::string model = "G4";
+  isIntenstiy = false;
+  isHalf = false;
 
   switch (devinfo.model) {
     case YDlidarDriver::YDLIDAR_G4:
@@ -364,6 +387,20 @@ bool CYdLidar::getDeviceInfo() {
     case YDlidarDriver::YDLIDAR_G4PRO:
       model = "G4Pro";
       frequencyOffset = 0.0;
+      break;
+
+    case YDlidarDriver::YDLIDAR_G2A:
+      model = "G10B";
+      frequencyOffset = 0.4;
+      isHalf = true;
+      isIntenstiy = true;
+      break;
+
+    case YDlidarDriver::YDLIDAR_G4B:
+      model = "G4B";
+      frequencyOffset = 0.4;
+      isIntenstiy = true;
+      isHalf = true;
       break;
 
     default:
@@ -389,7 +426,20 @@ bool CYdLidar::getDeviceInfo() {
   }
 
   printf("\n");
-  checkSampleRate();
+
+  lidarPtr->setIntensities(isIntenstiy);
+
+  if (devinfo.model != YDlidarDriver::YDLIDAR_G4B &&
+      devinfo.model != YDlidarDriver::YDLIDAR_G2A) {
+    checkSampleRate();
+  } else {
+    m_SampleRate = 5;
+
+    if (devinfo.model == YDlidarDriver::YDLIDAR_G2A) {
+      m_SampleRate = 10;
+    }
+  }
+
   printf("[YDLIDAR INFO] Current Sampling Rate : %dK\n", m_SampleRate);
   checkScanFrequency();
   return true;
@@ -574,6 +624,11 @@ bool  CYdLidar::checkCOMMs() {
 -------------------------------------------------------------*/
 bool CYdLidar::checkStatus() {
 
+  std::map<int, bool> checkmodel;
+  checkmodel.insert(std::map<int, bool>::value_type(230400, false));
+  checkmodel.insert(std::map<int, bool>::value_type(512000, false));
+Again:
+
   if (!checkCOMMs()) {
     return false;
   }
@@ -594,6 +649,19 @@ bool CYdLidar::checkStatus() {
     ret = getDeviceInfo();
 
     if (!ret) {
+      checkmodel[m_SerialBaudrate] = true;
+      map<int, bool>::iterator it;
+
+      for (it = checkmodel.begin(); it != checkmodel.end(); ++it) {
+        if (it->second) {
+          continue;
+        }
+
+        lidarPtr->disconnect();
+        m_SerialBaudrate = it->first;
+        goto Again;
+      }
+
       return false;
     }
   }

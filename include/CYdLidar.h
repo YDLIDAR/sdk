@@ -137,6 +137,9 @@ class YDLIDAR_API CYdLidar {
   YDlidarDriver *lidarPtr;
   uint64_t node_duration;
   uint64_t last_node_time;
+  node_info *nodes;
+  bool isIntenstiy;
+  bool isHalf;
 
 };	// End of class
 

@@ -480,7 +480,11 @@ class YDlidarDriver {
     YDLIDAR_G10 = 10, //256000
     YDLIDAR_S4B = 11,//153600
     YDLIDAR_S2 = 12,//115200
-    YDLIDAR_G25 = 13,//512000
+    YDLIDAR_G6 = 13,//512000
+    YDLIDAR_G2A = 14,//230400
+    YDLIDAR_G2B = 15,//230500
+    YDLIDAR_G2C = 16,//230400
+    YDLIDAR_G4B = 17,//230400
     YDLIDAR_Tail,
   };
 
@@ -528,6 +532,7 @@ class YDlidarDriver {
   uint16_t Valu8Tou16;
 
   std::string serial_port;///< 雷达端口
+  uint8_t *globalRecvBuffer;
 
 };
 }
