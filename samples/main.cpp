@@ -141,6 +141,9 @@ int main(int argc, char *argv[]) {
   ignore_array.clear();
   laser.setIgnoreArray(ignore_array);
 
+  //filter data overlap
+  laser.setFilterDataNoise(false);
+
   bool ret = laser.initialize();
 
   if (ret) {
