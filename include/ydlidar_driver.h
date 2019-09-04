@@ -321,7 +321,7 @@ class YDlidarDriver {
     DEFAULT_TIMEOUT = 2000,    /**< 默认超时时间. */
     DEFAULT_HEART_BEAT = 1000, /**< 默认检测掉电功能时间. */
     MAX_SCAN_NODES = 2048,	   /**< 最大扫描点数. */
-    DEFAULT_TIMEOUT_COUNT = 3,
+    DEFAULT_TIMEOUT_COUNT = 1,
   };
   enum {
     YDLIDAR_F4 = 1, /**< F4雷达型号代号. */
@@ -375,6 +375,7 @@ class YDlidarDriver {
   bool     get_device_health_success;
 
   std::string serial_port;///< 雷达端口
+  uint8_t *globalRecvBuffer;
 
 };
 }

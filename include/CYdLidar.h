@@ -1,7 +1,9 @@
 ﻿
 #pragma once
+#include "line_feature.h"
 #include "utils.h"
 #include "ydlidar_driver.h"
+#include "SimpleIni.h"
 #include <math.h>
 
 
@@ -18,6 +20,7 @@
 
 
 using namespace ydlidar;
+using namespace line_feature;
 
 class YDLIDAR_API CYdLidar {
   PropertyBuilderByName(float, MaxRange,
@@ -48,6 +51,12 @@ class YDLIDAR_API CYdLidar {
                         private) ///< 设置和获取激光剔除点
   PropertyBuilderByName(int, AbnormalCheckCount,
                         private) ///< Maximum number of abnormal checks
+  PropertyBuilderByName(std::string, CalibrationFileName,
+                        private) ///< calibration file
+  PropertyBuilderByName(bool, StartAngleOffset,
+                        private)//开启整机零位修正，
+  PropertyBuilderByName(float, RobotLidarDifference,
+                        private)//雷达零位和机器人零位理论安装偏差(0, 90, 180)
 
 
  public:
@@ -69,6 +78,12 @@ class YDLIDAR_API CYdLidar {
 
   //Turn off lidar connection
   void disconnecting(); //!< Closes the comms with the laser. Shouldn't have to be directly needed by the user
+
+  //获取已经零度纠正后的纠正值，
+  float getAngleOffset() const;
+
+  //当前机器是否零度纠正已经纠正
+  bool isAngleOffetCorrected() const;
 
  protected:
   /** Returns true if communication has been established with the device. If it's not,
@@ -99,6 +114,12 @@ class YDLIDAR_API CYdLidar {
 
   bool handleDeviceStatus();
 
+  //检测修正值
+  bool checkCalibrationAngle();
+
+  //保存修正值到文件
+  bool saveOffsetAngle();
+
 
  private:
   bool isScanning;
@@ -108,6 +129,17 @@ class YDLIDAR_API CYdLidar {
   uint32_t m_pointTime;
   uint64_t last_node_time;
   int m_FixedSize;
+  node_info *nodes;
+
+  //fit line
+  LineFeature line_feature_;
+
+  //param
+  CSimpleIniA ini;
+  float   m_AngleOffset;
+  bool    m_isAngleOffsetCorrected;
+  const std::string selectionName = "ROBOT";
+  const std::string paramName = "OffsetAngle";
 
 };	// End of class
 

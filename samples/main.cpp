@@ -53,17 +53,25 @@ int main(int argc, char *argv[]) {
   laser.setAutoReconnect(true);
   laser.setGlassNoise(true);
   laser.setSunNoise(true);
+  laser.setRobotLidarDifference(0);//机器零度和雷达零度理论偏差
+  laser.setStartAngleOffset(true);//开启整机零位修正
   bool ret = laser.initialize();
 
   while (ret && ydlidar::ok()) {
     bool hardError;
     LaserScan scan;
 
+    //雷达频率等于扫描时间的倒数
     if (laser.doProcessSimple(scan, hardError)) {
+      float lidar_scan_frequency = 1.0 / scan.config.scan_time;
       fprintf(stdout, "Scan received: %u ranges in %f HZ\n",
-              (unsigned int)scan.data.size(), 1.0 / scan.config.scan_time);
+              (unsigned int)scan.data.size(), lidar_scan_frequency);
       fflush(stdout);
     }
+
+    laser.isAngleOffetCorrected();//判断当前整机零位是否已经修正
+    laser.getStartAngleOffset();//判断当前是否正在修正零位中
+    laser.getAngleOffset();//获取修正零位值
   }
 
 
