@@ -56,6 +56,8 @@ class YDLIDAR_API CYdLidar {
                         private) ///< 设置和获取是否旋转激光180度
   PropertyBuilderByName(bool, AutoReconnect,
                         private) ///< 设置异常是否开启重新连接
+  PropertyBuilderByName(bool, FilterNoise,
+                        private) ///< 过滤干扰
   PropertyBuilderByName(int, SerialBaudrate,
                         private) ///< 设置和获取激光通讯波特率
   PropertyBuilderByName(int, SampleRate,
@@ -135,8 +137,10 @@ class YDLIDAR_API CYdLidar {
   uint8_t Major;
   uint8_t Minjor;
   YDlidarDriver *lidarPtr;
+  node_info *nodes;
   uint64_t node_duration;
   uint64_t last_node_time;
+  std::map<int, bool> unique_range, multi_range;
 
 };	// End of class
 

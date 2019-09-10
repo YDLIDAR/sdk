@@ -69,6 +69,23 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   node_duration = 1e9 / 9000;
   m_OffsetTime = 0.0;
   last_node_time = getTime();
+  nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
+  m_FilterNoise = true;
+  unique_range[16000] = true;
+  unique_range[16210] = true;
+  unique_range[16220] = true;
+  unique_range[16300] = true;
+  unique_range[16310] = true;
+  unique_range[16320] = true;
+  unique_range[16330] = true;
+  unique_range[16340] = true;
+
+  multi_range[16100] = true;
+  multi_range[16110] = true;
+  multi_range[16120] = true;
+  multi_range[16130] = true;
+  multi_range[16200] = true;
+
 }
 
 /*-------------------------------------------------------------
@@ -76,6 +93,11 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
 -------------------------------------------------------------*/
 CYdLidar::~CYdLidar() {
   disconnecting();
+
+  if (nodes) {
+    delete[] nodes;
+    nodes = nullptr;
+  }
 }
 
 void CYdLidar::disconnecting() {
@@ -108,9 +130,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     return false;
   }
 
-  node_info *nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
   size_t   count = YDlidarDriver::MAX_SCAN_NODES;
-
   //wait Scan data:
   uint64_t tim_scan_start = getTime();
   result_t op_result =  lidarPtr->grabScanData(nodes, count);
@@ -162,6 +182,43 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     float intensity = 0.0;
     float angle = 0.0;
     int index = 0;
+    std::map<int, bool> filter_flag;
+
+    if (m_FilterNoise) {
+      for (int i = 0; i < count; i++) {
+        auto find = filter_flag.find(i);
+
+        if (find == filter_flag.end()) {
+          filter_flag[i] = false;
+        }
+
+        uint16_t distance = nodes[i].distance_q2 >>
+                            LIDAR_RESP_MEASUREMENT_DISTANCE_SHIFT;
+
+        if (unique_range.find(distance) != unique_range.end()) {
+          if (unique_range[distance]) {
+            filter_flag[i] = true;
+          }
+        }
+
+        if (multi_range.find(distance) != multi_range.end()) {
+          if (multi_range[distance]) {
+            filter_flag[i] = true;
+            int index = i;
+
+            while (index >= 0 && index >= i - 3) {
+              filter_flag[index] = true;
+              index--;
+            }
+
+            if (i + 1 < count) {
+              filter_flag[i + 1] = true;
+            }
+
+          }
+        }
+      }
+    }
 
 
     for (int i = 0; i < count; i++) {
@@ -192,6 +249,14 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
         intensity = 0.0;
       }
 
+      if (m_FilterNoise) {
+        if (filter_flag[i]) {
+          range = 0.0;
+          intensity = 0.0;
+        }
+      }
+
+
       if (angle >= outscan.config.min_angle &&
           angle <= outscan.config.max_angle) {
         index = std::ceil((angle - outscan.config.min_angle) /
@@ -204,7 +269,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
       }
     }
 
-    delete[] nodes;
     return true;
   } else {
     if (IS_FAIL(op_result)) {
@@ -212,7 +276,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     }
   }
 
-  delete[] nodes;
   return false;
 
 }
@@ -272,7 +335,6 @@ bool  CYdLidar::turnOff() {
 }
 
 bool CYdLidar::checkLidarAbnormal() {
-  node_info *nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
   size_t   count = YDlidarDriver::MAX_SCAN_NODES;
   int check_abnormal_count = 0;
 
@@ -291,14 +353,12 @@ bool CYdLidar::checkLidarAbnormal() {
     op_result =  lidarPtr->grabScanData(nodes, count);
 
     if (IS_OK(op_result)) {
-      delete[] nodes;
       return false;
     }
 
     check_abnormal_count++;
   }
 
-  delete[] nodes;
   return !IS_OK(op_result);
 }
 

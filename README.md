@@ -20,10 +20,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  1.4.2 |   2019-07-16  |
+| SDK     |  1.4.2 |   2019-09-10  |
 
 
-- [feature] support G4Pro
+- [feature] add filter noise
 
 
 
@@ -41,7 +41,7 @@ How to build YDLIDAR SDK samples
 ---------------
     $ git clone https://github.com/ydlidar/sdk
     $ cd sdk
-    $ git checkout G4
+    $ git checkout G4-KK
     $ cd ..
     $ mkdir build
     $ cd build
