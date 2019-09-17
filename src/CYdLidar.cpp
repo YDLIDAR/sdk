@@ -86,6 +86,19 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   multi_range[16130] = true;
   multi_range[16200] = true;
 
+  ini.SetUnicode();
+  m_CalibrationFileName = "laserconfig.ini";
+  m_AngleOffset = 0.0;
+  m_isAngleOffsetCorrected = false;
+  m_StartAngleOffset = false;
+  m_RobotLidarDifference = 0;
+  last_frequency = 0.0;
+
+  indices.clear();
+  bearings.clear();
+  range_data.clear();
+  m_serial_number.clear();
+
 }
 
 /*-------------------------------------------------------------
@@ -114,6 +127,17 @@ std::map<std::string, std::string>  CYdLidar::lidarPortList() {
   return ydlidar::YDlidarDriver::lidarPortList();
 }
 
+//获取零位修正值
+float CYdLidar::getAngleOffset() const {
+  return m_AngleOffset;
+}
+
+//判断零位角度是否修正
+bool CYdLidar::isAngleOffetCorrected() const {
+  return m_isAngleOffsetCorrected && !m_StartAngleOffset;
+}
+
+
 /*-------------------------------------------------------------
 						doProcessSimple
 -------------------------------------------------------------*/
@@ -131,6 +155,13 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
   }
 
   size_t   count = YDlidarDriver::MAX_SCAN_NODES;
+
+  //fit line
+  //line feature
+  indices.clear();
+  bearings.clear();
+  range_data.clear();
+
   //wait Scan data:
   uint64_t tim_scan_start = getTime();
   result_t op_result =  lidarPtr->grabScanData(nodes, count);
@@ -175,7 +206,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     outscan.config.angle_increment = (outscan.config.max_angle -
                                       outscan.config.min_angle) / all_node_count;
 
-    outscan.ranges.resize(all_node_count, std::numeric_limits<float>::infinity());
+    outscan.ranges.resize(all_node_count, 0);
     outscan.intensities.resize(all_node_count, 0);
 
     float range = 0.0;
@@ -194,6 +225,22 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
         uint16_t distance = nodes[i].distance_q2 >>
                             LIDAR_RESP_MEASUREMENT_DISTANCE_SHIFT;
+
+        //filter pinpang
+        if (distance < 1000) {
+          bool filter = true;
+
+          for (int j = i + 1; (j < count && j < i + 4); j++) {
+            uint16_t range = nodes[j].distance_q2 >> LIDAR_RESP_MEASUREMENT_DISTANCE_SHIFT;
+
+            if (multi_range.find(range) != multi_range.end()) {
+              filter = false;
+              break;
+            }
+          }
+
+          filter_flag[i] = filter;
+        }
 
         if (unique_range.find(distance) != unique_range.end()) {
           if (unique_range[distance]) {
@@ -223,7 +270,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
     for (int i = 0; i < count; i++) {
       angle = (float)((nodes[i].angle_q6_checkbit >>
-                       LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f);
+                       LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f) + m_AngleOffset;
       range = (float)nodes[i].distance_q2 / 4000.f;
       intensity = (float)(nodes[i].sync_quality);
       angle = angles::from_degrees(angle);
@@ -266,9 +313,24 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
           outscan.ranges[index] = range;
           outscan.intensities[index] = intensity;
         }
+
+        //加入拟合直线数据
+        if (range >= m_MinRange) {
+          bearings.push_back(angle);
+          indices.push_back(indices.size());
+          range_data.ranges.push_back(range);
+          range_data.xs.push_back(cos(angle)*range);
+          range_data.ys.push_back(sin(angle)*range);
+        }
+
       }
     }
 
+    if (fabs(last_frequency - 1.0 / outscan.config.scan_time) < 0.01) {
+      fitLineSegment();
+    }
+
+    last_frequency = 1.0 / outscan.config.scan_time;
     return true;
   } else {
     if (IS_FAIL(op_result)) {
@@ -278,6 +340,55 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
   return false;
 
+}
+
+void CYdLidar::fitLineSegment() {
+  //当设置启动零位修正，　开始拟合直线．
+  if (m_StartAngleOffset) {
+    line_feature_.setCachedRangeData(bearings, indices, range_data);
+    std::vector<gline> glines;
+    line_feature_.extractLines(glines);
+    bool find_line_angle = false;
+    gline max;
+    max.distance = 0.0;
+    double line_angle = 0.0;
+
+    if (glines.size()) {
+      max = glines[0];
+    }
+
+    float offsetAngle = 0.0;
+
+    for (std::vector<gline>::const_iterator it = glines.begin();
+         it != glines.end(); ++it) {
+      line_angle = M_PI_2 - it->angle;
+      line_angle -= M_PI;
+      line_angle += angles::from_degrees(m_RobotLidarDifference);
+      line_angle = angles::normalize_angle(line_angle);
+
+      //可以再加入别的策略来约束，比如直线到中心点的距离
+      //角度差小于Ｍ_PI/4的直线，才算修正直线
+      //m_RobotLidarDifference 值表示雷达零度与机器人然零度之间的理论差值（0,180)四个值
+      //如果雷达零度和机器人零度在一个方向，当前值设置位零，如果差90就是90　反方向就是180
+      if (fabs(line_angle) < fabs(angles::from_degrees(m_RobotLidarDifference) -
+                                  M_PI / 3)) {
+        //直线距离大于1.0的直线才算修正直线
+        if (it->distance > 1.0 && it->distance > max.distance) {
+          max = (*it);
+          find_line_angle = true;
+//              line_angle -= angles::from_degrees(m_RobotLidarDifference);
+          offsetAngle = -angles::to_degrees(line_angle);
+        }
+      }
+
+    }
+
+    //找到拟合的直线，　保存修正值到文件
+    if (find_line_angle) {
+      m_AngleOffset += offsetAngle;
+      saveOffsetAngle();
+    }
+  }
 }
 
 /*-------------------------------------------------------------
@@ -309,6 +420,8 @@ bool  CYdLidar::turnOn() {
     isScanning = false;
     return false;
   }
+
+  checkCalibrationAngle();
 
   node_duration = lidarPtr->getPointTime();
   isScanning = true;
@@ -430,6 +543,7 @@ bool CYdLidar::getDeviceInfo() {
       break;
   }
 
+  m_serial_number.clear();
   Major = (uint8_t)(devinfo.firmware_version >> 8);
   Minjor = (uint8_t)(devinfo.firmware_version & 0xff);
   printf("[YDLIDAR] Connection established in [%s][%d]:\n"
@@ -446,6 +560,7 @@ bool CYdLidar::getDeviceInfo() {
 
   for (int i = 0; i < 16; i++) {
     printf("%01X", devinfo.serialnum[i] & 0xff);
+    m_serial_number += format("%01X", devinfo.serialnum[i] & 0xff);
   }
 
   printf("\n");
@@ -585,6 +700,71 @@ bool CYdLidar::checkScanFrequency() {
   printf("[YDLIDAR INFO] Current Scan Frequency: %fHz\n", m_ScanFrequency);
   return true;
 }
+
+bool CYdLidar::checkCalibrationAngle() {
+  m_AngleOffset = 0.0;
+  m_isAngleOffsetCorrected = false;
+  bool ret = false;
+
+  if (ydlidar::fileExists(m_CalibrationFileName)) {
+    SI_Error rc = ini.LoadFile(m_CalibrationFileName.c_str());
+
+    if (rc >= 0) {
+      m_isAngleOffsetCorrected = true;
+      double default_value = 179.6;
+      m_AngleOffset = ini.GetDoubleValue(selectionName.c_str(),
+                                         m_serial_number.c_str(),
+                                         default_value);
+
+      if (fabs(m_AngleOffset - default_value) < 0.01) {
+        m_isAngleOffsetCorrected = false;
+        m_AngleOffset = 0.0;
+      }
+
+      printf("[YDLIDAR INFO] Successfully obtained the %s offset angle[%f] from the calibration file[%s]\n"
+             , m_isAngleOffsetCorrected ? "corrected" : "uncorrrected", m_AngleOffset,
+             m_CalibrationFileName.c_str());
+      ret = true;
+
+    } else {
+      printf("[YDLIDAR INFO] Failed to open calibration file[%s]\n",
+             m_CalibrationFileName.c_str());
+    }
+  } else {
+    printf("[YDLIDAR INFO] Calibration file[%s] does not exist\n",
+           m_CalibrationFileName.c_str());
+  }
+
+  return ret;
+}
+
+/*-------------------------------------------------------------
+                        saveRobotOffsetAngle
+-------------------------------------------------------------*/
+bool CYdLidar::saveOffsetAngle() {
+  bool ret = true;
+
+  if (m_StartAngleOffset) {
+    ini.SetDoubleValue(selectionName.c_str(), m_serial_number.c_str(),
+                       m_AngleOffset);
+    SI_Error rc = ini.SaveFile(m_CalibrationFileName.c_str());
+
+    if (rc >= 0) {
+      m_StartAngleOffset = false;
+      m_isAngleOffsetCorrected = true;
+      printf("[YDLIDAR INFO] Current robot offset correction value[%f] is saved\n",
+             m_AngleOffset);
+    } else {
+      fprintf(stderr, "Saving correction value[%f] failed\n",
+              m_AngleOffset);
+      m_isAngleOffsetCorrected = false;
+      ret = false;
+    }
+  }
+
+
+}
+
 
 
 /*-------------------------------------------------------------

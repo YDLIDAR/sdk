@@ -39,6 +39,39 @@ using namespace impl;
 
 namespace ydlidar {
 
+// A sprintf-like function for std::string
+std::string format(const char *fmt, ...) {
+  if (!fmt) {
+    return std::string();
+  }
+
+  int   result = -1, length = 2048;
+  std::string buffer;
+
+  while (result == -1) {
+    buffer.resize(length);
+
+    va_list args;  // This must be done WITHIN the loop
+    va_start(args, fmt);
+    result = ::vsnprintf(&buffer[0], length, fmt, args);
+    va_end(args);
+
+    // Truncated?
+    if (result >= length) {
+      result = -1;
+    }
+
+    length *= 2;
+
+    // Ok?
+    if (result >= 0) {
+      buffer.resize(result);
+    }
+  }
+
+  return buffer;
+}
+
 YDlidarDriver::YDlidarDriver():
   _serial(NULL) {
   isConnected         = false;

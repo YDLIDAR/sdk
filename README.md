@@ -20,10 +20,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  1.4.2 |   2019-09-10  |
+| SDK     |  1.4.2 |   2019-09-17  |
 
 
-- [feature] add filter noise
+- [feature] correct zero angle offset
 
 
 
@@ -66,7 +66,7 @@ windows:
 
 You should see YDLIDAR's scan result in the console:
 
-	[YDLIDAR]:SDK Version: 1.4.1
+	[YDLIDAR]:SDK Version: 1.4.2
 	[YDLIDAR]:Lidar running correctly ! The health status: good
 	[YDLIDAR] Connection established in [/dev/ttyUSB0][230400]:
 	Firmware version: 1.2
@@ -206,6 +206,10 @@ Coordinate System
 
 Upgrade Log
 ---------------
+
+2019-09-10 version:1.4.2
+
+   1.filter noise
 
 2019-05-10 version:1.4.1
 

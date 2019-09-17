@@ -54,6 +54,8 @@ using namespace serial;
 
 namespace ydlidar {
 
+std::string format(const char *fmt, ...);
+
 class YDlidarDriver {
  public:
   /**

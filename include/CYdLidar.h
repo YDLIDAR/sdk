@@ -33,11 +33,14 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 #pragma once
+#include "line_feature.h"
 #include "utils.h"
 #include "ydlidar_driver.h"
 #include <math.h>
+#include <SimpleIni.h>
 
 using namespace ydlidar;
+using namespace line_feature;
 
 class YDLIDAR_API CYdLidar {
   PropertyBuilderByName(float, MaxRange,
@@ -70,6 +73,12 @@ class YDLIDAR_API CYdLidar {
                         private) ///< 设置和获取激光剔除点
   PropertyBuilderByName(float, OffsetTime,
                         private) ///<
+  PropertyBuilderByName(std::string, CalibrationFileName,
+                        private) ///< calibration file
+  PropertyBuilderByName(bool, StartAngleOffset,
+                        private)//开启整机零位修正，
+  PropertyBuilderByName(float, RobotLidarDifference,
+                        private)//雷达零位和机器人零位理论安装偏差(0, 90, 180)
 
 
  public:
@@ -94,6 +103,10 @@ class YDLIDAR_API CYdLidar {
 
   //Turn off lidar connection
   void disconnecting(); //!< Closes the comms with the laser. Shouldn't have to be directly needed by the user
+
+  float getAngleOffset() const;
+
+  bool isAngleOffetCorrected() const;
 
  protected:
   /** Returns true if communication has been established with the device. If it's not,
@@ -129,6 +142,14 @@ class YDLIDAR_API CYdLidar {
   /** returns true if the lidar data is normal, If it's not*/
   bool checkLidarAbnormal();
 
+  void fitLineSegment();
+
+  //
+  bool checkCalibrationAngle();
+
+  //
+  bool saveOffsetAngle();
+
  private:
   bool    isScanning;
   int     node_counts ;
@@ -137,10 +158,26 @@ class YDLIDAR_API CYdLidar {
   uint8_t Major;
   uint8_t Minjor;
   YDlidarDriver *lidarPtr;
+  LineFeature line_feature_;
   node_info *nodes;
   uint64_t node_duration;
   uint64_t last_node_time;
   std::map<int, bool> unique_range, multi_range;
+
+  std::string m_serial_number;
+  double last_frequency;
+
+  //param
+  CSimpleIniA ini;
+  float   m_AngleOffset;
+  bool    m_isAngleOffsetCorrected;
+  const std::string selectionName = "ROBOT";
+  const std::string paramName = "OffsetAngle";
+
+  //
+  std::vector<double> bearings;
+  std::vector<unsigned int> indices;
+  RangeData range_data;
 
 };	// End of class
 
