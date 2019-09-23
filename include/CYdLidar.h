@@ -81,7 +81,6 @@ class YDLIDAR_API CYdLidar {
 
  private:
   bool    isScanning;
-  int     node_counts ;
   double  each_angle;
   float   frequencyOffset;
   double  m_ScanFrequency;
@@ -92,7 +91,7 @@ class YDLIDAR_API CYdLidar {
   uint32_t m_pointTime;
   uint64_t last_node_time;
   bool print;
-
-
+  int m_SampleRate;
+  int m_FixedSize;
 };	// End of class
 

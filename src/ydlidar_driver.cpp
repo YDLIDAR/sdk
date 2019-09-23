@@ -705,9 +705,9 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   uint8_t package_CT;
 
   if (m_intensities) {
-    package_CT = package.package_CT;
+    package_CT = package.package_CT & 0x01;
   } else {
-    package_CT = packages.package_CT;
+    package_CT = packages.package_CT & 0x01;
   }
 
   if ((package_CT & 0x01) == CT_Normal) {
@@ -1111,7 +1111,7 @@ void YDlidarDriver::setIntensities(const bool &isintensities) {
     }
 
     globalRecvBuffer = new uint8_t[isintensities ? sizeof(node_package) : sizeof(
-                                     node_packages)];
+                                                   node_packages)];
   }
 
   m_intensities = isintensities;

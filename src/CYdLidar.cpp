@@ -23,7 +23,6 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_MinRange          = 0.08;
   m_ScanFrequency     = 8;
   isScanning          = false;
-  node_counts         = 720;
   each_angle          = 0.5;
   m_AbnormalCheckCount  = 4;
   m_FixedCount        = -1;
@@ -32,6 +31,8 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_IgnoreArray.clear();
   m_pointTime         = 1e9 / 4000;
   last_node_time = getTime();
+  m_FixedSize = 720;
+  m_SampleRate = 4;
   print = false;
   global_nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
 }
@@ -72,7 +73,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
   }
 
   size_t   count = YDlidarDriver::MAX_SCAN_NODES;
-  size_t all_nodes_counts = node_counts;
+  size_t all_nodes_counts = m_FixedSize;
 
   //wait Scan data:
   uint64_t tim_scan_start = getTime();
@@ -100,14 +101,11 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
     last_node_time = tim_scan_end;
 
-    float range = 0.0;
-
-
     if (IS_OK(op_result) && count > 1) {
       if (!m_FixedResolution) {
         all_nodes_counts = count;
       } else {
-        all_nodes_counts = node_counts;
+        all_nodes_counts = m_FixedSize;
 
         if (m_FixedCount > 0) {
           all_nodes_counts = m_FixedCount;
@@ -274,6 +272,8 @@ bool  CYdLidar::turnOn() {
     }
   }
 
+  m_pointTime = lidarPtr->getPointTime();
+
   if (checkLidarAbnormal()) {
     lidarPtr->stop();
     fprintf(stderr,
@@ -283,7 +283,6 @@ bool  CYdLidar::turnOn() {
   }
 
   isScanning = true;
-  m_pointTime = lidarPtr->getPointTime();
   lidarPtr->setAutoReconnect(m_AutoReconnect);
   printf("[YDLIDAR INFO] Now YDLIDAR is scanning ......\n");
   fflush(stdout);
@@ -316,6 +315,8 @@ bool CYdLidar::checkLidarAbnormal() {
   }
 
   result_t op_result = RESULT_FAIL;
+  std::vector<int> data;
+  int buffer_count  = 0;
 
   while (check_abnormal_count < m_AbnormalCheckCount) {
     //Ensure that the voltage is insufficient or the motor resistance is high, causing an abnormality.
@@ -323,10 +324,62 @@ bool CYdLidar::checkLidarAbnormal() {
       delay(check_abnormal_count * 1000);
     }
 
-    op_result =  lidarPtr->grabScanData(global_nodes, count);
+    float scan_time = 0.0;
+    uint64_t start_time = 0;
+    uint64_t end_time = 0;
+    op_result = RESULT_OK;
+
+    while (buffer_count < 10 && scan_time < 0.05 && IS_OK(op_result)) {
+      start_time = getTime();
+      count = YDlidarDriver::MAX_SCAN_NODES;
+      op_result =  lidarPtr->grabScanData(global_nodes, count);
+      end_time = getTime();
+      scan_time = 1.0 * static_cast<int64_t>(end_time - start_time) / 1e9;
+      buffer_count++;
+    }
 
     if (IS_OK(op_result)) {
-      return false;
+      data.push_back(count);
+      int collection = 0;
+
+      while (collection < 5) {
+        count = YDlidarDriver::MAX_SCAN_NODES;
+        start_time = getTime();
+        op_result =  lidarPtr->grabScanData(global_nodes, count);
+        end_time = getTime();
+
+
+        if (IS_OK(op_result)) {
+          if (abs(data.front() - count) > 20) {
+            data.erase(data.begin());
+          }
+
+          scan_time = 1.0 * static_cast<int64_t>(end_time - start_time) / 1e9;
+
+          if (scan_time > 0.04 && scan_time < 1.0) {
+            m_SampleRate = static_cast<int>((count / scan_time + 500) / 1000);
+            m_pointTime = 1e9 / (m_SampleRate * 1000);
+
+            if (m_SampleRate == 3) {
+            }
+          }
+
+          data.push_back(count);
+        }
+
+        collection++;
+      }
+
+      if (data.size() > 1) {
+        int total = accumulate(data.begin(), data.end(), 0);
+        int mean =  total / data.size(); //均值
+        m_FixedSize = (static_cast<int>((mean + 5) / 10)) * 10;
+        printf("[YDLIDAR]:Fixed Size: %d\n", m_FixedSize);
+        printf("[YDLIDAR]:Sample Rate: %dK\n", m_SampleRate);
+        return false;
+
+      }
+
     }
 
     check_abnormal_count++;
@@ -406,12 +459,10 @@ bool CYdLidar::getDeviceInfo() {
 
   if (lidarPtr->isSingleChannel()) {
     model = "S2K";
-    printf("[YDLIDAR] Connection established in [%s][%d]:\n"
-           "Model: %s",
+    printf("[YDLIDAR] Connection established in [%s][%d]:\n",
            m_SerialPort.c_str(),
-           m_SerialBaudrate,
-           model.c_str());
-    node_counts         = 360;
+           m_SerialBaudrate);
+    m_FixedSize         = 360;
     each_angle          = 1.0;
   } else {
     Major = (uint8_t)(devinfo.firmware_version >> 8);
