@@ -49,6 +49,7 @@ YDlidarDriver::YDlidarDriver():
   healthBuffer = reinterpret_cast<uint8_t *>(&health_);
   get_device_health_success = false;
   get_device_info_success = false;
+  recvBuffer = new uint8_t[sizeof(node_packages)];
 
 }
 
@@ -73,6 +74,11 @@ YDlidarDriver::~YDlidarDriver() {
     delete _serial;
     _serial = NULL;
   }
+
+  if (recvBuffer) {
+    delete[] recvBuffer;
+    recvBuffer = NULL;
+  }
 }
 
 result_t YDlidarDriver::connect(const char *port_path, uint32_t baudrate) {
@@ -94,6 +100,7 @@ result_t YDlidarDriver::connect(const char *port_path, uint32_t baudrate) {
   {
     ScopedLocker l(_lock);
     sendCommand(LIDAR_CMD_FORCE_STOP);
+    delay(10);
     sendCommand(LIDAR_CMD_STOP);
   }
   delay(50);
@@ -651,7 +658,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   int recvPos = 0;
   asyncRecvPos = 0;
   uint32_t startTs = getms();
-  uint32_t size = sizeof(node_packages);
   uint32_t waitTime = 0;
   uint8_t *packageBuffer = reinterpret_cast<uint8_t *>(&packages.package_Head);
   uint8_t  package_Sample_Num = 0;
@@ -662,7 +668,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   async_size = 0;
 
   if (package_Sample_Index == 0) {
-    uint8_t *recvBuffer = new uint8_t[size];
     recvPos = 0;
 
     while ((waitTime = getms() - startTs) <= timeout) {
@@ -671,7 +676,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
       result_t ans = waitForData(remainSize, timeout - waitTime, &recvSize);
 
       if (!IS_OK(ans)) {
-        delete[] recvBuffer;
         return ans;
       }
 
@@ -814,7 +818,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
         result_t ans = waitForData(remainSize, timeout - waitTime, &recvSize);
 
         if (!IS_OK(ans)) {
-          delete[] recvBuffer;
           return ans;
         }
 
@@ -843,11 +846,9 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
       }
 
       if (package_Sample_Num * PackageSampleBytes != recvPos) {
-        delete[] recvBuffer;
         return RESULT_FAIL;
       }
     } else {
-      delete[] recvBuffer;
       return RESULT_FAIL;
     }
 
@@ -860,10 +861,9 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
       CheckSumResult = true;
     }
 
-    delete[] recvBuffer;
   }
 
-  uint8_t package_CT = packages.package_CT;
+  uint8_t package_CT = packages.package_CT & 0x01;
 
 
   if (package_CT == CT_Normal) {

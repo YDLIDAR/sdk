@@ -32,6 +32,7 @@ CYdLidar::CYdLidar(): lidarPtr(0) {
   last_node_time      = getTime();
   m_FixedSize         = 360;
   m_IgnoreArray.clear();
+  nodes               = new node_info[YDlidarDriver::MAX_SCAN_NODES];
 }
 
 /*-------------------------------------------------------------
@@ -39,6 +40,11 @@ CYdLidar::CYdLidar(): lidarPtr(0) {
 -------------------------------------------------------------*/
 CYdLidar::~CYdLidar() {
   disconnecting();
+
+  if (nodes) {
+    delete[] nodes;
+    nodes = NULL;
+  }
 }
 
 void CYdLidar::disconnecting() {
@@ -67,7 +73,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     return false;
   }
 
-  node_info *nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
   size_t   count = YDlidarDriver::MAX_SCAN_NODES;
   //  wait Scan data:
   uint64_t tim_scan_start = getTime();
@@ -92,8 +97,9 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     tim_scan_end -= m_pointTime;
     tim_scan_start = tim_scan_end -  scan_time ;
 
-    if (tim_scan_start - last_node_time > -2e6 &&
-        tim_scan_start - last_node_time < 0) {
+    int64_t timeDiff = tim_scan_start - last_node_time;
+
+    if (timeDiff > -2e6 && timeDiff < 0) {
       tim_scan_start = last_node_time;
       tim_scan_end = tim_scan_start + scan_time;
     }
@@ -157,7 +163,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     }
 
     scan_msg.system_time_stamp = tim_scan_start + min_index * m_pointTime;
-    delete[] nodes;
     return true;
 
   } else {
@@ -166,7 +171,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     }
   }
 
-  delete[] nodes;
   return false;
 
 }
@@ -236,7 +240,6 @@ bool  CYdLidar::turnOff() {
             checkLidarAbnormal
 -------------------------------------------------------------*/
 bool CYdLidar::checkLidarAbnormal() {
-  node_info *nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
   size_t   count = YDlidarDriver::MAX_SCAN_NODES;
   int check_abnormal_count = 0;
 
@@ -255,14 +258,12 @@ bool CYdLidar::checkLidarAbnormal() {
     op_result =  lidarPtr->grabScanData(nodes, count);
 
     if (IS_OK(op_result)) {
-      delete[] nodes;
       return false;
     }
 
     check_abnormal_count++;
   }
 
-  delete[] nodes;
   return !IS_OK(op_result);
 }
 

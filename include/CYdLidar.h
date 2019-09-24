@@ -108,6 +108,7 @@ class YDLIDAR_API CYdLidar {
   uint32_t m_pointTime;
   uint64_t last_node_time;
   int m_FixedSize;
+  node_info *nodes;
 
 };	// End of class
 

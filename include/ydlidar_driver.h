@@ -375,6 +375,7 @@ class YDlidarDriver {
   bool     get_device_health_success;
 
   std::string serial_port;///< 雷达端口
+  uint8_t *recvBuffer;
 
 };
 }
