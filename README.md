@@ -36,7 +36,7 @@ How to build YDLIDAR SDK samples
 ---------------
     $ git clone https://github.com/ydlidar/sdk
     $ cd sdk
-    $ git checkout AD
+    $ git checkout AD_PRO
     $ cd ..
     $ mkdir build
     $ cd build

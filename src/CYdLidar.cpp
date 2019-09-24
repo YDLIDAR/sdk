@@ -16,6 +16,7 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_SerialPort        = "";
   m_SerialBaudrate    = 115200;
   m_FixedResolution   = true;
+  m_Reversion         = false;
   m_AutoReconnect     = true;
   m_MaxAngle          = 180.f;
   m_MinAngle          = -180.f;
@@ -23,17 +24,17 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_MinRange          = 0.08;
   m_ScanFrequency     = 8;
   isScanning          = false;
-  each_angle          = 0.5;
   m_AbnormalCheckCount  = 4;
-  m_FixedCount        = -1;
   Major               = 0;
   Minjor              = 0;
   m_IgnoreArray.clear();
   m_pointTime         = 1e9 / 4000;
-  last_node_time = getTime();
-  m_FixedSize = 720;
-  m_SampleRate = 4;
-  print = false;
+  last_node_time      = getTime();
+  m_FixedSize         = 720;
+  m_SampleRate        = 4;
+  print               = false;
+  m_GlassNoise        = true;
+  m_SunNoise          = true;
   global_nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
 }
 
@@ -59,10 +60,14 @@ void CYdLidar::disconnecting() {
   isScanning = false;
 }
 
+int CYdLidar::getFixedSize() const {
+  return m_FixedSize;
+}
+
 /*-------------------------------------------------------------
 						doProcessSimple
 -------------------------------------------------------------*/
-bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
+bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
   hardwareError			= false;
 
   // Bound?
@@ -73,7 +78,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
   }
 
   size_t   count = YDlidarDriver::MAX_SCAN_NODES;
-  size_t all_nodes_counts = m_FixedSize;
 
   //wait Scan data:
   uint64_t tim_scan_start = getTime();
@@ -82,162 +86,88 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
   // Fill in scan data:
   if (IS_OK(op_result)) {
-    op_result = lidarPtr->ascendScanData(global_nodes, count);
-    uint32_t scan_time = m_pointTime * (count - 1);
-    tim_scan_end -= m_pointTime;
-    tim_scan_start = tim_scan_start -  scan_time ;
+    float range = 0.0;
+    float intensity = 0.0;
+    float angle = 0.0f;
+    LaserPoint point;
 
-    if (static_cast<int>(tim_scan_start - last_node_time) > -20e6 &&
-        static_cast<int>(tim_scan_start - last_node_time) < 0) {
+    if (m_MaxAngle < m_MinAngle) {
+      float temp = m_MinAngle;
+      m_MinAngle = m_MaxAngle;
+      m_MaxAngle = temp;
+    }
+
+    uint64_t scan_time = m_pointTime * (count - 1);
+    tim_scan_end -= m_pointTime;
+    tim_scan_start = tim_scan_end -  scan_time ;
+
+    int64_t timeDiff = tim_scan_start - last_node_time;
+
+    if (timeDiff < 0) {
       tim_scan_start = last_node_time + m_pointTime;
       tim_scan_end = tim_scan_start + scan_time;
     }
 
-    if (static_cast<int>(tim_scan_start + scan_time  - tim_scan_end) >
-        0) {
-      tim_scan_end = tim_scan_end - m_pointTime;
-      tim_scan_start = tim_scan_end -  scan_time;
-    }
-
     last_node_time = tim_scan_end;
+    scan_msg.config.scan_time = 1.0 * scan_time / 1e9;
 
-    if (IS_OK(op_result) && count > 1) {
-      if (!m_FixedResolution) {
-        all_nodes_counts = count;
-      } else {
-        all_nodes_counts = m_FixedSize;
+    scan_msg.config.min_angle = angles::from_degrees(m_MinAngle);
+    scan_msg.config.max_angle = angles::from_degrees(m_MaxAngle);
+    scan_msg.config.time_increment = scan_msg.config.scan_time / (double)count;
+    scan_msg.system_time_stamp = tim_scan_start;
+    scan_msg.config.min_range = m_MinRange;
+    scan_msg.config.max_range = m_MaxRange;
+    int min_index = count;
 
-        if (m_FixedCount > 0) {
-          all_nodes_counts = m_FixedCount;
-        }
+
+    for (int i = 0; i < count; i++) {
+      angle = (float)((global_nodes[i].angle_q6_checkbit >>
+                       LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f);
+      range = (float)global_nodes[i].distance_q2 / 4.0f / 1000.f;
+
+      angle = angles::from_degrees(angle);
+
+      if (m_Reversion) {
+        angle += M_PI;
       }
 
-      each_angle = 360.0 / all_nodes_counts;
-      node_info *angle_compensate_nodes = new node_info[all_nodes_counts];
-      memset(angle_compensate_nodes, 0, all_nodes_counts * sizeof(node_info));
-      unsigned int i = 0;
+      angle = 2 * M_PI - angle;
 
-      for (; i < count; i++) {
-        if (global_nodes[i].distance_q2 != 0) {
-          float angle = static_cast<float>((global_nodes[i].angle_q6_checkbit >>
-                                            LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f);
+      angle = angles::normalize_angle(angle);
 
-          int inter = static_cast<int>(angle / each_angle);
-          float angle_pre = angle - inter * each_angle;
-          float angle_next = (inter + 1) * each_angle - angle;
+      uint8_t intensities = (uint8_t)(global_nodes[i].sync_quality >>
+                                      LIDAR_RESP_MEASUREMENT_QUALITY_SHIFT);
+      intensity = (float)intensities;
 
-          if (angle_pre < angle_next) {
-            if (inter < all_nodes_counts) {
-              angle_compensate_nodes[inter] = global_nodes[i];
-            }
-          } else {
-            if (inter < all_nodes_counts - 1) {
-              angle_compensate_nodes[inter + 1] = global_nodes[i];
-            }
-          }
-        }
-
-        if (global_nodes[i].stamp < tim_scan_start) {
-          tim_scan_start = global_nodes[i].stamp;
-        }
-
-        if (global_nodes[i].stamp > tim_scan_end) {
-          tim_scan_end = global_nodes[i].stamp;
-        }
+      if (m_GlassNoise && intensities == GLASSNOISEINTENSITY) {
+        intensity = 0.0;
+        range     = 0.0;
       }
 
-
-      LaserScan scan_msg;
-
-      if (m_MaxAngle < m_MinAngle) {
-        float temp = m_MinAngle;
-        m_MinAngle = m_MaxAngle;
-        m_MaxAngle = temp;
+      if (m_SunNoise && intensities == SUNNOISEINTENSITY) {
+        intensity = 0.0;
+        range     = 0.0;
       }
 
-
-      int counts = all_nodes_counts * ((m_MaxAngle - m_MinAngle) / 360.0f);
-      int angle_start = 180 + m_MinAngle;
-      int node_start = all_nodes_counts * (angle_start / 360.0f);
-
-      scan_msg.ranges.resize(counts, 0.0);
-      scan_msg.intensities.resize(counts, 0.0);
-      float range = 0.0;
-      float intensity = 0.0;
-      int index = 0;
-
-      for (size_t i = 0; i < all_nodes_counts; i++) {
-        range = static_cast<float>(angle_compensate_nodes[i].distance_q2 / 4.f / 1000);
-        intensity = static_cast<float>(angle_compensate_nodes[i].sync_quality >>
-                                       LIDAR_RESP_MEASUREMENT_QUALITY_SHIFT);
-
-        if (i < all_nodes_counts / 2) {
-          index = all_nodes_counts / 2 - 1 - i;
-        } else {
-          index = all_nodes_counts - 1 - (i - all_nodes_counts / 2);
-        }
-
-        if (m_IgnoreArray.size() != 0) {
-          float angle = static_cast<float>((angle_compensate_nodes[i].angle_q6_checkbit >>
-                                            LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f);
-
-          if (angle > 180) {
-            angle = 360 - angle;
-          } else {
-            angle = -angle;
-          }
-
-          for (uint16_t j = 0; j < m_IgnoreArray.size(); j = j + 2) {
-            if ((m_IgnoreArray[j] < angle) && (angle <= m_IgnoreArray[j + 1])) {
-              range = 0.0;
-              intensity = 0.0;
-              break;
-            }
-          }
-        }
-
-        if (range > m_MaxRange || range < m_MinRange) {
-          range = 0.0;
-          intensity = 0.0;
-        }
-
-        int pos = index - node_start ;
-
-        if (0 <= pos && pos < counts) {
-          scan_msg.ranges[pos] =  range;
-          scan_msg.intensities[pos] = intensity;
-        }
+      if (range > m_MaxRange || range < m_MinRange) {
+        range = 0.0;
       }
 
+      if (angle >= scan_msg.config.min_angle && angle <= scan_msg.config.max_angle) {
+        if (i < min_index) {
+          min_index = i;
+        }
 
-
-
-      scan_msg.system_time_stamp = tim_scan_start;
-      scan_msg.self_time_stamp = tim_scan_start;
-      scan_msg.config.min_angle = from_degrees(m_MinAngle);
-      scan_msg.config.max_angle = from_degrees(m_MaxAngle);
-
-      if (scan_msg.config.max_angle - scan_msg.config.min_angle == 2 * M_PI) {
-        scan_msg.config.ang_increment = static_cast<double>(scan_msg.config.max_angle -
-                                        scan_msg.config.min_angle) /
-                                        (double)counts;
-      } else {
-        scan_msg.config.ang_increment = static_cast<double>(scan_msg.config.max_angle -
-                                        scan_msg.config.min_angle) /
-                                        (double)(counts - 1);
+        point.angle = angle;
+        point.range = range;
+        point.intensity = intensity;
+        scan_msg.data.push_back(point);
       }
-
-      scan_msg.config.time_increment = scan_time / (double)counts;
-      scan_msg.config.time_increment /= 1e9;
-      scan_msg.config.scan_time = static_cast<float>(scan_time / 1e9);
-      scan_msg.config.min_range = m_MinRange;
-      scan_msg.config.max_range = m_MaxRange;
-      outscan = scan_msg;
-      delete[] angle_compensate_nodes;
-      return true;
-
 
     }
+
+    scan_msg.system_time_stamp = tim_scan_start + min_index * m_pointTime;
+    return true;
 
   } else {
     if (IS_FAIL(op_result)) {
@@ -463,7 +393,6 @@ bool CYdLidar::getDeviceInfo() {
            m_SerialPort.c_str(),
            m_SerialBaudrate);
     m_FixedSize         = 360;
-    each_angle          = 1.0;
   } else {
     Major = (uint8_t)(devinfo.firmware_version >> 8);
     Minjor = (uint8_t)(devinfo.firmware_version & 0xff);

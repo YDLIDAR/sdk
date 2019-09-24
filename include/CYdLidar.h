@@ -17,10 +17,13 @@ class YDLIDAR_API CYdLidar {
                         private) ///< 设置和获取激光最小角度, 最小值-180度(度)
   PropertyBuilderByName(bool, FixedResolution,
                         private) ///< 设置和获取激光是否是固定角度分辨率
-  PropertyBuilderByName(int, FixedCount,
-                        private) ///< 设置固定点数
   PropertyBuilderByName(bool, AutoReconnect,
                         private) ///< 设置异常是否开启重新连接
+  PropertyBuilderByName(bool, Reversion,
+                        private) ///< 设置和获取是否旋转激光180度
+  PropertyBuilderByName(bool, GlassNoise,
+                        private) ///< whether to close glass noise
+  PropertyBuilderByName(bool, SunNoise, private) ///< whether to close sun noise
   PropertyBuilderByName(int, SerialBaudrate,
                         private) ///< 设置和获取激光通讯波特率
   PropertyBuilderByName(int, AbnormalCheckCount,
@@ -41,7 +44,7 @@ class YDLIDAR_API CYdLidar {
   bool initialize();  //!< Attempts to connect and turns the laser on. Raises an exception on error.
 
   // Return true if laser data acquistion succeeds, If it's not
-  bool doProcessSimple(LaserScan &outscan, bool &hardwareError);
+  bool doProcessSimple(LaserScan &scan_msg, bool &hardwareError);
 
   //Turn on the motor enable
   bool  turnOn();  //!< See base class docs
@@ -51,6 +54,12 @@ class YDLIDAR_API CYdLidar {
 
   //Turn off lidar connection
   void disconnecting(); //!< Closes the comms with the laser. Shouldn't have to be directly needed by the user
+
+  /**
+   * @brief getFixedSize
+   * @return
+   */
+  int getFixedSize() const;
 
  protected:
   /** Returns true if communication has been established with the device. If it's not,
@@ -81,7 +90,6 @@ class YDLIDAR_API CYdLidar {
 
  private:
   bool    isScanning;
-  double  each_angle;
   float   frequencyOffset;
   double  m_ScanFrequency;
   uint8_t Major;
