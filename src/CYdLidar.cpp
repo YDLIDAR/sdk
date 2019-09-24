@@ -27,6 +27,7 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_AbnormalCheckCount  = 2;
   m_ScanFrequency     = 8.0;
   m_IgnoreArray.clear();
+  nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
 }
 
 /*-------------------------------------------------------------
@@ -34,6 +35,11 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
 -------------------------------------------------------------*/
 CYdLidar::~CYdLidar() {
   disconnecting();
+
+  if (nodes) {
+    delete[] nodes;
+    nodes = NULL;
+  }
 }
 
 void CYdLidar::disconnecting() {
@@ -55,12 +61,11 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
   // Bound?
   if (!checkHardware()) {
     hardwareError = true;
-    delay(1000 / m_ScanFrequency);
+    delay(500 / m_ScanFrequency);
     return false;
   }
 
-  node_info nodes[2048];
-  size_t   count = _countof(nodes);
+  size_t   count = YDlidarDriver::MAX_SCAN_NODES;
   size_t all_nodes_counts = node_counts;
 
   //wait Scan data:
@@ -273,8 +278,7 @@ bool  CYdLidar::turnOff() {
 }
 
 bool CYdLidar::checkLidarAbnormal() {
-  node_info nodes[2048];
-  size_t   count = _countof(nodes);
+  size_t   count = YDlidarDriver::MAX_SCAN_NODES;
   int check_abnormal_count = 0;
 
   if (m_AbnormalCheckCount < 2) {
@@ -282,6 +286,7 @@ bool CYdLidar::checkLidarAbnormal() {
   }
 
   result_t op_result = RESULT_FAIL;
+  std::vector<int> data;
 
   while (check_abnormal_count < m_AbnormalCheckCount) {
     //Ensure that the voltage is insufficient or the motor resistance is high, causing an abnormality.
@@ -289,9 +294,37 @@ bool CYdLidar::checkLidarAbnormal() {
       delay(check_abnormal_count * 1000);
     }
 
+    count = YDlidarDriver::MAX_SCAN_NODES;
     op_result =  lidarPtr->grabScanData(nodes, count);
 
     if (IS_OK(op_result)) {
+      data.push_back(count);
+      //收集数据确认固定分辨率时，最优数据个数
+      int collection = 0;
+
+      while (collection < 5) {
+        count = YDlidarDriver::MAX_SCAN_NODES;
+        op_result =  lidarPtr->grabScanData(nodes, count);
+
+        if (IS_OK(op_result)) {
+          if (abs(data.front() - count) > 20) {
+            data.erase(data.begin());
+          }
+
+          data.push_back(count);
+        }
+
+        collection++;
+      }
+
+      if (data.size() > 1) {
+        int total = accumulate(data.begin(), data.end(), 0);
+        int mean =  total / data.size(); //均值
+        node_counts = (static_cast<int>((mean + 5) / 10)) * 10;
+        printf("[YDLIDAR]:Fixed Size: %d\n", node_counts);
+        fflush(stdout);
+      }
+
       return false;
     }
 
@@ -300,6 +333,7 @@ bool CYdLidar::checkLidarAbnormal() {
 
   return !IS_OK(op_result);
 }
+
 
 
 /*-------------------------------------------------------------

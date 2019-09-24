@@ -132,6 +132,7 @@ void YDlidarDriver::flushSerial() {
   if (len) {
     _serial->read(len);
   }
+
   _serial->flushInput();
 }
 
@@ -671,6 +672,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     } else {
       CheckSumResult = true;
     }
+
     delete[] recvBuffer;
 
   }
@@ -678,9 +680,9 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   uint8_t package_CT;
 
   if (m_intensities) {
-    package_CT = package.package_CT;
+    package_CT = package.package_CT & 0x01;
   } else {
-    package_CT = packages.package_CT;
+    package_CT = packages.package_CT & 0x01;
   }
 
   if (package_CT == CT_Normal) {
@@ -758,11 +760,13 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     m_node_last_time_ns = m_node_time_ns;
     uint64_t current_time_ns = getTime();
 
-    uint64_t delay_time_ns = (nowPackageNum * PackageSampleBytes + PackagePaidBytes) * trans_delay +
-        (nowPackageNum -1)* m_pointTime;
+    uint64_t delay_time_ns = (nowPackageNum * PackageSampleBytes + PackagePaidBytes)
+                             * trans_delay +
+                             (nowPackageNum - 1) * m_pointTime;
     m_node_time_ns = current_time_ns - delay_time_ns;
-    if(current_time_ns <= delay_time_ns) {
-        m_node_time_ns = current_time_ns;
+
+    if (current_time_ns <= delay_time_ns) {
+      m_node_time_ns = current_time_ns;
     }
 
     if (m_node_time_ns < m_node_last_time_ns) {
@@ -770,12 +774,13 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
         m_node_time_ns = m_node_last_time_ns;
       }
     } else {
-        if(m_node_time_ns - m_node_last_time_ns < 8*1e6 && CheckSumResult &&
-                        Last_CheckSum_Result&&!package_header_error) {
+      if (m_node_time_ns - m_node_last_time_ns < 8 * 1e6 && CheckSumResult &&
+          Last_CheckSum_Result && !package_header_error) {
 
-            m_node_time_ns = m_node_last_time_ns;
-        }
+        m_node_time_ns = m_node_last_time_ns;
+      }
     }
+
     Last_CheckSum_Result = CheckSumResult;
 
   }

@@ -76,6 +76,7 @@ class YDLIDAR_API CYdLidar {
   double  each_angle;
   double  m_ScanFrequency;
   YDlidarDriver *lidarPtr;
+  node_info *nodes;
 
 };	// End of class
 
