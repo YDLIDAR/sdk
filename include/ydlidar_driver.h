@@ -376,6 +376,8 @@ class YDlidarDriver {
 
   std::string serial_port;///< 雷达端口
 
+  uint8_t *recvBuffer;
+
 };
 }
 

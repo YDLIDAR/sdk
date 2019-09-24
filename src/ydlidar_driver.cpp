@@ -46,6 +46,8 @@ YDlidarDriver::YDlidarDriver():
 
   package_Sample_Index = 0;
   IntervalSampleAngle_LastPackage = 0.0;
+
+  recvBuffer = new uint8_t[sizeof(node_packages)];
 }
 
 YDlidarDriver::~YDlidarDriver() {
@@ -68,6 +70,11 @@ YDlidarDriver::~YDlidarDriver() {
   if (_serial) {
     delete _serial;
     _serial = NULL;
+  }
+
+  if (recvBuffer) {
+    delete[] recvBuffer;
+    recvBuffer = NULL;
   }
 }
 
@@ -467,7 +474,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   bool package_header_error = false;
 
   if (package_Sample_Index == 0) {
-    uint8_t *recvBuffer = new uint8_t[size];
     recvPos = 0;
 
     while ((waitTime = getms() - startTs) <= timeout) {
@@ -476,7 +482,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
       result_t ans = waitForData(remainSize, timeout - waitTime, &recvSize);
 
       if (!IS_OK(ans)) {
-        delete[] recvBuffer;
         return ans;
       }
 
@@ -616,7 +621,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
         result_t ans = waitForData(remainSize, timeout - waitTime, &recvSize);
 
         if (!IS_OK(ans)) {
-          delete[] recvBuffer;
           return ans;
         }
 
@@ -656,11 +660,9 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
       }
 
       if (package_Sample_Num * PackageSampleBytes != recvPos) {
-        delete[] recvBuffer;
         return RESULT_FAIL;
       }
     } else {
-      delete[] recvBuffer;
       return RESULT_FAIL;
     }
 
@@ -672,8 +674,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     } else {
       CheckSumResult = true;
     }
-
-    delete[] recvBuffer;
 
   }
 
@@ -971,6 +971,19 @@ result_t YDlidarDriver::ascendScanData(node_info *nodebuffer, size_t count) {
 /* the set to signal quality                                            */
 /************************************************************************/
 void YDlidarDriver::setIntensities(const bool &isintensities) {
+  if (m_intensities != isintensities) {
+    uint32_t size       = (isintensities) ? sizeof(node_package) : sizeof(
+                            node_packages);
+
+    if (recvBuffer) {
+      delete[] recvBuffer;
+    }
+
+    recvBuffer = new uint8_t[size];
+
+
+  }
+
   m_intensities = isintensities;
 
   if (m_intensities) {
