@@ -22,10 +22,10 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_MaxRange          = 8.0;
   m_MinRange          = 0.08;
   isScanning          = false;
-  node_counts         = 720;
-  each_angle          = 0.5;
+  node_counts         = 360;
+  each_angle          = 1.0;
   m_AbnormalCheckCount  = 2;
-  m_ScanFrequency     = 8.0;
+  m_ScanFrequency     = 8.33;
   m_IgnoreArray.clear();
   nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
 }
@@ -320,7 +320,7 @@ bool CYdLidar::checkLidarAbnormal() {
       if (data.size() > 1) {
         int total = accumulate(data.begin(), data.end(), 0);
         int mean =  total / data.size(); //均值
-        node_counts = (static_cast<int>((mean + 5) / 10)) * 10;
+        //node_counts = (static_cast<int>((mean + 5) / 10)) * 10;
         printf("[YDLIDAR]:Fixed Size: %d\n", node_counts);
         fflush(stdout);
       }
