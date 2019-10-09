@@ -80,11 +80,14 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   unique_range[16330] = true;
   unique_range[16340] = true;
 
+
   multi_range[16100] = true;
   multi_range[16110] = true;
   multi_range[16120] = true;
   multi_range[16130] = true;
   multi_range[16200] = true;
+
+  smaller_range[16000] = true;
 
   ini.SetUnicode();
   m_CalibrationFileName = "laserconfig.ini";
@@ -231,9 +234,9 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
           bool filter = true;
 
           for (int j = i + 1; (j < count && j < i + 4); j++) {
-            uint16_t range = nodes[j].distance_q2 >> LIDAR_RESP_MEASUREMENT_DISTANCE_SHIFT;
+            uint16_t drange = nodes[j].distance_q2 >> LIDAR_RESP_MEASUREMENT_DISTANCE_SHIFT;
 
-            if (multi_range.find(range) != multi_range.end()) {
+            if (multi_range.find(drange) != multi_range.end() || smaller_range.find(drange) != smaller_range.end()) {
               filter = false;
               break;
             }

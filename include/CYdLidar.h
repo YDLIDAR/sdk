@@ -162,7 +162,7 @@ class YDLIDAR_API CYdLidar {
   node_info *nodes;
   uint64_t node_duration;
   uint64_t last_node_time;
-  std::map<int, bool> unique_range, multi_range;
+  std::map<int, bool> unique_range, multi_range, smaller_range;
 
   std::string m_serial_number;
   double last_frequency;
