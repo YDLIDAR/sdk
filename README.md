@@ -20,10 +20,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  1.4.2 |   2019-09-17  |
+| SDK     |  1.4.3 |   2019-10-09  |
 
 
-- [feature] correct zero angle offset
+- [Bug] fixed Less than one meter without obstacles
 
 
 
@@ -206,6 +206,10 @@ Coordinate System
 
 Upgrade Log
 ---------------
+
+2019-10-09 version:1.4.3
+
+   1.fixed Less than one meter without obstacles.
 
 2019-09-10 version:1.4.2
 
