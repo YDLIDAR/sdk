@@ -1,4 +1,4 @@
-/*********************************************************************
+﻿/*********************************************************************
 * Software License Agreement (BSD License)
 *
 *  Copyright (c) 2015-2019, YDLIDAR Team. (http://www.ydlidar.com).
@@ -236,10 +236,15 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
           for (int j = i + 1; (j < count && j < i + 4); j++) {
             uint16_t drange = nodes[j].distance_q2 >> LIDAR_RESP_MEASUREMENT_DISTANCE_SHIFT;
 
-            if (multi_range.find(drange) != multi_range.end() || smaller_range.find(drange) != smaller_range.end()) {
+            if (multi_range.find(drange) != multi_range.end() ||
+                smaller_range.find(drange) != smaller_range.end()) {
               filter = false;
               break;
             }
+          }
+
+          if (i >= count - 3) {
+            filter = true;
           }
 
           filter_flag[i] = filter;
@@ -276,7 +281,24 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
                        LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f) + m_AngleOffset;
       range = (float)nodes[i].distance_q2 / 4000.f;
       intensity = (float)(nodes[i].sync_quality);
+
       angle = angles::from_degrees(angle);
+
+      double AngleCorrectForDistance = 0.0;
+
+      if (m_FilterNoise) {
+        if (filter_flag[i]) {
+          range = 0.0;
+          intensity = 0.0;
+        }
+      }
+
+      if (range != 0.0) {
+        AngleCorrectForDistance = atan(((21.8 * (155.3 - (nodes[i].distance_q2 /
+                                         4.0))) / 155.3) / (nodes[i].distance_q2 / 4.0));
+      }
+
+      angle += AngleCorrectForDistance;
 
       if (m_Reversion) {
         angle = angle + M_PI;
@@ -298,14 +320,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
         range = 0.0;
         intensity = 0.0;
       }
-
-      if (m_FilterNoise) {
-        if (filter_flag[i]) {
-          range = 0.0;
-          intensity = 0.0;
-        }
-      }
-
 
       if (angle >= outscan.config.min_angle &&
           angle <= outscan.config.max_angle) {

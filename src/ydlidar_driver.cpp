@@ -768,6 +768,8 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
       AngleCorrectForDistance = 0;
     }
 
+    AngleCorrectForDistance = 0;
+
     if ((FirstSampleAngle + IntervalSampleAngle * package_Sample_Index +
          AngleCorrectForDistance) < 0) {
       (*node).angle_q6_checkbit = (((uint16_t)(FirstSampleAngle + IntervalSampleAngle
