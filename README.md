@@ -20,10 +20,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  1.4.3 |   2019-10-09  |
+| SDK     |  1.4.4 |   2019-10-16  |
 
 
-- [Bug] fixed Less than one meter without obstacles
+- [Feat] Support for old version of lidar
 
 
 
@@ -66,7 +66,7 @@ windows:
 
 You should see YDLIDAR's scan result in the console:
 
-	[YDLIDAR]:SDK Version: 1.4.2
+	[YDLIDAR]:SDK Version: 1.4.4
 	[YDLIDAR]:Lidar running correctly ! The health status: good
 	[YDLIDAR] Connection established in [/dev/ttyUSB0][230400]:
 	Firmware version: 1.2
@@ -206,6 +206,12 @@ Coordinate System
 
 Upgrade Log
 ---------------
+
+2019-10-09 version:1.4.4
+
+   1.fixed thread join.
+
+   2.Support for old version of lidar
 
 2019-10-09 version:1.4.3
 
