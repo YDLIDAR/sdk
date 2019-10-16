@@ -197,7 +197,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     outscan.system_time_stamp = tim_scan_start;
     outscan.config.min_angle = angles::from_degrees(m_MinAngle);
     outscan.config.max_angle =  angles::from_degrees(m_MaxAngle);
-    outscan.config.scan_time =  scan_time / 1e9;
+    outscan.config.scan_time =  static_cast<float>(scan_time / 1e9);
     outscan.config.time_increment = outscan.config.scan_time / (double)count;
     outscan.config.min_range = m_MinRange;
     outscan.config.max_range = m_MaxRange;
@@ -343,7 +343,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
       }
     }
 
-    if (fabs(last_frequency - 1.0 / outscan.config.scan_time) < 0.01) {
+    if (fabs(last_frequency - 1.0 / outscan.config.scan_time) < 0.03) {
       fitLineSegment();
     }
 
@@ -581,12 +581,21 @@ bool CYdLidar::getDeviceInfo() {
   }
 
   printf("\n");
+  checkLidarFilter();
   checkSampleRate();
   printf("[YDLIDAR INFO] Current Sampling Rate : %dK\n", m_SampleRate);
   checkScanFrequency();
   return true;
 }
 
+void CYdLidar::checkLidarFilter() {
+  if (Major < 2 || (Major == 2 && Minjor < 34)) {
+    m_FilterNoise = false;
+  }
+
+  printf("[YDLIDAR INFO] Current FilterNoise Flag: %s\n",
+         m_FilterNoise ? "true" : "false");
+}
 
 void CYdLidar::checkSampleRate() {
   sampling_rate _rate;

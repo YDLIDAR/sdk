@@ -126,6 +126,11 @@ class YDLIDAR_API CYdLidar {
   bool checkHardware();
 
   /**
+   * @brief checkLidarFilter
+   */
+  void checkLidarFilter();
+
+  /**
    * @brief checkSampleRate
    */
   void checkSampleRate();
