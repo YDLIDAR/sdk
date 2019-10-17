@@ -88,7 +88,20 @@ public:
 		}		
 #else
 		UNUSED(timeout);
-		pthread_join((pthread_t)(this->_handle), NULL);
+        void *res;
+        int s;
+        s = pthread_cancel((pthread_t)(this->_handle));
+
+        if (s != 0) {
+        }
+
+        s = pthread_join((pthread_t)(this->_handle), &res);
+
+        if (res == PTHREAD_CANCELED) {
+          printf("%lu thread has been canceled\n", this->_handle);
+          fflush(stdout);
+          this->_handle = 0;
+        }
 #endif
 		return 0;
 	}

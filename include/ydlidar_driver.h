@@ -19,6 +19,8 @@ using namespace serial;
 
 namespace ydlidar {
 
+std::string format(const char *fmt, ...);
+
 class YDlidarDriver {
  public:
   /**
@@ -103,6 +105,12 @@ class YDlidarDriver {
    * @return
    */
   uint32_t getPointTime() const;
+
+  /**
+   * @brief getPackageTime
+   * @return
+   */
+  uint32_t getPackageTime() const;
 
   /**
   * @brief 设置雷达异常自动重新连接 \n
@@ -309,7 +317,6 @@ class YDlidarDriver {
     */
   void clearDTR();
 
-
  public:
   bool     m_isConnected;  ///< 串口连接状体
   bool     m_isScanning;   ///< 扫图状态
@@ -334,7 +341,7 @@ class YDlidarDriver {
     YDLIDAR_G4C = 9, /**< G4C雷达型号代号. */
 
   };
-  node_info      scan_node_buf[2048];  ///< 激光点信息
+  node_info      *scan_node_buf;       ///< 激光点信息
   size_t         scan_node_count;      ///< 激光点数
   Event          _dataEvent;			 ///< 数据同步事件
   Locker         _lock;				///< 线程锁
@@ -352,6 +359,7 @@ class YDlidarDriver {
   bool        CheckSumResult;
   uint32_t    m_baudrate;					///< 波特率
   uint32_t    m_pointTime;			///< 两个激光点时间间隔
+  uint32_t    m_packageTime;        ///零位包传送时间
   uint32_t    trans_delay;				///< 串口传输一个byte时间
   uint16_t    package_Sample_Index;
   uint16_t    FirstSampleAngle;

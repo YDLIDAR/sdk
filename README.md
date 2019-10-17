@@ -1,4 +1,4 @@
-YDLIDAR SDK PACKAGE V1.4.1
+YDLIDAR SDK PACKAGE V1.4.2
 =====================================================================
 
 SDK [test](https://github.com/ydlidar/sdk/tree/S4-EB-1) application for YDLIDAR
@@ -12,7 +12,7 @@ How to build YDLIDAR SDK samples
     
     $ cd sdk
     
-    $ git checkout S4-EB-1
+    $ git checkout S3K
     
     $ cd ..
     
@@ -47,7 +47,7 @@ You should see YDLIDAR's scan result in the console:
 
      	YDLIDAR C++ TEST
      	
-	[YDLIDAR INFO] Now YDLIDAR SDK VERSION: 1.4.1
+	[YDLIDAR INFO] Now YDLIDAR SDK VERSION: 1.4.2
 	
 	fhs_lock: creating lockfile:      11796
 

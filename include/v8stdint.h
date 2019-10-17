@@ -87,8 +87,6 @@ enum {
 #define M_PI 3.1415926
 #endif
 
-#define DEG2RAD(x) ((x)*M_PI/180.)
-
 
 // Determine if sigaction is available
 #if __APPLE__ || _POSIX_C_SOURCE >= 1 || _XOPEN_SOURCE || _POSIX_SOURCE

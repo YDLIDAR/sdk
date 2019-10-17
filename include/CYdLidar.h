@@ -96,7 +96,10 @@ class YDLIDAR_API CYdLidar {
   /** Returns true if the device information is correct, If it's not*/
   bool getDeviceInfo();
 
-
+  /**
+   * @brief handleDeviceStatus
+   * @return
+   */
   bool handleDeviceStatus();
 
 
@@ -106,8 +109,10 @@ class YDLIDAR_API CYdLidar {
   ydlidar::YDlidarDriver *lidarPtr;
 
   uint32_t m_pointTime;
+  uint32_t m_packageTime;        ///零位包传送时间
   uint64_t last_node_time;
   int m_FixedSize;
+  int m_SampleRate;
   node_info *nodes;
 
 };	// End of class

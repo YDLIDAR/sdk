@@ -133,6 +133,8 @@ struct LaserConfig {
   float min_range;
   //! Maximum range [m]
   float max_range;
+  //! fixed resolution size
+  int fixed_size;
   LaserConfig &operator = (const LaserConfig &data) {
     min_angle = data.min_angle;
     max_angle = data.max_angle;
@@ -140,6 +142,7 @@ struct LaserConfig {
     scan_time = data.scan_time;
     min_range = data.min_range;
     max_range = data.max_range;
+    fixed_size= data.fixed_size;
     return *this;
   }
 };

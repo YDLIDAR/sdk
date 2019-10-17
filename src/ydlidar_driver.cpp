@@ -13,6 +13,39 @@ using namespace impl;
 
 namespace ydlidar {
 
+// A sprintf-like function for std::string
+std::string format(const char *fmt, ...) {
+  if (!fmt) {
+    return std::string();
+  }
+
+  int   result = -1, length = 2048;
+  std::string buffer;
+
+  while (result == -1) {
+    buffer.resize(length);
+
+    va_list args;  // This must be done WITHIN the loop
+    va_start(args, fmt);
+    result = ::vsnprintf(&buffer[0], length, fmt, args);
+    va_end(args);
+
+    // Truncated?
+    if (result >= length) {
+      result = -1;
+    }
+
+    length *= 2;
+
+    // Ok?
+    if (result >= 0) {
+      buffer.resize(result);
+    }
+  }
+
+  return buffer;
+}
+
 YDlidarDriver::YDlidarDriver():
   _serial(0) {
   m_isConnected         = false;
@@ -26,6 +59,7 @@ YDlidarDriver::YDlidarDriver():
 
   m_pointTime         = 1e9 / 3000;
   trans_delay         = 0;
+  m_packageTime       = 0;
 
   //解析参数
   PackageSampleBytes  = 2;
@@ -50,6 +84,7 @@ YDlidarDriver::YDlidarDriver():
   get_device_health_success = false;
   get_device_info_success = false;
   recvBuffer = new uint8_t[sizeof(node_packages)];
+  scan_node_buf = new node_info[MAX_SCAN_NODES];
 
 }
 
@@ -79,6 +114,10 @@ YDlidarDriver::~YDlidarDriver() {
     delete[] recvBuffer;
     recvBuffer = NULL;
   }
+  if(scan_node_buf) {
+      delete[] scan_node_buf;
+      scan_node_buf = NULL;
+  }
 }
 
 result_t YDlidarDriver::connect(const char *port_path, uint32_t baudrate) {
@@ -96,6 +135,7 @@ result_t YDlidarDriver::connect(const char *port_path, uint32_t baudrate) {
   }
 
   trans_delay = _serial->getByteTime();
+  m_packageTime = trans_delay * (PackagePaidBytes + PackageSampleBytes);
   m_isConnected = true;
   {
     ScopedLocker l(_lock);
@@ -215,6 +255,10 @@ uint32_t YDlidarDriver::getPointTime() const {
   return m_pointTime;
 }
 
+uint32_t YDlidarDriver::getPackageTime() const {
+    return m_packageTime;
+}
+
 result_t YDlidarDriver::getHealth(device_health &health, uint32_t timeout) {
   if (!m_isConnected) {
     return RESULT_FAIL;
@@ -290,7 +334,7 @@ result_t YDlidarDriver::sendData(const uint8_t *data, size_t size) {
     return RESULT_FAIL;
   }
 
-  size_t r;
+  size_t r = 0;
 
   while (size) {
     r = _serial->write(data, size);
@@ -312,7 +356,7 @@ result_t YDlidarDriver::getData(uint8_t *data, size_t size) {
     return RESULT_FAIL;
   }
 
-  size_t r;
+  size_t r = 0;
 
   while (size) {
     r = _serial->read(data, size);
@@ -443,7 +487,7 @@ int YDlidarDriver::cacheScanData() {
 
             while (isAutoReconnect &&
                    connect(serial_port.c_str(), m_baudrate) != RESULT_OK) {
-              printf("Waiting for the Lidar serial port to be available\n");
+              printf("Waiting for the Lidar serial port[%s] to be available in [%d]\n", serial_port.c_str(), m_baudrate);
               delay(1000);
             }
 
@@ -692,8 +736,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
                               pos) == RESULT_OK) {
           continue;
         }
-
-
 
         switch (recvPos) {
           case 0:
