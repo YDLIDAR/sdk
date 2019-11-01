@@ -42,6 +42,8 @@
 using namespace ydlidar;
 using namespace line_feature;
 
+#define LOG_TAG    "YD"
+
 class YDLIDAR_API CYdLidar {
   PropertyBuilderByName(float, MaxRange,
                         private) ///< 设置和获取激光最大测距范围(m)

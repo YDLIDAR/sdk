@@ -36,6 +36,7 @@
 #include "common.h"
 #include <map>
 #include <angles.h>
+#include <elog.h>
 
 using namespace std;
 using namespace ydlidar;
@@ -101,6 +102,23 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   bearings.clear();
   range_data.clear();
   m_serial_number.clear();
+
+  /* close printf buffer */
+  setbuf(stdout, NULL);
+  /* initialize EasyLogger */
+  elog_init();
+  /* set EasyLogger log format */
+  elog_set_fmt(ELOG_LVL_ASSERT, ELOG_FMT_ALL);
+  elog_set_fmt(ELOG_LVL_ERROR, ELOG_FMT_LVL | ELOG_FMT_TAG | ELOG_FMT_TIME);
+  elog_set_fmt(ELOG_LVL_WARN, ELOG_FMT_LVL | ELOG_FMT_TAG | ELOG_FMT_TIME);
+  elog_set_fmt(ELOG_LVL_INFO, ELOG_FMT_LVL | ELOG_FMT_TAG | ELOG_FMT_TIME);
+  elog_set_fmt(ELOG_LVL_DEBUG, ELOG_FMT_ALL & ~ELOG_FMT_FUNC);
+  elog_set_fmt(ELOG_LVL_VERBOSE, ELOG_FMT_ALL & ~ELOG_FMT_FUNC);
+#ifdef ELOG_COLOR_ENABLE
+  elog_set_text_color_enabled(true);
+#endif
+  /* start EasyLogger */
+  elog_start();
 
 }
 
@@ -172,6 +190,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
   // Fill in scan data:
   if (IS_OK(op_result)) {
+    log_i("\n");
+    log_i("grabScanData Finished.........");
     uint64_t scan_time = node_duration * (count - 1);
     tim_scan_end += m_OffsetTime * 1e9;
     tim_scan_end -= node_duration;
@@ -243,11 +263,11 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
             }
           }
 
-          if (i >= count - 3) {
-            filter = true;
-          }
-
           filter_flag[i] = filter;
+        }
+
+        if (i >= count - 3 || i < 3) {
+          filter_flag[i] = true;
         }
 
         if (unique_range.find(distance) != unique_range.end()) {
@@ -286,6 +306,17 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
       double AngleCorrectForDistance = 0.0;
 
+      if (nodes[i].distance_q2 != 0) {
+        AngleCorrectForDistance = atan(((21.8 * (155.3 - (nodes[i].distance_q2 /
+                                         4.0))) / 155.3) / (nodes[i].distance_q2 / 4.0));
+      }
+
+      log_i("[%d][F]angle: %f, distance: %f, anglecorrect: %f, filter: %d", i,
+            angles::to_degrees(angle),
+            range,
+            angles::to_degrees(AngleCorrectForDistance), 0);
+      AngleCorrectForDistance = 0.0;
+
       if (m_FilterNoise) {
         if (filter_flag[i]) {
           range = 0.0;
@@ -293,12 +324,24 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
         }
       }
 
-      if (range != 0.0) {
+      if (range > 0.0001) {
         AngleCorrectForDistance = atan(((21.8 * (155.3 - (nodes[i].distance_q2 /
                                          4.0))) / 155.3) / (nodes[i].distance_q2 / 4.0));
       }
 
       angle += AngleCorrectForDistance;
+
+      if (m_FilterNoise) {
+        log_i("[%d][B]angle: %f, distance: %f, anglecorrect: %f, filter: %d", i,
+              angles::to_degrees(angle),
+              range,
+              angles::to_degrees(AngleCorrectForDistance), filter_flag[i]);
+      } else {
+        log_i("[%d][B]angle: %f, distance: %f, anglecorrect: %f, filter: %d", i,
+              angles::to_degrees(angle),
+              range,
+              angles::to_degrees(AngleCorrectForDistance), 0);
+      }
 
       if (m_Reversion) {
         angle = angle + M_PI;
@@ -350,6 +393,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     last_frequency = 1.0 / outscan.config.scan_time;
     return true;
   } else {
+    log_e("Failed to get Scan data.........");
+
     if (IS_FAIL(op_result)) {
       // Error? Retry connection
     }
@@ -425,6 +470,7 @@ bool  CYdLidar::turnOn() {
     if (!IS_OK(op_result)) {
       lidarPtr->stop();
       fprintf(stderr, "[CYdLidar] Failed to start scan mode: %x\n", op_result);
+      log_e("[CYdLidar] Failed to start scan mode: %x", op_result);
       isScanning = false;
       return false;
     }
@@ -434,6 +480,7 @@ bool  CYdLidar::turnOn() {
     lidarPtr->stop();
     fprintf(stderr,
             "[CYdLidar] Failed to turn on the Lidar, because the lidar is blocked or the lidar hardware is faulty.\n");
+    log_e("[CYdLidar] Failed to turn on the Lidar, because the lidar is blocked or the lidar hardware is faulty.");
     isScanning = false;
     return false;
   }
@@ -444,6 +491,7 @@ bool  CYdLidar::turnOn() {
   isScanning = true;
   lidarPtr->setAutoReconnect(m_AutoReconnect);
   printf("[YDLIDAR INFO] Now YDLIDAR is scanning ......\n");
+  log_i("Now YDLIDAR is scanning ......");
   fflush(stdout);
   return true;
 }
@@ -502,6 +550,7 @@ bool CYdLidar::getDeviceHealth() {
   result_t op_result;
   device_health healthinfo;
   printf("[YDLIDAR]:SDK Version: %s\n", YDlidarDriver::getSDKVersion().c_str());
+  log_i("[YDLIDAR]:SDK Version: %s\n", YDlidarDriver::getSDKVersion().c_str());
   op_result = lidarPtr->getHealth(healthinfo);
 
   if (IS_OK(op_result)) {
@@ -580,6 +629,19 @@ bool CYdLidar::getDeviceInfo() {
     m_serial_number += format("%01X", devinfo.serialnum[i] & 0xff);
   }
 
+  log_i("[YDLIDAR] Connection established in [%s][%d]:\n"
+        "Firmware version: %u.%u\n"
+        "Hardware version: %u\n"
+        "Model: %s\n"
+        "Serial: %s\n",
+        m_SerialPort.c_str(),
+        m_SerialBaudrate,
+        Major,
+        Minjor,
+        (unsigned int)devinfo.hardware_version,
+        model.c_str(),
+        m_serial_number.c_str());
+
   printf("\n");
   checkLidarFilter();
   checkSampleRate();
@@ -595,6 +657,8 @@ void CYdLidar::checkLidarFilter() {
 
   printf("[YDLIDAR INFO] Current FilterNoise Flag: %s\n",
          m_FilterNoise ? "true" : "false");
+  log_i("[YDLIDAR INFO] Current FilterNoise Flag: %s\n",
+        m_FilterNoise ? "true" : "false");
 }
 
 void CYdLidar::checkSampleRate() {
@@ -750,6 +814,9 @@ bool CYdLidar::checkCalibrationAngle() {
       printf("[YDLIDAR INFO] Successfully obtained the %s offset angle[%f] from the calibration file[%s]\n"
              , m_isAngleOffsetCorrected ? "corrected" : "uncorrrected", m_AngleOffset,
              m_CalibrationFileName.c_str());
+      log_i("[YDLIDAR INFO] Successfully obtained the %s offset angle[%f] from the calibration file[%s]\n"
+            , m_isAngleOffsetCorrected ? "corrected" : "uncorrrected", m_AngleOffset,
+            m_CalibrationFileName.c_str());
       ret = true;
 
     } else {
@@ -780,9 +847,13 @@ bool CYdLidar::saveOffsetAngle() {
       m_isAngleOffsetCorrected = true;
       printf("[YDLIDAR INFO] Current robot offset correction value[%f] is saved\n",
              m_AngleOffset);
+      log_i("[YDLIDAR INFO] Current robot offset correction value[%f] is saved\n",
+            m_AngleOffset);
     } else {
       fprintf(stderr, "Saving correction value[%f] failed\n",
               m_AngleOffset);
+      log_e("Saving correction value[%f] failed\n",
+            m_AngleOffset);
       m_isAngleOffsetCorrected = false;
       ret = false;
     }
@@ -843,6 +914,8 @@ bool CYdLidar::checkStatus() {
   if (!checkCOMMs()) {
     return false;
   }
+
+  return true;
 
   bool ret = getDeviceHealth();
 
