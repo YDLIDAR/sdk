@@ -48,6 +48,9 @@
 #endif
 #endif
 
+//#ifndef DEBUG
+//#define DEBUG 1
+//#endif
 
 using namespace std;
 using namespace serial;
@@ -455,6 +458,8 @@ class YDlidarDriver {
    */
   result_t checkAutoConnecting();
 
+  void printLog(const std::string &msg);
+
 
  public:
   std::atomic<bool>     isConnected;  ///< 串口连接状体
@@ -531,6 +536,16 @@ class YDlidarDriver {
 
   std::string serial_port;///< 雷达端口
   uint8_t *globalRecvBuffer;
+#ifdef DEBUG
+  FILE *fd;
+  const int max_log_size = 1024 * 5;//1M
+  /* buffered output mode's buffer */
+  char *log_buf;
+  /* log buffer current write size */
+  size_t buf_write_size = 0;
+  /* buffered output mode enabled flag */
+  bool is_enabled = false;
+#endif
 
 };
 }
