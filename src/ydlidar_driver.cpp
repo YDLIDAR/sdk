@@ -1283,9 +1283,6 @@ result_t YDlidarDriver::startScan(bool force, uint32_t timeout) {
       return ans;
     }
 
-    ans = this->createThread();
-    return ans;
-
     lidar_ans_header response_header;
 
     if ((ans = waitResponseHeader(&response_header, timeout)) != RESULT_OK) {

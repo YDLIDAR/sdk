@@ -915,8 +915,6 @@ bool CYdLidar::checkStatus() {
     return false;
   }
 
-  return true;
-
   bool ret = getDeviceHealth();
 
   if (!ret) {
