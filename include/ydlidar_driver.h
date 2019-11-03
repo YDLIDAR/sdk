@@ -48,9 +48,9 @@
 #endif
 #endif
 
-//#ifndef DEBUG
-//#define DEBUG 1
-//#endif
+#ifndef DEBUG
+#define DEBUG 1
+#endif
 
 using namespace std;
 using namespace serial;
@@ -316,6 +316,8 @@ class YDlidarDriver {
   result_t getZeroOffsetAngle(offset_angle &angle,
                               uint32_t timeout = DEFAULT_TIMEOUT);
 
+  void saveNoiseDataToFile();
+
  protected:
 
   /**
@@ -487,7 +489,8 @@ class YDlidarDriver {
     YDLIDAR_G10 = 10, //256000
     YDLIDAR_S4B = 11,//153600
     YDLIDAR_S2 = 12,//115200
-    YDLIDAR_G25 = 13,//512000
+    YDLIDAR_G6 = 13,//512000
+    YDLIDAR_G1 = 19,//512000
     YDLIDAR_Tail,
   };
 
@@ -538,7 +541,7 @@ class YDlidarDriver {
   uint8_t *globalRecvBuffer;
 #ifdef DEBUG
   FILE *fd;
-  const int max_log_size = 1024 * 5;//1M
+  const int max_log_size = 1024 * 10;//1M
   /* buffered output mode's buffer */
   char *log_buf;
   /* log buffer current write size */

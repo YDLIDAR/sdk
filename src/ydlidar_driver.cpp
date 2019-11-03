@@ -162,8 +162,6 @@ YDlidarDriver::~YDlidarDriver() {
   }
 
 #ifdef DEBUG
-  is_enabled = true;
-  printLog("~YDlidarDriver...\n");
 
   if (NULL != fd) {
     fclose(fd);
@@ -510,13 +508,21 @@ void YDlidarDriver::printLog(const string &msg) {
       write_size = max_log_size - size;
       memcpy(log_buf + write_size, log, size);
       buf_write_size = max_log_size;
+
+      if (is_enabled) {
+        fseek(fd, 0, SEEK_SET);
+        fwrite(log_buf, buf_write_size, 1, fd);
+        fflush(fd);
+        is_enabled = false;
+      }
+
       /* output log */
-      fseek(fd, 0, SEEK_SET);
-      fwrite(log_buf, buf_write_size, 1, fd);
-      fflush(fd);
-      /* reset write index */
-      buf_write_size = 0;
-      is_enabled = false;
+//      fseek(fd, 0, SEEK_SET);
+//      fwrite(log_buf, buf_write_size, 1, fd);
+//      fflush(fd);
+//      /* reset write index */
+//      buf_write_size = 0;
+//      is_enabled = false;
     } else {
 
       memcpy(log_buf + buf_write_size, log + write_index, size);
@@ -534,6 +540,11 @@ void YDlidarDriver::printLog(const string &msg) {
   }
 
 #endif
+}
+
+void YDlidarDriver::saveNoiseDataToFile() {
+  is_enabled = true;
+  printLog("Save noise Data....\n\n");
 }
 
 int YDlidarDriver::cacheScanData() {

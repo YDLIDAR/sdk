@@ -43,6 +43,7 @@ using namespace ydlidar;
 using namespace line_feature;
 
 #define LOG_TAG    "YD"
+#define PATH_SUFFIX_LEN                     10
 
 class YDLIDAR_API CYdLidar {
   PropertyBuilderByName(float, MaxRange,
@@ -110,6 +111,11 @@ class YDLIDAR_API CYdLidar {
 
   bool isAngleOffetCorrected() const;
 
+  /**
+   * @brief saveNoiseDataToFile
+   */
+  void saveNoiseDataToFile();
+
  protected:
   /** Returns true if communication has been established with the device. If it's not,
     *  try to create a comms channel.
@@ -157,6 +163,8 @@ class YDLIDAR_API CYdLidar {
   //
   bool saveOffsetAngle();
 
+  void elog(const std::string &msg);
+
  private:
   bool    isScanning;
   int     node_counts ;
@@ -185,6 +193,7 @@ class YDLIDAR_API CYdLidar {
   std::vector<double> bearings;
   std::vector<unsigned int> indices;
   RangeData range_data;
+
 
 };	// End of class
 

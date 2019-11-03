@@ -115,6 +115,8 @@ int main(int argc, char *argv[]) {
     ret = laser.turnOn();
   }
 
+  int saveNoise = 0;
+
   while (ret && ydlidar::ok()) {
     bool hardError;
     LaserScan scan;
@@ -134,6 +136,13 @@ int main(int argc, char *argv[]) {
       fprintf(stderr, "Failed to get Lidar Data\n");
       fflush(stderr);
     }
+
+    //
+    if (saveNoise == 30) {
+      laser.saveNoiseDataToFile();
+    }
+
+    saveNoise++;
   }
 
   laser.turnOff();
