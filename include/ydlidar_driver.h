@@ -534,6 +534,8 @@ class YDlidarDriver {
   bool LastCheckSumResult;
   uint16_t Valu8Tou16;
 
+  uint8_t *recvBuffer;
+
   std::string serial_port;///< lidar serial port
   std::vector<float> m_IgnoreArray;//
 

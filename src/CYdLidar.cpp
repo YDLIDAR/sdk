@@ -11,7 +11,7 @@ using namespace impl;
 /*-------------------------------------------------------------
 						Constructor
 -------------------------------------------------------------*/
-CYdLidar::CYdLidar(): lidarPtr(nullptr) {
+CYdLidar::CYdLidar(): lidarPtr(nullptr), m_freq_callback(nullptr) {
   m_SerialPort        = "";
   m_SerialBaudrate    = 230400;
   m_Intensities       = false;
@@ -57,6 +57,14 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_distance_queue.resize(MAXCALIBRATIONRANGE);
   m_last_check_distance.resize(MAXCALIBRATIONRANGE);
   m_percentage.resize(MAXCALIBRATIONRANGE);
+  m_check_percentage.resize(MAXCALIBRATIONRANGE);
+  m_pass_percentage.resize(MAXCALIBRATIONRANGE);
+  m_check_percentage[0] = 4.9;//修正合格率
+  m_pass_percentage[0] = 4.9;//
+  m_check_percentage[1] = 0.9;//修正后合格率
+  m_pass_percentage[1] = 0.9;
+
+
   m_mean_distance_queue.resize(MAXCALIBRATIONRANGE);
   m_Calibration_angle[0] = 0;
   m_Calibration_angle[1] = 10;
@@ -72,7 +80,18 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   action_check_time = getTime();
   has_check_state = false;
   m_state  = NORMAL;
+  m_last_state = IDEL;
   m_check_state_error = NOERROR;
+  resetCheckState();
+  setMaxLowFrequencyTimes(MaxPlusTimes);
+  setMaxHightFrequencyTimes(MaxPlusTimes);
+  setMaxEchoTimes(2);
+  setChangeFrequency(false);
+  setCheckFinished(true);
+  setLastFrequencyStatus(true);
+  setCurrentFrequencyStatus(true);
+  setResult(false);
+  nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
 }
 
 /*-------------------------------------------------------------
@@ -80,6 +99,11 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
 -------------------------------------------------------------*/
 CYdLidar::~CYdLidar() {
   disconnecting();
+
+  if (nodes) {
+    delete[] nodes;
+    nodes = nullptr;
+  }
 }
 
 void CYdLidar::disconnecting() {
@@ -115,8 +139,13 @@ void CYdLidar::setStartRobotAngleOffset() {
 }
 
 bool CYdLidar::isRobotAngleOffsetCorrected() const {
-	return m_isLRRAngleOffsetCorrected && !m_startRobotAngleOffset;
+  return m_isLRRAngleOffsetCorrected && !m_startRobotAngleOffset;
 }
+
+void CYdLidar::RegisterCtrlFreqCallback(LIDARCtrlFreqCallback callback) {
+  m_freq_callback = callback;
+}
+
 /*-------------------------------------------------------------
 						doProcessSimple
 -------------------------------------------------------------*/
@@ -130,7 +159,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     return false;
   }
 
-  node_info *nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
   size_t   count = YDlidarDriver::MAX_SCAN_NODES;
 
   //line feature
@@ -232,7 +260,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     scan_msg.config.min_range = m_MinRange;
     scan_msg.config.max_range = m_MaxRange;
     outscan = scan_msg;
-    delete[] nodes;
     {
       current_frequency = 1.0 / scan_time;
       handleCheckData();
@@ -249,7 +276,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     }
   }
 
-  delete[] nodes;
   return false;
 
 }
@@ -327,6 +353,7 @@ bool  CYdLidar::turnOn() {
 
   isScanning = true;
   lidarPtr->setAutoReconnect(m_AutoReconnect);
+  lowSpeed();
   printf("[YDLIDAR INFO] Now YDLIDAR is scanning ......\n");
   fflush(stdout);
   return true;
@@ -351,7 +378,6 @@ bool  CYdLidar::turnOff() {
 }
 
 bool CYdLidar::checkLidarAbnormal() {
-  node_info *nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
   size_t   count = YDlidarDriver::MAX_SCAN_NODES;
   int check_abnormal_count = 0;
 
@@ -367,17 +393,16 @@ bool CYdLidar::checkLidarAbnormal() {
       delay(check_abnormal_count * 1000);
     }
 
+    count = YDlidarDriver::MAX_SCAN_NODES;
     op_result =  lidarPtr->grabScanData(nodes, count);
 
     if (IS_OK(op_result)) {
-      delete[] nodes;
       return false;
     }
 
     check_abnormal_count++;
   }
 
-  delete[] nodes;
   return !IS_OK(op_result);
 }
 
@@ -498,7 +523,7 @@ bool CYdLidar::getDeviceInfo() {
 void CYdLidar::checkSampleRate() {
   sampling_rate _rate;
   int _samp_rate = 9;
-  int try_count;
+  int try_count = 0;
   result_t ans = lidarPtr->getSamplingRate(_rate);
 
   if (IS_OK(ans)) {
@@ -746,6 +771,7 @@ void CYdLidar::saveRobotOffsetAngle() {
 
 }
 
+
 void CYdLidar::lowSpeed() {
   if (!lidarPtr) {
     return;
@@ -753,6 +779,10 @@ void CYdLidar::lowSpeed() {
 
   if (!isScanning || !lidarPtr->isscanning()) {
     return ;
+  }
+
+  if (m_freq_callback) {
+    m_freq_callback(true);
   }
 
   lidarPtr->setStartAdjSpeed();
@@ -767,6 +797,10 @@ void CYdLidar::hightSpeed() {
 
   if (!isScanning || !lidarPtr->isscanning()) {
     return ;
+  }
+
+  if (m_freq_callback) {
+    m_freq_callback(false);
   }
 
   lidarPtr->setStartAdjSpeed();

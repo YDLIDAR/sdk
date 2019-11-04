@@ -50,6 +50,10 @@ void CYdLidar::ActionStateUpdate(double frequency) {
         if (m_action_step < max_action_step && has_check_flag) {
           printf("The correction model has been opened\n");
           m_action_startup = false;
+          resetCheckState();
+          setCurrentFrequencyStatus(true);
+          setLastFrequencyStatus(true);
+          setCheckFinished(false);
           return;
         }
 
@@ -65,6 +69,10 @@ void CYdLidar::ActionStateUpdate(double frequency) {
           if (has_check_flag) {
             printf("Successful Opening of correction Mod\n");
             m_action_startup = false;
+            resetCheckState();
+            setCurrentFrequencyStatus(true);
+            setLastFrequencyStatus(true);
+            setCheckFinished(false);
           } else {
 
           }
@@ -115,7 +123,7 @@ void CYdLidar::setActionState(bool isLowerSpeed) {
 bool CYdLidar::CheckStateTimeout(bool isLowerSpeed) {
   uint64_t current_time = getTime();
   bool retVal = false;
-  int time_diff = current_time - action_check_time;
+  int64_t time_diff = current_time - action_check_time;
 
   if (time_diff > min_check_time) {
     retVal = true;

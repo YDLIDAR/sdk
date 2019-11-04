@@ -79,6 +79,7 @@ YDlidarDriver::YDlidarDriver():
   LastCheckSumResult  = true;
   Valu8Tou16          = 0;
 
+  recvBuffer = new uint8_t[sizeof(node_packages)];
   package_Sample_Index = 0;
   IntervalSampleAngle_LastPackage = 0.0;
   m_IgnoreArray.clear();
@@ -104,6 +105,11 @@ YDlidarDriver::~YDlidarDriver() {
   if (_serial) {
     delete _serial;
     _serial = NULL;
+  }
+
+  if (recvBuffer) {
+    delete[]  recvBuffer;
+    recvBuffer = NULL;
   }
 }
 
@@ -496,9 +502,6 @@ int YDlidarDriver::cacheScanData() {
 result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   int recvPos         = 0;
   uint32_t startTs    = getms();
-  uint32_t size       = (m_intensities) ? sizeof(node_package) : sizeof(
-                          node_packages);
-
   uint32_t waitTime   = 0;
   uint8_t  *packageBuffer = (m_intensities) ? (uint8_t *)&package.package_Head :
                             (uint8_t *)&packages.package_Head;
@@ -509,7 +512,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   bool data_header_error = false;
 
   if (package_Sample_Index == 0) {
-    uint8_t *recvBuffer = new uint8_t[size];
     recvPos = 0;
 
     while ((waitTime = getms() - startTs) <= timeout) {
@@ -518,7 +520,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
       result_t ans = waitForData(remainSize, timeout - waitTime, &recvSize);
 
       if (!IS_OK(ans)) {
-        delete[] recvBuffer;
         return ans;
       }
 
@@ -658,7 +659,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
         result_t ans = waitForData(remainSize, timeout - waitTime, &recvSize);
 
         if (!IS_OK(ans)) {
-          delete[] recvBuffer;
           return ans;
         }
 
@@ -698,11 +698,9 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
       }
 
       if (package_Sample_Num * PackageSampleBytes != recvPos) {
-        delete[] recvBuffer;
         return RESULT_FAIL;
       }
     } else {
-      delete[] recvBuffer;
       return RESULT_FAIL;
     }
 
@@ -715,8 +713,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
       CheckSumResult = true;
     }
 
-    delete[] recvBuffer;
-
   }
 
   uint8_t package_CT;
@@ -727,7 +723,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     package_CT = packages.package_CT;
   }
 
-  if (package_CT == CT_Normal) {
+  if ((package_CT & 0x01) == CT_Normal) {
     (*node).sync_flag = Node_NotSync;
   } else {
     (*node).sync_flag = Node_Sync;
@@ -1133,7 +1129,17 @@ result_t YDlidarDriver::getDeviceInfo(device_info &info, uint32_t timeout) {
 /* the set to signal quality                                            */
 /************************************************************************/
 void YDlidarDriver::setIntensities(const bool &isintensities) {
-  m_intensities = isintensities;
+  if (m_intensities != isintensities) {
+    m_intensities = isintensities;
+    uint32_t size       = (m_intensities) ? sizeof(node_package) : sizeof(
+                            node_packages);
+
+    if (recvBuffer) {
+      delete[] recvBuffer;
+    }
+
+    recvBuffer = new uint8_t[size];
+  }
 
   if (m_intensities) {
     PackageSampleBytes = 3;

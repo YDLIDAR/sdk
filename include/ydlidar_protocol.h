@@ -124,6 +124,7 @@ typedef enum {
 #define MAXCALIBRATIONRANGE    2
 
 enum CheckState {
+  IDEL,
   NORMAL,
   CHECKING,
   CHECK_FAILED,

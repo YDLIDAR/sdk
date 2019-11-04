@@ -9,6 +9,16 @@ using namespace ydlidar;
 #pragma comment(lib, "ydlidar_driver.lib")
 #endif
 
+void LidarCtrlFreqCallback(bool isLowerFreq) {
+  if (isLowerFreq) { //低频模式
+    //设置雷达频率小于6.8Hz
+
+  } else {//高频模式
+    //设置雷达频率大于11.7Hz
+
+  }
+}
+
 int main(int argc, char *argv[]) {
   printf("__   ______  _     ___ ____    _    ____      ____ ____  \n");
   printf("\\ \\ / /  _ \\| |   |_ _|  _ \\  / \\  |  _ \\    / ___/ ___| \n");
@@ -144,14 +154,28 @@ int main(int argc, char *argv[]) {
     ret = laser.turnOn();
   }
 
+  //开启修正需注册高低频回调函数, 外部调用设定雷达高低频率
+  laser.RegisterCtrlFreqCallback(std::bind(LidarCtrlFreqCallback,
+                                 std::placeholders::_1));
+
+  //如果要开启进入修正模式并修正, 调用startCorrectionMod函数
+  //laser.startCorrectionMod();
+  //修正中可以通过getCheckStateError函数获取状态信息
+  //开启修正模式后, 判断是否修正完成, 调用IsCheckingFinished函数, 返回值是true, 修正完成, 否则,正在修正
+  //laser.IsCheckingFinished();
+  //修正完成后, 判断修正成功还是失败调用getResult函数, 返回值是true, 修正成功, 否则修正失败
+  //laser.getResult();
+
   while (ret && ydlidar::ok()) {
     bool hardError;
     LaserScan scan;
 
     if (laser.doProcessSimple(scan, hardError)) {
-      fprintf(stdout, "Scan received[%llu]: %u ranges is [%f]Hz\n",
-              scan.system_time_stamp,
-              (unsigned int)scan.data.size(), 1.0 / scan.config.scan_time);
+      if (laser.getCheckFinished()) {
+        fprintf(stdout, "Scan received[%lu]: %u ranges is [%f]Hz\n",
+                scan.system_time_stamp,
+                (unsigned int)scan.data.size(), 1.0 / scan.config.scan_time);
+      }
 
       for (int i = 0; i < scan.data.size(); i++) {
         uint64_t time_stamp = scan.system_time_stamp + i * scan.config.time_increment *
@@ -163,6 +187,31 @@ int main(int argc, char *argv[]) {
     } else {
       fprintf(stderr, "Failed to get Lidar Data\n");
       fflush(stderr);
+    }
+
+    if (laser.IsCheckingFinished()) {//修正完成
+      if (laser.getResult()) { //修正成功
+
+      } else {//修正失败
+
+      }
+    } else {//查看修正状态
+      switch (laser.getCheckStateError()) {
+        case CYdLidar::NOERROR:
+
+          break;
+
+        case CYdLidar::FREQUENCYOUT:
+
+          break;
+
+        case CYdLidar::JUMPFREQUENCY:
+
+          break;
+
+        default:
+          break;
+      }
     }
   }
 
