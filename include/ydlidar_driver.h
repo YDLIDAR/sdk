@@ -125,23 +125,16 @@ class YDlidarDriver {
    */
   void setIgnoreArray(const std::vector<float> ignore_array);
 
-  /**
-  * @brief get Health status \n
-  * @return result status
-  * @retval RESULT_OK       success
-  * @retval RESULT_FAILE or RESULT_TIMEOUT   failed
-  */
-  result_t getHealth(device_health &health, uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
-  * @brief get Device information \n
-  * @param[in] info     Device information
-  * @param[in] timeout  timeout
-  * @return result status
-  * @retval RESULT_OK       success
-  * @retval RESULT_FAILE or RESULT_TIMEOUT   failed
-  */
-  result_t getDeviceInfo(device_info &info, uint32_t timeout = DEFAULT_TIMEOUT);
+   * @brief getDeviceInfo
+   * @param buffer
+   * @param size
+   * @param timeout
+   * @return
+   */
+  result_t getDeviceInfo(std::string &buffer, size_t &size,
+                         uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
   * @brief Turn on scanning \n
@@ -198,123 +191,6 @@ class YDlidarDriver {
   * @note Non-scan state, perform currect operation.
   */
   result_t reset(uint32_t timeout = DEFAULT_TIMEOUT);
-
-  /**
-  * @brief Get lidar scan frequency \n
-  * @param[in] frequency    scanning frequency
-  * @param[in] timeout      timeout
-  * @return return status
-  * @retval RESULT_OK       success
-  * @retval RESULT_FAILE    failed
-  * @note Non-scan state, perform currect operation.
-  */
-  result_t getScanFrequency(scan_frequency &frequency,
-                            uint32_t timeout = DEFAULT_TIMEOUT);
-
-  /**
-  * @brief Increase the scanning frequency by 1.0 HZ \n
-  * @param[in] frequency    scanning frequency
-  * @param[in] timeout      timeout
-  * @return return status
-  * @retval RESULT_OK       success
-  * @retval RESULT_FAILE    failed
-  * @note Non-scan state, perform currect operation.
-  */
-  result_t setScanFrequencyAdd(scan_frequency &frequency,
-                               uint32_t timeout = DEFAULT_TIMEOUT);
-
-  /**
-  * @brief Reduce the scanning frequency by 1.0 HZ \n
-  * @param[in] frequency    scanning frequency
-  * @param[in] timeout      timeout
-  * @return return status
-  * @retval RESULT_OK       success
-  * @retval RESULT_FAILE    failed
-  * @note Non-scan state, perform currect operation.
-  */
-  result_t setScanFrequencyDis(scan_frequency &frequency,
-                               uint32_t timeout = DEFAULT_TIMEOUT);
-
-  /**
-  * @brief Increase the scanning frequency by 0.1 HZ \n
-  * @param[in] frequency    scanning frequency
-  * @param[in] timeout      timeout
-  * @return return status
-  * @retval RESULT_OK       success
-  * @retval RESULT_FAILE    failed
-  * @note Non-scan state, perform currect operation.
-  */
-  result_t setScanFrequencyAddMic(scan_frequency &frequency,
-                                  uint32_t timeout = DEFAULT_TIMEOUT);
-
-  /**
-  * @brief Reduce the scanning frequency by 0.1 HZ \n
-  * @param[in] frequency    scanning frequency
-  * @param[in] timeout      timeout
-  * @return return status
-  * @retval RESULT_OK       success
-  * @retval RESULT_FAILE    failed
-  * @note Non-scan state, perform currect operation.
-  */
-  result_t setScanFrequencyDisMic(scan_frequency &frequency,
-                                  uint32_t timeout = DEFAULT_TIMEOUT);
-
-  /**
-  * @brief Get lidar sampling frequency \n
-  * @param[in] frequency    sampling frequency
-  * @param[in] timeout      timeout
-  * @return return status
-  * @retval RESULT_OK       success
-  * @retval RESULT_FAILE    failed
-  * @note Non-scan state, perform currect operation.
-  */
-  result_t getSamplingRate(sampling_rate &rate,
-                           uint32_t timeout = DEFAULT_TIMEOUT);
-
-  /**
-  * @brief Set the lidar sampling frequency \n
-  * @param[in] rate    　　　sampling frequency
-  * @param[in] timeout      timeout
-  * @return return status
-  * @retval RESULT_OK       success
-  * @retval RESULT_FAILE    failed
-  * @note Non-scan state, perform currect operation.
-  */
-  result_t setSamplingRate(sampling_rate &rate,
-                           uint32_t timeout = DEFAULT_TIMEOUT);
-
-  /**
-  * @brief get lidar zero offset angle \n
-  * @param[in] angle　　　   zero offset angle
-  * @param[in] timeout      timeout
-  * @return return status
-  * @retval RESULT_OK       success
-  * @retval RESULT_FAILE    failed
-  * @note Non-scan state, perform currect operation.
-  */
-  result_t getZeroOffsetAngle(offset_angle &angle,
-                              uint32_t timeout = DEFAULT_TIMEOUT);
-
-  /**
-   * @brief setScanLowSpeed
-   * @param timeout
-   * @return
-   */
-  result_t setScanLowSpeed(uint32_t timeout = DEFAULT_TIMEOUT);
-
-  /**
-   * @brief setScanHightSpeed
-   * @param timeout
-   * @return
-   */
-  result_t setScanHightSpeed(uint32_t timeout = DEFAULT_TIMEOUT);
-
-  /**
-   * @brief setStartAdjSpeed
-   * @param timeout
-   * @return
-   */
-  result_t setStartAdjSpeed(uint32_t timeout = DEFAULT_TIMEOUT);
 
  protected:
 
@@ -392,6 +268,16 @@ class YDlidarDriver {
   */
   result_t waitResponseHeader(lidar_ans_header *header,
                               uint32_t timeout = DEFAULT_TIMEOUT);
+
+  /**
+     * @brief waitResponseStartHeader
+     * @param buffer
+     * @param size
+     * @param timeout
+     * @return
+     */
+  result_t waitResponseStartHeader(std::string &buffer, size_t &size,
+                                   uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
   * @brief Waiting for the specified size data from the lidar \n
@@ -513,8 +399,6 @@ class YDlidarDriver {
   uint64_t m_node_last_time_ns;       ///< time stamp
   uint32_t m_pointTime;				///< two laser point time intervals
   uint32_t trans_delay;				///< serial transfer on byte time
-  int m_sampling_rate;					///< sample rate
-  int model; ///< lidar model
 
   node_package package;
   node_packages packages;
@@ -538,6 +422,8 @@ class YDlidarDriver {
 
   std::string serial_port;///< lidar serial port
   std::vector<float> m_IgnoreArray;//
+
+  bool m_singleChannel;
 
 };
 }

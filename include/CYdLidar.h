@@ -1,15 +1,12 @@
 ﻿
 #pragma once
-#include "line_feature.h"
 #include "utils.h"
 #include "ydlidar_driver.h"
 #include <math.h>
-#include <SimpleIni.h>
 #include "angles.h"
 #include <functional>
 
 using namespace ydlidar;
-using namespace line_feature;
 using namespace angles;
 
 /**
@@ -30,9 +27,6 @@ class YDLIDAR_API CYdLidar {
   PropertyBuilderByName(float, ScanFrequency,
                         private) ///< scan frequency (5HZ~12HZ)(HZ)
 
-  PropertyBuilderByName(float, RobotLidarDifference,
-                        private) ///< lidar zero and robot zero difference(°)
-
   PropertyBuilderByName(bool, Intensities,
                         private) ///< intensity
   PropertyBuilderByName(bool, AutoReconnect,
@@ -44,8 +38,6 @@ class YDLIDAR_API CYdLidar {
   PropertyBuilderByName(int, SampleRate, private) ///< sampling rate(KHz)
   PropertyBuilderByName(int, AbnormalCheckCount,
                         private) ///< Maximum number of abnormal checks
-  PropertyBuilderByName(std::string, CalibrationFileName,
-                        private) ///< calibration file
   PropertyBuilderByName(std::string, SerialPort, private) ///< serial port
   PropertyBuilderByName(std::vector<float>, IgnoreArray,
                         private) ///< Culling angle list
@@ -68,10 +60,6 @@ class YDLIDAR_API CYdLidar {
                         private) ///< Constrained minimum distance(m)
   PropertyBuilderByName(bool, Result,
                         private) ///< 修正是否成功
-
-
-
-
 
  public:
   CYdLidar(); //!< Constructor
@@ -120,36 +108,24 @@ class YDLIDAR_API CYdLidar {
   //Turn off lidar connection
   void disconnecting(); //!< Closes the comms with the laser. Shouldn't have to be directly needed by the user
 
-  //lidar pointer
-  YDlidarDriver *getYdlidarDriver();
-
-  //get zero angle offset value
-  float getAngleOffset() const;
-
-  //Whether the zero offset angle is corrected?
-  bool isAngleOffetCorrected() const;
-
-  // get lidar relative robot offset angle
-  float getRobotAngleOffset() const;
-
-  // start lidar is corrected relative to the robot.
-  void setStartRobotAngleOffset();
-
-  //Whether the lidar relative robot offset angle is corrected?
-  //After the corrrection is started,
-  //the currect interface can be used to datermine when the correction is completed.
-  bool isRobotAngleOffsetCorrected() const;
-
   /**
    * @brief RegisterContrlFreqCallback
    * @param callback
    */
   void RegisterCtrlFreqCallback(LIDARCtrlFreqCallback callback);
 
+  /**
+   * @brief getCheckStateError
+   * @return
+   */
   CheckStateError getCheckStateError() const {//获取错误状态
     return m_check_state_error;
   }
 
+  /**
+   * @brief getSartUpState
+   * @return
+   */
   bool getSartUpState() const {//获取当前开启状态是否正在进行中
     return m_action_startup;
   }
@@ -170,54 +146,51 @@ class YDLIDAR_API CYdLidar {
     */
   bool  checkStatus();
 
-  /**
-   * @brief checkSampleRate
-   */
-  void checkSampleRate();
-
-  /**
-   * @brief checkCalibrationAngle
-   */
-  void checkCalibrationAngle(const std::string &serialNumber);
-
-  /**
-   * @brief checkRobotOffsetAngleCorrected
-   * @param serialNumber
-   */
-  void checkRobotOffsetAngleCorrected(const std::string &serialNumber);
-
-  /** Returns true if the device is in good health, If it's not*/
-  bool getDeviceHealth();
-
   /** Returns true if the device information is correct, If it's not*/
   bool getDeviceInfo();
 
-  /** Retruns true if the scan frequency is set to user's frequency is successful, If it's not*/
-  bool checkScanFrequency();
 
   /** returns true if the lidar data is normal, If it's not*/
   bool checkLidarAbnormal();
 
-  /**
-   * @brief saveRobotOffsetAngle
-   * @return
-   */
-  void saveRobotOffsetAngle();
-
-  /**
-   * @brief hangleRobotOffsetAngle
-   */
-  void handleRobotOffsetAngle();
-
  private:
-
+  /**
+   * @brief lowSpeed
+   */
   void lowSpeed();//雷达低速命令
+  /**
+   * @brief hightSpeed
+   */
   void hightSpeed();//雷达高速命令
 
+  /**
+   * @brief startCorrectionMod
+   */
   void startCorrectionMod();//开启修正模式
+  /**
+   * @brief OnEnter
+   * @param frequency
+   */
+  /**
+   * @brief OnEnter
+   * @param frequency
+   */
   void OnEnter(double frequency);//进入开启修正模式
+  /**
+   * @brief ActionStateUpdate
+   * @param frequency
+   */
   void ActionStateUpdate(double frequency);
+  /**
+   * @brief setActionState
+   * @param isLowerSpeed
+   */
   void setActionState(bool isLowerSpeed = true);
+  /**
+   * @brief CheckStateTimeout
+   * @param isLowerSpeed
+   * @return
+   */
   bool CheckStateTimeout(bool isLowerSpeed = true);
 
 
@@ -290,23 +263,7 @@ class YDLIDAR_API CYdLidar {
 
  private:
   bool    isScanning;
-  float   frequencyOffset;
-  float   m_AngleOffset;
-  bool    m_isAngleOffsetCorrected;
-  float   m_LRRAngleOffset;
-  bool    m_isLRRAngleOffsetCorrected;//lidar relative robot angle offset
-  bool    m_startRobotAngleOffset;
-  uint8_t Major;
-  uint8_t Minjor;
-  CSimpleIniA ini;
   YDlidarDriver *lidarPtr;
-  LineFeature line_feature_;
-  std::string m_serial_number;
-
-  std::vector<double> bearings;
-  std::vector<unsigned int> indices;
-  RangeData range_data;
-
   //controller frequency callback
   LIDARCtrlFreqCallback m_freq_callback;//频率切换回调函数
 

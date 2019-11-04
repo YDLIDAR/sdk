@@ -120,8 +120,8 @@ int main(int argc, char *argv[]) {
   laser.setAutoReconnect(true);//hot plug
 
   //unit: Deg
-  laser.setMaxAngle(360);
-  laser.setMinAngle(0);
+  laser.setMaxAngle(180);
+  laser.setMinAngle(-180);
 
   //unit: m
   laser.setMinRange(0.1);
@@ -133,14 +133,6 @@ int main(int argc, char *argv[]) {
   //unit: Hz
   laser.setScanFrequency(frequency);
 
-  laser.setCalibrationFileName(calibration_filename);//Zero angle offset filename
-
-  //start correction zero angle and robot zero angle.
-  laser.setStartRobotAngleOffset();
-
-  //Theoretical difference between lidar zero angle and robot zero angle.
-  //unit: Deg
-  laser.setRobotLidarDifference(0);
 
   //set the range of angles that need to be removed.
   //usage: [0, 10, 15,25, 80, 90]
