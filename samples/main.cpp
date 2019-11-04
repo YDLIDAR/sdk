@@ -20,44 +20,22 @@ void LidarCtrlFreqCallback(bool isLowerFreq) {
 }
 
 int main(int argc, char *argv[]) {
-  printf("__   ______  _     ___ ____    _    ____      ____ ____  \n");
-  printf("\\ \\ / /  _ \\| |   |_ _|  _ \\  / \\  |  _ \\    / ___/ ___| \n");
-  printf(" \\ V /| | | | |    | || | | |/ _ \\ | |_) |___\\___ \\___ \\ \n");
-  printf("  | | | |_| | |___ | || |_| / ___ \\|  _ <_____|__) |__) | \n");
-  printf("  |_| |____/|_____|___|____/_/   \\_\\_| \\_\\   |____/____/  \n");
+  printf("__   ______  _     ___ ____    _    ____            \n");
+  printf("\\ \\ / /  _ \\| |   |_ _|  _ \\  / \\  |  _ \\     \n");
+  printf(" \\ V /| | | | |    | || | | |/ _ \\ | |_) |        \n");
+  printf("  | | | |_| | |___ | || |_| / ___ \\|  _ <          \n");
+  printf("  |_| |____/|_____|___|____/_/   \\_\\_| \\_\\      \n");
   printf("\n");
   fflush(stdout);
   std::string port;
-  std::string calibration_filename = "LidarAngleCalibration.ini";
-
-  if (argc > 1) {
-    calibration_filename = (std::string)argv[1];
-  }
-
   ydlidar::init(argc, argv);
-
-  printf("lidar angle calibration file: %s\n", calibration_filename.c_str());
   std::map<std::string, std::string> ports =
     ydlidar::YDlidarDriver::lidarPortList();
   std::map<std::string, std::string>::iterator it;
 
   if (ports.size() == 1) {
     it = ports.begin();
-    printf("Lidar[%s] detected, whether to select current lidar(yes/no)?:",
-           it->first.c_str());
-    std::string ok;
-    std::cin >> ok;
-
-    for (size_t i = 0; i < ok.size(); i++) {
-      ok[i] = tolower(ok[i]);
-    }
-
-    if (ok.find("yes") != std::string::npos || atoi(ok.c_str()) == 1) {
-      port = it->second;
-    } else {
-      printf("Please enter the lidar serial port:");
-      std::cin >> port;
-    }
+    port = it->second;
   } else {
     int id = 0;
 
@@ -93,30 +71,14 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  std::string input_frequency;
-  float frequency = 8.0;
-
-  while (ydlidar::ok()) {
-    printf("Please enter the lidar scan frequency[5-12]:");
-    std::cin >> input_frequency;
-    frequency = atof(input_frequency.c_str());
-
-    if (frequency <= 12.0 && frequency >= 5.0) {
-      break;
-    }
-
-    fprintf(stderr,
-            "Invalid scan frequency,The scanning frequency range is 5 to 12 HZ, Please re-enter.\n");
-  }
-
   if (!ydlidar::ok()) {
     return 0;
   }
 
   CYdLidar laser;
   laser.setSerialPort(port);
-  laser.setSerialBaudrate(230400);
-  laser.setIntensities(false);//intensity
+  laser.setSerialBaudrate(214285);
+  laser.setIntensities(true);//intensity
   laser.setAutoReconnect(true);//hot plug
 
   //unit: Deg
@@ -126,12 +88,6 @@ int main(int argc, char *argv[]) {
   //unit: m
   laser.setMinRange(0.1);
   laser.setMaxRange(16.0);
-
-  //unit: K
-  laser.setSampleRate(5);
-
-  //unit: Hz
-  laser.setScanFrequency(frequency);
 
 
   //set the range of angles that need to be removed.
@@ -166,16 +122,9 @@ int main(int argc, char *argv[]) {
       if (laser.getCheckFinished()) {
         fprintf(stdout, "Scan received[%lu]: %u ranges is [%f]Hz\n",
                 scan.system_time_stamp,
-                (unsigned int)scan.data.size(), 1.0 / scan.config.scan_time);
+                (unsigned int)scan.ranges.size(), 1.0 / scan.config.scan_time);
+        fflush(stdout);
       }
-
-      for (int i = 0; i < scan.data.size(); i++) {
-        uint64_t time_stamp = scan.system_time_stamp + i * scan.config.time_increment *
-                              1e9;
-        LaserPoint point = scan.data[i];
-      }
-
-      fflush(stdout);
     } else {
       fprintf(stderr, "Failed to get Lidar Data\n");
       fflush(stderr);

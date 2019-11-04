@@ -60,6 +60,7 @@ YDlidarDriver::YDlidarDriver():
 
   m_pointTime         = 1e9 / 5000;
   trans_delay         = 0;
+  m_packageTime       = 0;
   m_node_time_ns      = getTime();
   m_node_last_time_ns = getTime();
   scan_frequence      = 0;
@@ -129,8 +130,9 @@ result_t YDlidarDriver::connect(const char *port_path, uint32_t baudrate) {
       return RESULT_FAIL;
     }
 
+    trans_delay = _serial->getByteTime();
+    m_packageTime = trans_delay * (PackagePaidBytes + PackageSampleBytes);
     isConnected = true;
-
   }
 
   stopScan();
@@ -217,6 +219,14 @@ bool YDlidarDriver::isscanning() const {
 }
 bool YDlidarDriver::isconnected() const {
   return isConnected;
+}
+
+uint32_t YDlidarDriver::getPointTime() const {
+  return m_pointTime;
+}
+
+uint32_t YDlidarDriver::getPackageTime() const {
+  return m_packageTime;
 }
 
 result_t YDlidarDriver::sendCommand(uint8_t cmd, const void *payload,

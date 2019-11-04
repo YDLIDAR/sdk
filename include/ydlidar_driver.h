@@ -101,6 +101,18 @@ class YDlidarDriver {
   bool isconnected() const;
 
   /**
+   * @brief getPointTime
+   * @return
+   */
+  uint32_t getPointTime() const;
+
+  /**
+   * @brief getPackageTime
+   * @return
+   */
+  uint32_t getPackageTime() const;
+
+  /**
   * @brief Is there intensity \n
   * @param[in] isintensities    intentsity
   *   true	intensity
@@ -398,6 +410,7 @@ class YDlidarDriver {
   uint64_t m_node_time_ns;			///< time stamp
   uint64_t m_node_last_time_ns;       ///< time stamp
   uint32_t m_pointTime;				///< two laser point time intervals
+  uint32_t m_packageTime;        ///零位包传送时间
   uint32_t trans_delay;				///< serial transfer on byte time
 
   node_package package;

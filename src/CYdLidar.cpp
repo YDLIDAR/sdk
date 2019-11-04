@@ -15,13 +15,13 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr), m_freq_callback(nullptr) {
   m_SerialPort        = "";
   m_SerialBaudrate    = 214285;
   m_Intensities       = true;
+  m_FixedResolution   = false;
   m_AutoReconnect     = false;
   m_MaxAngle          = 180.f;
   m_MinAngle          = -180;
   m_MaxRange          = 16.0;
   m_MinRange          = 0.08;
   m_SampleRate        = 5;
-  m_ScanFrequency     = 10;
   m_GlassNoise        = true;
   m_SunNoise          = true;
   isScanning          = false;
@@ -79,7 +79,11 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr), m_freq_callback(nullptr) {
   setLastFrequencyStatus(true);
   setCurrentFrequencyStatus(true);
   setResult(false);
+  m_FixedSize = 721;
   nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
+  m_pointTime         = 1e9 / 5000;
+  m_packageTime       = 0;
+  last_node_time      = getTime();
 }
 
 /*-------------------------------------------------------------
@@ -118,22 +122,37 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
   // Bound?
   if (!checkHardware()) {
     hardwareError = true;
-    delay(500 / m_ScanFrequency);
+    delay(20);
     return false;
   }
 
   size_t   count = YDlidarDriver::MAX_SCAN_NODES;
+  size_t all_nodes_counts = m_FixedSize;
   //wait Scan data:
+  uint64_t tim_scan_start = getTime();
   result_t op_result =  lidarPtr->grabScanData(nodes, count);
+  uint64_t tim_scan_end = getTime();
 
   // Fill in scan data:
   if (IS_OK(op_result)) {
-    uint64_t tim_scan_start = nodes[0].stamp;
-    uint64_t tim_scan_end   = nodes[count - 1].stamp;
+    uint64_t scan_time = m_pointTime * (count - 1);
+    tim_scan_end -= m_packageTime;
+    tim_scan_end -= m_pointTime;
+    tim_scan_start = tim_scan_end -  scan_time ;
+    last_node_time = tim_scan_end;
+    outscan.config.scan_time = static_cast<float>(1.0 * scan_time / 1e9);
+    outscan.config.time_increment = static_cast<float>(m_pointTime / 1e9);
+
+
     float range = 0.0;
     float intensity = 0.0;
     float angle = 0.0;
-    LaserPoint point;
+
+    if (!m_FixedResolution) {
+      all_nodes_counts = count;
+    } else {
+      all_nodes_counts = m_FixedResolution;
+    }
 
     if (m_MaxAngle < m_MinAngle) {
       float temp = m_MinAngle;
@@ -143,7 +162,11 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
     outscan.config.min_angle = angles::from_degrees(m_MinAngle);
     outscan.config.max_angle = angles::from_degrees(m_MaxAngle);
-
+    int counts = all_nodes_counts * ((m_MaxAngle - m_MinAngle) / 360.0f);
+    outscan.config.ang_increment = (outscan.config.max_angle -
+                                    outscan.config.min_angle) / (counts - 1);
+    outscan.intensities.resize(counts, 0.0);
+    outscan.ranges.resize(counts, 0.0);
     retSetData();
 
     for (int i = 0; i < count; i++) {
@@ -174,32 +197,24 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
       }
 
       if (angle >= outscan.config.min_angle && angle <= outscan.config.max_angle) {
-        point.angle = angle;
-        point.distance = range;
-        point.intensity = intensity;
-        outscan.data.push_back(point);
-      }
 
+        int index = (angle - outscan.config.min_angle) / outscan.config.ang_increment +
+                    0.5;
 
-      if (nodes[i].stamp < tim_scan_start) {
-        tim_scan_start = nodes[i].stamp;
-      }
-
-      if (nodes[i].stamp > tim_scan_end) {
-        tim_scan_end = nodes[i].stamp;
+        if (index >= 0 && index < counts) {
+          outscan.ranges[index] = range;
+          outscan.intensities[index] = intensity;
+        }
       }
 
     }
 
 
-    double scan_time = (tim_scan_end - tim_scan_start) / 1e9;
     outscan.system_time_stamp = tim_scan_start;
-    outscan.config.time_increment = scan_time / (double)(count - 1);
-    outscan.config.scan_time = scan_time;
     outscan.config.min_range = m_MinRange;
     outscan.config.max_range = m_MaxRange;
     {
-      current_frequency = 1.0 / scan_time;
+      current_frequency = 1.0 / outscan.config.scan_time;
       handleCheckData();
       OnEnter(current_frequency);
       last_frequency = current_frequency;
@@ -244,6 +259,9 @@ bool  CYdLidar::turnOn() {
       return false;
     }
   }
+
+  m_pointTime = lidarPtr->getPointTime();
+  m_packageTime = lidarPtr->getPackageTime();
 
   if (checkLidarAbnormal()) {
     lidarPtr->stop();

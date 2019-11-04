@@ -24,9 +24,8 @@ class YDLIDAR_API CYdLidar {
                         private) ///< constrained maximum angle, Maximum 360 Deg(Deg)
   PropertyBuilderByName(float, MinAngle,
                         private) ///< constrained minimum angle, minmum 0 Deg(Deg)
-  PropertyBuilderByName(float, ScanFrequency,
-                        private) ///< scan frequency (5HZ~12HZ)(HZ)
-
+  PropertyBuilderByName(bool, FixedResolution,
+                        private) ///< 设置和获取激光是否是固定角度分辨率
   PropertyBuilderByName(bool, Intensities,
                         private) ///< intensity
   PropertyBuilderByName(bool, AutoReconnect,
@@ -267,7 +266,11 @@ class YDLIDAR_API CYdLidar {
   //controller frequency callback
   LIDARCtrlFreqCallback m_freq_callback;//频率切换回调函数
 
+  int     m_FixedSize;
   node_info *nodes;
+  uint32_t m_pointTime;
+  uint32_t m_packageTime;        ///零位包传送时间
+  uint64_t last_node_time;
 
 
 };	// End of class
