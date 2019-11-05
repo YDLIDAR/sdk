@@ -15,9 +15,9 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.0.8 |   2019-05-20  |
+| SDK     |  1.4.2 |   2019-11-05  |
 
-- [new feature] increase the deviation between correcting the zero angle of the lidar and the zero angle of the robot.
+- [new feature] Add correction.
 
 
 
@@ -28,15 +28,13 @@ Dataset
 
 | Model      |  Baudrate |  Sampling Frequency | Range(m)  | Scanning Frequency(HZ) | Working temperature(°C) | Laser power max(mW) | voltage(V) | Current(mA)
 | :-------- | --------:|--------:|  --------:| --------:|--------:| --------:| --------:|  :--: |
-| G2-SS-1 |  230400 |   5000  |  0.1-16   |5-12|0-50| ~5|4.8-5.2|400-480|
-| R2-SS-1 |  230400 |   5000  |  0.1-16   |5-12|0-50| ~5|4.8-5.2|400-480|
-| G4     |  230400 |   9000  |  0.26-16   |5-12|0-50| ~5|4.8-5.2|400-480|
+| X4T     |  214285 |   5000  |  0.1-16   |5-12|0-50| ~5|4.8-5.2|400-480|
 
 How to build YDLIDAR SDK samples
 ---------------
     $ git clone https://github.com/ydlidar/sdk
     $ cd sdk
-    $ git checkout SS-TS
+    $ git checkout Temi_check
     $ cd ..
     $ mkdir build
     $ cd build
@@ -62,16 +60,8 @@ You should see YDLIDAR's scan result in the console:
 
 	[YDLIDAR]:SDK Version: 2.0.8
 	[YDLIDAR]:Lidar running correctly ! The health status: good
-	[YDLIDAR] Connection established in [/dev/ttyUSB0][230400]:
-	Firmware version: 1.2
-	Hardware version: 3
-	Model: R2-SS-1
-	Serial: 2018101800011111
+	[YDLIDAR] Connection established in [/dev/ttyUSB0][214285]:
 	[YDLIDAR INFO] Current Sampling Rate : 5K
-	[YDLIDAR INFO] Successfully obtained the corrected offset angle[0.0000] from the lidar[2018101800011111]
-	[YDLIDAR INFO] Calibration file[LidarAngleCalibration.ini] does not exist
-	[YDLIDAR INFO] Current uncorrrected RobotAngleOffset : 0.000000°
-	[YDLIDAR INFO] Current AngleOffset : 0.000000°
 	[YDLIDAR INFO] Current Scan Frequency : 8.000000Hz
 	[YDLIDAR INFO] Now YDLIDAR is scanning ......
 	Scan received: 625 ranges

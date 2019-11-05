@@ -149,7 +149,7 @@ void YDlidarDriver::setDTR() {
   }
 
   if (_serial) {
-    _serial->flush();
+//    _serial->flush();
     _serial->setDTR(1);
   }
 
@@ -161,7 +161,7 @@ void YDlidarDriver::clearDTR() {
   }
 
   if (_serial) {
-    _serial->flush();
+//    _serial->flush();
     _serial->setDTR(0);
   }
 }

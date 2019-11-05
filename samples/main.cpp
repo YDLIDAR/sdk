@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
                                  std::placeholders::_1));
 
   //如果要开启进入修正模式并修正, 调用startCorrectionMod函数
-  //laser.startCorrectionMod();
+  laser.startCorrectionMod();
   //修正中可以通过getCheckStateError函数获取状态信息
   //开启修正模式后, 判断是否修正完成, 调用IsCheckingFinished函数, 返回值是true, 修正完成, 否则,正在修正
   //laser.IsCheckingFinished();
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
     LaserScan scan;
 
     if (laser.doProcessSimple(scan, hardError)) {
-      if (laser.getCheckFinished()) {
+      if (laser.getCheckFinished() && laser.IsCheckingFinished()) {
         fprintf(stdout, "Scan received[%lu]: %u ranges is [%f]Hz\n",
                 scan.system_time_stamp,
                 (unsigned int)scan.ranges.size(), 1.0 / scan.config.scan_time);

@@ -108,6 +108,11 @@ class YDLIDAR_API CYdLidar {
   void disconnecting(); //!< Closes the comms with the laser. Shouldn't have to be directly needed by the user
 
   /**
+   * @brief startCorrectionMod
+   */
+  void startCorrectionMod();//开启修正模式
+
+  /**
    * @brief RegisterContrlFreqCallback
    * @param callback
    */
@@ -162,10 +167,6 @@ class YDLIDAR_API CYdLidar {
    */
   void hightSpeed();//雷达高速命令
 
-  /**
-   * @brief startCorrectionMod
-   */
-  void startCorrectionMod();//开启修正模式
   /**
    * @brief OnEnter
    * @param frequency

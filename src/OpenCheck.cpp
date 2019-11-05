@@ -131,8 +131,8 @@ bool CYdLidar::CheckStateTimeout(bool isLowerSpeed) {
 
   if (time_diff > max_check_time) {
     retVal = false;
-    fprintf(stderr, isLowerSpeed ? " Minimum frequency error " :
-            " Maximum frequency error ");
+    fprintf(stderr, isLowerSpeed ? " Minimum frequency error\n" :
+            " Maximum frequency error\n");
     m_check_state_error = isLowerSpeed ? MINFREQERROR : MAXFREQERROR;
     m_action_step = max_action_step + 3;
     m_action_startup = false;
