@@ -543,8 +543,10 @@ void YDlidarDriver::printLog(const string &msg) {
 }
 
 void YDlidarDriver::saveNoiseDataToFile() {
+#ifdef DEBUG
   is_enabled = true;
   printLog("Save noise Data....\n\n");
+#endif
 }
 
 int YDlidarDriver::cacheScanData() {
@@ -667,7 +669,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
                 eol = true;
               }
 
-              printLog(format("[%02x]", currentByte));
+//              printLog(format("[%02x]", currentByte));
               continue;
             }
 
@@ -771,9 +773,9 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
         }
 
         if (recvPos == 3 || recvPos == 8 || recvPos == 9) {
-          printLog(format("[%02x]", currentByte));
+//          printLog(format("[%02x]", currentByte));
         } else {
-          printLog(format("%02x", currentByte));
+//          printLog(format("%02x", currentByte));
         }
 
         packageBuffer[recvPos++] = currentByte;
@@ -825,7 +827,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
           packageBuffer[package_recvPos + recvPos] = globalRecvBuffer[pos];
           recvPos++;
-          printLog(format("%02x", globalRecvBuffer[pos]));
+//          printLog(format("%02x", globalRecvBuffer[pos]));
         }
 
         if (package_Sample_Num * PackageSampleBytes == recvPos) {
@@ -850,8 +852,8 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
                       (CheckSumCal >> 8) & 0xff));
     } else {
       CheckSumResult = true;
-      printLog(format("[%02x][%02x]\n", CheckSumCal & 0xff,
-                      (CheckSumCal >> 8) & 0xff));
+//      printLog(format("[%02x][%02x]\n", CheckSumCal & 0xff,
+//                      (CheckSumCal >> 8) & 0xff));
     }
   }
 

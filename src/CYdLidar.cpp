@@ -104,7 +104,7 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   range_data.clear();
   m_serial_number.clear();
 
-#ifdef DEBUG
+#ifdef YDDEBUG
   elog_file_init();
 
 #endif
@@ -122,7 +122,7 @@ CYdLidar::~CYdLidar() {
     nodes = nullptr;
   }
 
-#ifdef DEBUG
+#ifdef YDDEBUG
   elog_file_close();
 #endif
 }
@@ -139,7 +139,7 @@ void CYdLidar::disconnecting() {
 
 void CYdLidar::elog(const string &msg) {
 
-#ifdef DEBUG
+#ifdef YDDEBUG
   elog_file_write(msg.c_str(), msg.size());
 #endif
 }
@@ -564,6 +564,7 @@ bool CYdLidar::checkLidarAbnormal() {
       delay(check_abnormal_count * 1000);
     }
 
+    count = YDlidarDriver::MAX_SCAN_NODES;
     op_result =  lidarPtr->grabScanData(nodes, count);
 
     if (IS_OK(op_result)) {

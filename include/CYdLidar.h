@@ -44,6 +44,8 @@ using namespace line_feature;
 
 #define LOG_TAG    "YD"
 #define PATH_SUFFIX_LEN                     10
+#define YDDEBUG 1
+
 
 class YDLIDAR_API CYdLidar {
   PropertyBuilderByName(float, MaxRange,
