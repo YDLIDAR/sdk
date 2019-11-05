@@ -559,7 +559,7 @@ int YDlidarDriver::cacheScanData() {
 
       local_scan[scan_count++] = local_buf[pos];
 
-      if (scan_count == _countof(local_scan)) {
+      if (scan_count == MAX_SCAN_NODES) {
         scan_count -= 1;
       }
     }
