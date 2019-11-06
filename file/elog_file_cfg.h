@@ -38,4 +38,6 @@
 /* EasyLogger file log plugin's using max rotate file count */
 #define ELOG_FILE_MAX_ROTATE 2
 
+#define ELOG_FILE_FLUSH_CAHCE_ENABLE 1
+
 #endif /* _ELOG_FILE_CFG_H_ */

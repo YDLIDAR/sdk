@@ -167,6 +167,8 @@ class YDLIDAR_API CYdLidar {
 
   void elog(const std::string &msg);
 
+  void handleLaserData(node_info *data, size_t count);
+
  private:
   bool    isScanning;
   int     node_counts ;
@@ -183,6 +185,11 @@ class YDLIDAR_API CYdLidar {
 
   std::string m_serial_number;
   double last_frequency;
+
+  std::vector<node_info *> last_nodes;
+  std::vector<size_t> last_count;
+  size_t last_index;
+
 
   //param
   CSimpleIniA ini;

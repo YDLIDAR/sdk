@@ -61,8 +61,8 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_SampleRate        = 9;
   m_ScanFrequency     = 10;
   isScanning          = false;
-  node_counts         = 1440;
-  each_angle          = 0.25;
+  node_counts         = 1200;
+  each_angle          = 0.3;
   frequencyOffset     = 0.4;
   m_AbnormalCheckCount  = 4;
   Major               = 0;
@@ -72,6 +72,16 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_OffsetTime = 0.0;
   last_node_time = getTime();
   nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
+  last_nodes.resize(2);
+  last_count.resize(2);
+
+  for (int i = 0; i < 2; i++) {
+    last_nodes[i] = new node_info[YDlidarDriver::MAX_SCAN_NODES];
+    last_count[i] = YDlidarDriver::MAX_SCAN_NODES;
+  }
+
+  last_index = 0;
+
   m_FilterNoise = true;
   unique_range[16000] = true;
   unique_range[16210] = true;
@@ -106,7 +116,6 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
 
 #ifdef YDDEBUG
   elog_file_init();
-
 #endif
 
 }
@@ -121,6 +130,15 @@ CYdLidar::~CYdLidar() {
     delete[] nodes;
     nodes = nullptr;
   }
+
+  for (int i = 0; i < 2; i++) {
+    if (last_nodes[i]) {
+      delete[] last_nodes[i];
+      last_nodes[i] = nullptr;
+    }
+  }
+
+
 
 #ifdef YDDEBUG
   elog_file_close();
@@ -159,12 +177,23 @@ bool CYdLidar::isAngleOffetCorrected() const {
 }
 
 void CYdLidar::saveNoiseDataToFile() {
+  uint64_t start_time = getTime();
+
   if (lidarPtr) {
     lidarPtr->saveNoiseDataToFile();
   }
 
   elog("Save Noise Data To File.......\n\n");
+  elog(format("last_index: %d, m_AngleOffset: %f\n\n", last_index,
+              m_AngleOffset));
 
+  for (int i = 0; i < 2; i++) {
+    handleLaserData(last_nodes[i], last_count[i]);
+    elog(format("Save Noise Data[%d] is Finished.......\n\n", i));
+  }
+
+  elog(format("save time: %fms\n",
+              static_cast<float>((getTime() - start_time) / 1e6)));
   /* mv xxx.log.n-1 => xxx.log.n, and xxx.log => xxx.log.0 */
   int n;
   char oldpath[256], newpath[256];
@@ -190,6 +219,117 @@ void CYdLidar::saveNoiseDataToFile() {
   }
 
 
+}
+
+void CYdLidar::handleLaserData(node_info *data, size_t count) {
+  float range = 0.0;
+  float angle = 0.0;
+  std::string buffer;
+  std::map<int, bool> filter_flag;
+
+  for (int i = 0; i < count; i++) {
+    angle = (float)((data[i].angle_q6_checkbit >>
+                     LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f) + m_AngleOffset;
+    range = (float)data[i].distance_q2 / 4.f;
+    uint16_t distance = data[i].distance_q2 >>
+                        LIDAR_RESP_MEASUREMENT_DISTANCE_SHIFT;
+
+    angle = angles::from_degrees(angle);
+
+    double AngleCorrectForDistance = 0.0;
+    double LastAngleCorrectForDistance = 0.0;
+
+    if (data[i].distance_q2 != 0) {
+      AngleCorrectForDistance = atan(((21.8 * (155.3 - range)) / 155.3) / range);
+      LastAngleCorrectForDistance = AngleCorrectForDistance;
+    }
+
+    if (m_FilterNoise) {
+      buffer +=
+        (format("[%d][F]a: %f, d: %f, c: %f, f: %d\n",
+                i,
+                angles::to_degrees(angle),
+                range,
+                angles::to_degrees(AngleCorrectForDistance), 0));
+    }
+
+    AngleCorrectForDistance = 0.0;
+
+    if (m_FilterNoise) {
+      auto find = filter_flag.find(i);
+
+      if (find == filter_flag.end()) {
+        filter_flag[i] = false;
+      }
+
+      //filter pinpang
+      if (range < 1000) {
+        bool filter = true;
+
+        for (int j = i + 1; (j < count && j < i + 4); j++) {
+          uint16_t drange = data[j].distance_q2 >> LIDAR_RESP_MEASUREMENT_DISTANCE_SHIFT;
+
+          if (multi_range.find(drange) != multi_range.end() ||
+              smaller_range.find(drange) != smaller_range.end()) {
+            filter = false;
+            break;
+          }
+        }
+
+        filter_flag[i] = filter;
+      }
+
+      if (unique_range.find(distance) != unique_range.end()) {
+        if (unique_range[distance]) {
+          filter_flag[i] = true;
+        }
+      }
+
+      if (multi_range.find(distance) != multi_range.end()) {
+        if (multi_range[distance]) {
+          filter_flag[i] = true;
+          int index = i;
+
+          while (index >= 0 && index >= i - 3) {
+            filter_flag[index] = true;
+            index--;
+          }
+
+          if (i + 1 < count) {
+            filter_flag[i + 1] = true;
+          }
+
+        }
+      }
+
+      if (i < 3 || i >= count - 3) {
+        filter_flag[i] = true;
+      }
+
+
+      if (filter_flag[i]) {
+        range = 0.0;
+      }
+    }
+
+    if (range > 1) {
+      AngleCorrectForDistance = LastAngleCorrectForDistance;
+    }
+
+    angle += AngleCorrectForDistance;
+
+    if (m_FilterNoise) {
+      buffer +=
+        (format("[%d][B]a: %f, d: %f, c: %f, f: %d\n",
+                i,
+                angles::to_degrees(angle),
+                range,
+                angles::to_degrees(AngleCorrectForDistance), filter_flag[i]));
+    }
+
+  }
+
+  elog(buffer);
 }
 
 
@@ -227,8 +367,10 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
   // Fill in scan data:
   if (IS_OK(op_result)) {
-    buffer += "\n";
-    buffer += "grabScanData Finished.........\n";
+    last_count[last_index] = count;
+    memcpy(last_nodes[last_index], nodes, count * sizeof(node_info));
+    last_index++;
+    last_index = last_index % 2;
     uint64_t scan_time = node_duration * (count - 1);
     tim_scan_end += m_OffsetTime * 1e9;
     tim_scan_end -= node_duration;
@@ -275,19 +417,35 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     int index = 0;
     std::map<int, bool> filter_flag;
 
-    if (m_FilterNoise) {
-      for (int i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++) {
+      angle = (float)((nodes[i].angle_q6_checkbit >>
+                       LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f) + m_AngleOffset;
+      range = (float)nodes[i].distance_q2 / 4.f;
+      uint16_t distance = nodes[i].distance_q2 >>
+                          LIDAR_RESP_MEASUREMENT_DISTANCE_SHIFT;
+      intensity = (float)(nodes[i].sync_quality);
+
+      angle = angles::from_degrees(angle);
+
+      double AngleCorrectForDistance = 0.0;
+      double LastAngleCorrectForDistance = 0.0;
+
+      if (nodes[i].distance_q2 != 0) {
+        AngleCorrectForDistance = atan(((21.8 * (155.3 - range)) / 155.3) / range);
+        LastAngleCorrectForDistance = AngleCorrectForDistance;
+      }
+
+      AngleCorrectForDistance = 0.0;
+
+      if (m_FilterNoise) {
         auto find = filter_flag.find(i);
 
         if (find == filter_flag.end()) {
           filter_flag[i] = false;
         }
 
-        uint16_t distance = nodes[i].distance_q2 >>
-                            LIDAR_RESP_MEASUREMENT_DISTANCE_SHIFT;
-
         //filter pinpang
-        if (distance < 1000) {
+        if (range < 1000) {
           bool filter = true;
 
           for (int j = i + 1; (j < count && j < i + 4); j++) {
@@ -301,10 +459,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
           }
 
           filter_flag[i] = filter;
-        }
-
-        if (i >= count - 3 || i < 3) {
-          filter_flag[i] = true;
         }
 
         if (unique_range.find(distance) != unique_range.end()) {
@@ -329,54 +483,23 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
           }
         }
-      }
-    }
 
-    for (int i = 0; i < count; i++) {
-      angle = (float)((nodes[i].angle_q6_checkbit >>
-                       LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f) + m_AngleOffset;
-      range = (float)nodes[i].distance_q2 / 4000.f;
-      intensity = (float)(nodes[i].sync_quality);
+        if (i < 3 || i >= count - 3) {
+          filter_flag[i] = true;
+        }
 
-      angle = angles::from_degrees(angle);
 
-      double AngleCorrectForDistance = 0.0;
-
-      if (nodes[i].distance_q2 != 0) {
-        AngleCorrectForDistance = atan(((21.8 * (155.3 - (nodes[i].distance_q2 /
-                                         4.0))) / 155.3) / (nodes[i].distance_q2 / 4.0));
-      }
-
-      buffer +=
-        (format("[%d][F]a: %f, d: %f, c: %f, f: %d\n",
-                i,
-                angles::to_degrees(angle),
-                range,
-                angles::to_degrees(AngleCorrectForDistance), 0));
-      AngleCorrectForDistance = 0.0;
-
-      if (m_FilterNoise) {
         if (filter_flag[i]) {
           range = 0.0;
           intensity = 0.0;
         }
       }
 
-      if (range > 0.001) {
-        AngleCorrectForDistance = atan(((21.8 * (155.3 - (nodes[i].distance_q2 /
-                                         4.0))) / 155.3) / (nodes[i].distance_q2 / 4.0));
+      if (range > 1) {
+        AngleCorrectForDistance = LastAngleCorrectForDistance;
       }
 
       angle += AngleCorrectForDistance;
-
-      if (m_FilterNoise) {
-        buffer +=
-          (format("[%d][B]a: %f, d: %f, c: %f, f: %d\n",
-                  i,
-                  angles::to_degrees(angle),
-                  range,
-                  angles::to_degrees(AngleCorrectForDistance), filter_flag[i]));
-      }
 
       if (m_Reversion) {
         angle = angle + M_PI;
@@ -392,6 +515,10 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
           range = 0.0;
           break;
         }
+      }
+
+      if (range > 0.0) {
+        range /= 1000.f;
       }
 
       if (range > m_MaxRange || range < m_MinRange) {
@@ -410,7 +537,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
         }
 
         //加入拟合直线数据
-        if (range >= m_MinRange) {
+        if (m_StartAngleOffset && range >= m_MinRange) {
           bearings.push_back(angle);
           indices.push_back(indices.size());
           range_data.ranges.push_back(range);
@@ -419,18 +546,16 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
         }
 
       }
+
     }
 
     if (fabs(last_frequency - 1.0 / outscan.config.scan_time) < 0.03) {
       fitLineSegment();
     }
 
-    elog(buffer);
     last_frequency = 1.0 / outscan.config.scan_time;
     return true;
   } else {
-    elog("Failed to get Scan data.........\n");
-
     if (IS_FAIL(op_result)) {
       // Error? Retry connection
     }
@@ -624,7 +749,8 @@ bool CYdLidar::getDeviceInfo() {
   }
 
   if (devinfo.model != YDlidarDriver::YDLIDAR_G4 &&
-      devinfo.model != YDlidarDriver::YDLIDAR_G4PRO) {
+      devinfo.model != YDlidarDriver::YDLIDAR_G4PRO &&
+      devinfo.model != YDlidarDriver::YDLIDAR_G1) {
     printf("[YDLIDAR INFO] Current SDK does not support current lidar models[%d]\n",
            devinfo.model);
     return false;
@@ -684,6 +810,7 @@ bool CYdLidar::getDeviceInfo() {
   checkLidarFilter();
   checkSampleRate();
   printf("[YDLIDAR INFO] Current Sampling Rate : %dK\n", m_SampleRate);
+  elog(format("[YDLIDAR INFO] Current Sampling Rate : %dK\n", m_SampleRate));
   checkScanFrequency();
   return true;
 }
@@ -704,8 +831,8 @@ void CYdLidar::checkSampleRate() {
   int _samp_rate = 9;
   int try_count = 0;
   int success_count = 0;
-  node_counts = 1440;
-  each_angle = 0.25;
+  node_counts = 1200;
+  each_angle = 0.3;
   result_t ans = lidarPtr->getSamplingRate(_rate);
 
   if (IS_OK(ans)) {
@@ -752,14 +879,14 @@ void CYdLidar::checkSampleRate() {
         break;
 
       case YDlidarDriver::YDLIDAR_RATE_8K:
-        node_counts = 1440;
-        each_angle = 0.25;
+        node_counts = 1200;
+        each_angle = 0.3;
         _samp_rate = 8;
         break;
 
       case YDlidarDriver::YDLIDAR_RATE_9K:
-        node_counts = 1440;
-        each_angle = 0.25;
+        node_counts = 1200;
+        each_angle = 0.3;
         _samp_rate = 9;
         break;
 
@@ -832,6 +959,7 @@ bool CYdLidar::checkScanFrequency() {
   node_counts = m_SampleRate * 1000 / (m_ScanFrequency - 0.1);
   each_angle = 360.0 / node_counts;
   printf("[YDLIDAR INFO] Current Scan Frequency: %fHz\n", m_ScanFrequency);
+  elog(format("[YDLIDAR INFO] Current Scan Frequency: %fHz\n", m_ScanFrequency));
   return true;
 }
 
