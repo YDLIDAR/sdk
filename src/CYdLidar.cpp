@@ -749,8 +749,7 @@ bool CYdLidar::getDeviceInfo() {
   }
 
   if (devinfo.model != YDlidarDriver::YDLIDAR_G4 &&
-      devinfo.model != YDlidarDriver::YDLIDAR_G4PRO &&
-      devinfo.model != YDlidarDriver::YDLIDAR_G1) {
+      devinfo.model != YDlidarDriver::YDLIDAR_G4PRO) {
     printf("[YDLIDAR INFO] Current SDK does not support current lidar models[%d]\n",
            devinfo.model);
     return false;
