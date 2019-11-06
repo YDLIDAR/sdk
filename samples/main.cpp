@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
 
   std::string port;
   std::string baudrate;
-  int baud = 115200;
+  int baud = 153600;
   printf("__   ______  _     ___ ____    _    ____  \n");
   printf("\\ \\ / /  _ \\| |   |_ _|  _ \\  / \\  |  _ \\ \n");
   printf(" \\ V /| | | | |    | || | | |/ _ \\ | |_) | \n");

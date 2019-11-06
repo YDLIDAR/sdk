@@ -21,6 +21,7 @@
 #define LIDAR_RESP_MEASUREMENT_CHECKBIT       (0x1<<0)
 #define LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT    1
 #define LIDAR_RESP_MEASUREMENT_DISTANCE_SHIFT  2
+#define LIDAR_RESP_MEASUREMENT_ANGLE_SAMPLE_SHIFT 8
 
 #define LIDAR_CMD_RUN_POSITIVE             0x06
 #define LIDAR_CMD_RUN_INVERSION            0x07
@@ -52,10 +53,10 @@
 
 #define PackageSampleMaxLngth 0x100
 typedef enum {
-    CT_Normal = 0,
-    CT_RingStart  = 1,
-    CT_Tail,
-}CT;
+  CT_Normal = 0,
+  CT_RingStart  = 1,
+  CT_Tail,
+} CT;
 #define Node_Default_Quality (10<<2)
 #define Node_Sync 1
 #define Node_NotSync 2

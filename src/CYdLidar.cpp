@@ -14,7 +14,7 @@ using namespace impl;
 -------------------------------------------------------------*/
 CYdLidar::CYdLidar(): lidarPtr(0) {
   m_SerialPort        = "";
-  m_SerialBaudrate    = 115200;
+  m_SerialBaudrate    = 153600;
   m_FixedResolution   = false;
   m_Reversion         = false;
   m_AutoReconnect     = false;
@@ -28,11 +28,11 @@ CYdLidar::CYdLidar(): lidarPtr(0) {
   m_GlassNoise        = true;
   m_SunNoise          = true;
   m_OffsetTime        = 0.0;
-  m_pointTime         = 1e9 / 3000;
+  m_pointTime         = 1e9 / 4000;
   m_packageTime       = 0;
   last_node_time      = getTime();
-  m_FixedSize         = 360;
-  m_SampleRate        = 3;
+  m_FixedSize         = 500;
+  m_SampleRate        = 4;
   m_IgnoreArray.clear();
   nodes               = new node_info[YDlidarDriver::MAX_SCAN_NODES];
 }
@@ -105,7 +105,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
 
     scan_msg.config.min_angle = angles::from_degrees(m_MinAngle);
     scan_msg.config.max_angle = angles::from_degrees(m_MaxAngle);
-    scan_msg.config.time_increment = scan_msg.config.scan_time / (double)(count - 1);
+    scan_msg.config.time_increment = scan_msg.config.scan_time / (double)(
+                                       count - 1);
     scan_msg.system_time_stamp = tim_scan_start;
     scan_msg.config.min_range = m_MinRange;
     scan_msg.config.max_range = m_MaxRange;
@@ -149,6 +150,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
         if (i < min_index) {
           min_index = i;
         }
+
         point.angle = angle;
         point.range = range;
         point.intensity = intensity;
@@ -192,8 +194,10 @@ bool  CYdLidar::turnOn() {
       return false;
     }
   }
+
   m_pointTime = lidarPtr->getPointTime();
   m_packageTime = lidarPtr->getPackageTime();
+
   if (checkLidarAbnormal()) {
     lidarPtr->stop();
     fprintf(stderr,
@@ -284,6 +288,7 @@ bool CYdLidar::checkLidarAbnormal() {
           }
 
           scan_time = 1.0 * static_cast<int64_t>(end_time - start_time) / 1e9;
+
           if (scan_time > 0.04 && scan_time < 1.0) {
             m_SampleRate = static_cast<int>((count / scan_time + 500) / 1000);
             m_pointTime = 1e9 / (m_SampleRate * 1000);

@@ -12,7 +12,7 @@ How to build YDLIDAR SDK samples
     
     $ cd sdk
     
-    $ git checkout S3K
+    $ git checkout S2-PS
     
     $ cd ..
     
@@ -34,13 +34,13 @@ linux:
 
     $ ./ydlidar_test
     $Please enter the lidar serial port :/dev/ttyUSB0
-    $Please enter the lidar serial baud rate:115200
+    $Please enter the lidar serial baud rate:153600
 
 windows:
 
     $ ydlidar_test.exe
     $Please enter the lidar serial port:COM3
-    $Please enter the lidar serial baud rate:115200
+    $Please enter the lidar serial baud rate:153600
 
 
 You should see YDLIDAR's scan result in the console:
@@ -51,10 +51,10 @@ You should see YDLIDAR's scan result in the console:
 	
 	fhs_lock: creating lockfile:      11796
 
-	[YDLIDAR INFO] Connection established in /dev/ttyUSB0[115200]:
+	[YDLIDAR INFO] Connection established in /dev/ttyUSB0[153600]:
 	
 	[YDLIDAR INFO] Now YDLIDAR is scanning ......
 	
-	Scan received: 368 ranges
+	Scan received: 500 ranges
 
 

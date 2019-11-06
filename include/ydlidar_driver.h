@@ -350,7 +350,7 @@ class YDlidarDriver {
 
  private:
   serial::Serial *_serial;			///< 串口
-  node_packages packages;
+  node_package package;
 
   float       IntervalSampleAngle;
   float       IntervalSampleAngle_LastPackage;
