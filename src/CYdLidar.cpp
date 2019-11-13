@@ -413,7 +413,8 @@ bool CYdLidar::getDeviceInfo() {
   ydlidar::console.message("[YDLIDAR INFO] Current Sampling Rate : %dK",
                            m_SampleRate);
 
-  if (devinfo.model == YDlidarDriver::YDLIDAR_G6) {
+  if (devinfo.model == YDlidarDriver::YDLIDAR_G6 ||
+      devinfo.model == YDlidarDriver::YDLIDAR_TG30) {
     checkScanFrequency();
   }
 
@@ -427,8 +428,8 @@ void CYdLidar::checkSampleRate() {
   _rate.rate = 3;
   int _samp_rate = 20;
   int try_count = 0;
-  node_counts = 2800;
-  each_angle = 0.1;
+  node_counts = 2880;
+  each_angle = 0.125;
   result_t ans = lidarPtr->getSamplingRate(_rate);
 
   if (IS_OK(ans)) {
@@ -505,7 +506,7 @@ bool CYdLidar::checkScanFrequency() {
   result_t ans;
   m_ScanFrequency += m_FrequencyOffset;
 
-  if (5.0 - m_FrequencyOffset <= m_ScanFrequency &&
+  if (3.0 - m_FrequencyOffset <= m_ScanFrequency &&
       m_ScanFrequency <= 12 + m_FrequencyOffset) {
     ans = lidarPtr->getScanFrequency(_scan_frequency) ;
 
