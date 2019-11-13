@@ -22,14 +22,15 @@ CYdLidar::CYdLidar() : lidarPtr(nullptr) {
   m_MinAngle          = -180.f;
   m_MaxRange          = 64.0;
   m_MinRange          = 0.08;
-  m_SampleRate        = 18;
+  m_SampleRate        = 20;
   m_ScanFrequency     = 8.0;
   isScanning          = false;
-  node_counts         = 2400;
-  each_angle          = 0.15;
+  node_counts         = 2800;
+  each_angle          = 360 / node_counts;
   m_FrequencyOffset   = 0.0;
   m_AbnormalCheckCount = 2;
   m_IgnoreArray.clear();
+  nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
 }
 
 /*-------------------------------------------------------------
@@ -37,6 +38,11 @@ CYdLidar::CYdLidar() : lidarPtr(nullptr) {
 -------------------------------------------------------------*/
 CYdLidar::~CYdLidar() {
   disconnecting();
+
+  if (nodes) {
+    delete[] nodes;
+    nodes = nullptr;
+  }
 }
 
 void CYdLidar::disconnecting() {
@@ -67,7 +73,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     return false;
   }
 
-  node_info *nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
   size_t   count = YDlidarDriver::MAX_SCAN_NODES;
 
   size_t all_nodes_counts = node_counts;
@@ -206,24 +211,16 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
       scan_msg.config.max_angle = DEG2RAD(m_MaxAngle);
       scan_msg.config.time_increment = scan_time / (double)counts;
       scan_msg.config.time_increment /= 1e9;
+      scan_msg.config.ang_increment = (scan_msg.config.max_angle -
+                                       scan_msg.config.min_angle) /
+                                      (double)(counts - 1);
 
-      if ((scan_msg.config.max_angle - scan_msg.config.min_angle) == 2 * M_PI) {
-        scan_msg.config.ang_increment = (scan_msg.config.max_angle -
-                                         scan_msg.config.min_angle) /
-                                        (double)counts;
-
-      } else {
-        scan_msg.config.ang_increment = (scan_msg.config.max_angle -
-                                         scan_msg.config.min_angle) /
-                                        (double)(counts - 1);
-      }
 
       scan_msg.config.scan_time = scan_time / 1e9;
       scan_msg.config.min_range = m_MinRange;
       scan_msg.config.max_range = m_MaxRange;
       outscan = scan_msg;
       delete[] angle_compensate_nodes;
-      delete[] nodes;
       return true;
 
 
@@ -236,7 +233,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     }
   }
 
-  delete[] nodes;
   return false;
 
 }
@@ -296,8 +292,6 @@ bool  CYdLidar::turnOff() {
 }
 
 bool CYdLidar::checkLidarAbnormal() {
-  node_info *nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
-  size_t   count = YDlidarDriver::MAX_SCAN_NODES;
   int check_abnormal_count = 0;
 
   if (m_AbnormalCheckCount < 2) {
@@ -305,6 +299,8 @@ bool CYdLidar::checkLidarAbnormal() {
   }
 
   result_t op_result = RESULT_FAIL;
+  size_t   count = YDlidarDriver::MAX_SCAN_NODES;
+
 
   while (check_abnormal_count < m_AbnormalCheckCount) {
     //Ensure that the voltage is insufficient or the motor resistance is high, causing an abnormality.
@@ -312,17 +308,16 @@ bool CYdLidar::checkLidarAbnormal() {
       delay(check_abnormal_count * 1000);
     }
 
+    count = YDlidarDriver::MAX_SCAN_NODES;
     op_result =  lidarPtr->grabScanData(nodes, count);
 
     if (IS_OK(op_result)) {
-      delete[] nodes;
       return false;
     }
 
     check_abnormal_count++;
   }
 
-  delete[] nodes;
   return !IS_OK(op_result);
 }
 
@@ -375,7 +370,8 @@ bool CYdLidar::getDeviceInfo() {
     return false;
   }
 
-  if (devinfo.model != YDlidarDriver::YDLIDAR_G6) {
+  if (devinfo.model != YDlidarDriver::YDLIDAR_G6 &&
+      devinfo.model != YDlidarDriver::YDLIDAR_TG30) {
     ydlidar::console.error("[YDLIDAR INFO] Current SDK does not support current lidar models[%d]",
                            devinfo.model);
     return false;
@@ -387,6 +383,9 @@ bool CYdLidar::getDeviceInfo() {
     case YDlidarDriver::YDLIDAR_G6:
       model = "G6";
       break;
+
+    case YDlidarDriver::YDLIDAR_TG30:
+      model = "TG30";
 
     default:
       break;
@@ -413,7 +412,11 @@ bool CYdLidar::getDeviceInfo() {
   checkSampleRate();
   ydlidar::console.message("[YDLIDAR INFO] Current Sampling Rate : %dK",
                            m_SampleRate);
-  checkScanFrequency();
+
+  if (devinfo.model == YDlidarDriver::YDLIDAR_G6) {
+    checkScanFrequency();
+  }
+
   return true;
 
 
@@ -421,10 +424,10 @@ bool CYdLidar::getDeviceInfo() {
 
 void CYdLidar::checkSampleRate() {
   sampling_rate _rate;
-  _rate.rate = 18;
-  int _samp_rate = 18;
-  int try_count;
-  node_counts = 2600;
+  _rate.rate = 3;
+  int _samp_rate = 20;
+  int try_count = 0;
+  node_counts = 2800;
   each_angle = 0.1;
   result_t ans = lidarPtr->getSamplingRate(_rate);
 
@@ -441,6 +444,9 @@ void CYdLidar::checkSampleRate() {
       case 18:
         _samp_rate = YDlidarDriver::YDLIDAR_RATE_9K;
         break;
+
+      case 20:
+        _samp_rate = YDlidarDriver::YDLIDAR_RATE_10K;
 
       default:
         _samp_rate = _rate.rate;
@@ -474,6 +480,11 @@ void CYdLidar::checkSampleRate() {
         each_angle = 0.1;
         _samp_rate = 18;
         break;
+
+      case YDlidarDriver::YDLIDAR_RATE_10K:
+        node_counts = 2800;
+        each_angle = 360.0 / node_counts;
+        _samp_rate = 20;
 
       default:
         break;

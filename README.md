@@ -9,7 +9,7 @@ How to build YDLIDAR SDK samples
 =====================================================================
     $ git clone https://github.com/yangfuyuan/sdk
     $ cd sdk
-    $ git checkout G6
+    $ git checkout TG30
     $ cd ..
     $ mkdir build
     $ cd build
@@ -37,9 +37,9 @@ You should see YDLIDAR's scan result in the console:
 	[YDLIDAR] Connection established in [/dev/ttyUSB0]:
 	Firmware version: 1.0.5
 	Hardware version: 2
-	Model: G6
+	Model: TG30
 	Serial: 2018112000000017
-	[YDLidar]: [YDLIDAR INFO] Current Sampling Rate : 18K
+	[YDLidar]: [YDLIDAR INFO] Current Sampling Rate : 20K
 	[YDLidar]: [YDLIDAR INFO] Current Scan Frequency : 8.000000Hz
 	[YDLidar]: [YDLIDAR INFO] Now YDLIDAR is scanning ......
 

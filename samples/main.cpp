@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
   laser.setMinRange(0.1);
   laser.setMaxAngle(180);
   laser.setMinAngle(-180);
-  laser.setSampleRate(18);
+  laser.setSampleRate(20);
   laser.setScanFrequency(8.0);
   laser.setReversion(false);
   laser.setFixedResolution(false);
