@@ -824,6 +824,11 @@ result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,
 
     nodebuffer[recvNodeCount++] = node;
 
+    if (node.sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
+      count = recvNodeCount;
+      return RESULT_OK;
+    }
+
     if (recvNodeCount == count) {
       return RESULT_OK;
     }
