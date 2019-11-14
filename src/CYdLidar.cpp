@@ -323,7 +323,9 @@ bool CYdLidar::getDeviceInfo() {
   }
 
   if (devinfo.model != YDlidarDriver::YDLIDAR_G6 &&
-      devinfo.model != YDlidarDriver::YDLIDAR_TG30) {
+      devinfo.model != YDlidarDriver::YDLIDAR_TG30 &&
+      devinfo.model != YDlidarDriver::YDLIDAR_TG15 &&
+      devinfo.model != YDlidarDriver::YDLIDAR_TG50) {
     ydlidar::console.error("[YDLIDAR INFO] Current SDK does not support current lidar models[%d]",
                            devinfo.model);
     //return false;
@@ -332,16 +334,20 @@ bool CYdLidar::getDeviceInfo() {
   std::string model = "G6";
 
   switch (devinfo.model) {
-    case YDlidarDriver::YDLIDAR_G4:
-      model = "G4";
-      break;
-
     case YDlidarDriver::YDLIDAR_G6:
       model = "G6";
       break;
 
+    case YDlidarDriver::YDLIDAR_TG15:
+      model = "TG15";
+      break;
+
     case YDlidarDriver::YDLIDAR_TG30:
       model = "TG30";
+      break;
+
+    case YDlidarDriver::YDLIDAR_TG50:
+      model = "TG50";
 
     default:
       break;
@@ -370,7 +376,7 @@ bool CYdLidar::getDeviceInfo() {
                            m_SampleRate);
 
   if (devinfo.model == YDlidarDriver::YDLIDAR_G6 ||
-      devinfo.model == YDlidarDriver::YDLIDAR_TG30) {
+      devinfo.model >= YDlidarDriver::YDLIDAR_TG15) {
     checkScanFrequency();
   }
 

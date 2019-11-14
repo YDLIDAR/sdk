@@ -537,7 +537,10 @@ class YDlidarDriver {
     YDLIDAR_S4B 		= 11,/**< S4B雷达型号代号. */
     YDLIDAR_S2 			= 12,/**< S2雷达型号代号. */
     YDLIDAR_G6          = 13,/**< G25雷达型号代号. */
+    YDLIDAR_TG15        = 100,/**< TG雷达型号代号. */
     YDLIDAR_TG30        = 101,/**< TG雷达型号代号. */
+    YDLIDAR_TG50        = 102,/**< TG雷达型号代号. */
+
     YDLIDAR_Tail,/**< 雷达型号代号. */
 
   };
@@ -563,7 +566,10 @@ class YDlidarDriver {
     YDLIDAR_S4B_BAUD 	= 153600,/**< S4B雷达型号波特率. */
     YDLIDAR_S2_BAUD 	= 115200,/**< S2雷达型号波特率. */
     YDLIDAR_G6_BAUD 	= 512000,/**< G25雷达型号波特率. */
-    YDLIDAR_TG30_BAUD 	= 512000,/**< G25雷达型号波特率. */
+    YDLIDAR_TG15_BAUD 	= 512000,/**< TG15雷达型号波特率. */
+    YDLIDAR_TG30_BAUD 	= 512000,/**< TG30雷达型号波特率. */
+    YDLIDAR_TG50_BAUD 	= 512000,/**< TG50雷达型号波特率. */
+
 
 
   };
