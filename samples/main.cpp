@@ -117,6 +117,7 @@ int main(int argc, char *argv[]) {
       for (int i = 0; i < scan.ranges.size(); i++) {
         float angle = scan.config.min_angle + i * scan.config.ang_increment;
         float dis = scan.ranges[i];
+//        printf("angle: %f, distance: %f\n", angle, dis);
 
       }
 

@@ -158,7 +158,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
       }
 
       if (angle >= outscan.config.min_angle && angle <= outscan.config.max_angle) {
-        index = (angle + outscan.config.min_angle) / outscan.config.ang_increment;
+        index = (angle - outscan.config.min_angle) / outscan.config.ang_increment;
 
         if (0 <= index && index < counts) {
           if (range > m_MaxRange || range < m_MinRange) {
@@ -326,7 +326,7 @@ bool CYdLidar::getDeviceInfo() {
       devinfo.model != YDlidarDriver::YDLIDAR_TG30) {
     ydlidar::console.error("[YDLIDAR INFO] Current SDK does not support current lidar models[%d]",
                            devinfo.model);
-    return false;
+    //return false;
   }
 
   std::string model = "G6";
