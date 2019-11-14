@@ -91,6 +91,17 @@ class YDlidarDriver {
   bool isconnected() const;
 
   /**
+   * @brief getPointTime
+   * @return
+   */
+  uint32_t getPointTime() const;
+  /**
+     * @brief getPackageTime
+     * @return
+     */
+  uint32_t getPackageTime() const;
+
+  /**
    * @brief 设置雷达异常自动重新连接 \n
    * @param[in] enable    是否开启自动重连:
    *     true	开启
@@ -571,9 +582,8 @@ class YDlidarDriver {
   int model;
   uint32_t m_baudrate;					///< 波特率
   bool isSupportMotorCtrl;			///< 是否支持电机控制
-  uint64_t m_node_time_ns;						///< 时间戳
-  uint64_t m_node_last_time_ns;					///< 时间戳
   uint32_t m_pointTime;				///< 激光点直接时间间隔
+  uint32_t    m_packageTime;        ///零位包传送时间
   uint32_t trans_delay;				///< 串口传输一个byte时间
 
   node_packages packages;

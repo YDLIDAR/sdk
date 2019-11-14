@@ -113,10 +113,13 @@ class YDLIDAR_API CYdLidar {
  private:
   bool isScanning;
   int node_counts ;
-  float each_angle;
   float m_FrequencyOffset;
 
   YDlidarDriver *lidarPtr;
   node_info *nodes;
+  uint32_t m_pointTime;
+  uint32_t m_packageTime;        ///零位包传送时间
+  uint64_t last_node_time;
+
 };  // End of class
 

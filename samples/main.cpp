@@ -71,6 +71,27 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
+  float frequency = 10.0;
+  std::string info = "Please Input the lidar Scan frequency: ";
+
+  while (ydlidar::ok()) {
+    ydlidar::console.show("%s", info.c_str());
+    std::string number;
+    std::cin >> number;
+    frequency = atof(number.c_str());
+
+    if (frequency >= 3 &&  frequency <= 12) {
+      break;
+    }
+
+    info = "The lidar frequency is wrong, please re-enter: ";
+  }
+
+  if (!ydlidar::ok()) {
+    return 0;
+  }
+
+
   laser.setSerialPort(port);
   laser.setAutoReconnect(true);//hot plug
   laser.setMaxRange(64.0);
@@ -78,8 +99,8 @@ int main(int argc, char *argv[]) {
   laser.setMaxAngle(180);
   laser.setMinAngle(-180);
   laser.setSampleRate(20);
-  laser.setScanFrequency(10.0);
-  laser.setReversion(false);
+  laser.setScanFrequency(frequency);
+  laser.setReversion(true);
   laser.setFixedResolution(false);
   bool ret = laser.initialize();
 

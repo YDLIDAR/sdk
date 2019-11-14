@@ -27,10 +27,9 @@ YDlidarDriver::YDlidarDriver():
   isSupportMotorCtrl = true;
   m_sampling_rate = -1;
   scan_frequence = 0;
-  m_pointTime = 1e9 / 2000;
+  m_pointTime = 1e9 / 20000;
   trans_delay = 0;
-  m_node_time_ns = getTime();
-  m_node_last_time_ns = getTime();
+  m_packageTime = 0;
 
   //解析参数
   PackageSampleBytes = 2;
@@ -225,6 +224,14 @@ bool YDlidarDriver::isscanning() const {
 }
 bool YDlidarDriver::isconnected() const {
   return isConnected;
+}
+
+uint32_t YDlidarDriver::getPackageTime() const {
+  return m_packageTime;
+}
+
+uint32_t YDlidarDriver::getPointTime() const {
+  return m_pointTime;
 }
 
 result_t YDlidarDriver::sendCommand(uint8_t cmd, const void *payload,
@@ -785,43 +792,11 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
   uint8_t nowPackageNum = packages.nowPackageNum;
 
-
-  if ((*node).sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
-    m_node_last_time_ns = m_node_time_ns;
-    uint64_t delay_time_ns = (nowPackageNum * PackageSampleBytes + PackagePaidBytes)
-                             * trans_delay +
-                             (nowPackageNum - 1) * m_pointTime;
-    uint64_t current_time_ns = getTime();
-    m_node_time_ns = current_time_ns - delay_time_ns;
-
-    if (current_time_ns <= delay_time_ns) {
-      m_node_time_ns = current_time_ns;
-    }
-
-    if (m_node_time_ns < m_node_last_time_ns) {
-      if ((m_node_last_time_ns - m_node_time_ns) < 1e9 / 15) {
-        m_node_time_ns = m_node_last_time_ns;
-      }
-    } else {
-      if (m_node_time_ns - m_node_last_time_ns < 8 * 1e6 && CheckSumResult &&
-          Last_CheckSum_Result && !package_header_error) {
-        m_node_time_ns = m_node_last_time_ns;
-
-      } else {
-
-      }
-    }
-
-    Last_CheckSum_Result = CheckSumResult;
-  }
-
-  (*node).stamp = m_node_time_ns + package_Sample_Index * m_pointTime;
   (*node).scan_frequence = scan_frequence;
   package_Sample_Index++;
 
   if (package_Sample_Index >= nowPackageNum) {
     package_Sample_Index = 0;
-    m_node_time_ns = (*node).stamp + m_pointTime;
     CheckSumResult = false;
   }
 
@@ -1119,6 +1094,7 @@ void YDlidarDriver::checkTransTime() {
   }
 
   trans_delay = _serial->getByteTime();
+  m_packageTime = trans_delay * (PackagePaidBytes + PackageSampleBytes);
 }
 
 
@@ -1142,6 +1118,7 @@ result_t YDlidarDriver::startScan(bool force, uint32_t timeout) {
   {
     ScopedLocker l(_lock);
     sendCommand(LIDAR_CMD_FORCE_STOP);
+    delay(1);
     sendCommand(LIDAR_CMD_STOP);
   }
   delay(100);
@@ -1200,6 +1177,7 @@ result_t YDlidarDriver::startAutoScan(bool force, uint32_t timeout) {
   {
     ScopedLocker l(_lock);
     sendCommand(LIDAR_CMD_FORCE_STOP);
+    delay(1);
     sendCommand(LIDAR_CMD_STOP);
   }
   delay(100);
