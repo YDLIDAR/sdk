@@ -462,12 +462,18 @@ bool CYdLidar::checkScanFrequency() {
   float hz = 0;
   result_t ans;
   m_ScanFrequency += m_FrequencyOffset;
+  int retryCount = 0;
 
   if (3.0 - m_FrequencyOffset <= m_ScanFrequency &&
       m_ScanFrequency <= 12 + m_FrequencyOffset) {
-    ans = lidarPtr->getScanFrequency(_scan_frequency) ;
+    ans = lidarPtr->getScanFrequency(_scan_frequency);
+
+    if (!IS_OK(ans)) {
+      ans = lidarPtr->getScanFrequency(_scan_frequency);
+    }
 
     if (IS_OK(ans)) {
+TryAgain:
       freq = _scan_frequency.frequency / 100.f;
       hz = m_ScanFrequency - freq;
 
@@ -496,6 +502,33 @@ bool CYdLidar::checkScanFrequency() {
 
         freq = _scan_frequency.frequency / 100.0f;
       }
+
+      ans = lidarPtr->getScanFrequency(_scan_frequency);
+
+      if (!IS_OK(ans)) {
+        ans = lidarPtr->getScanFrequency(_scan_frequency);
+      }
+
+      if (IS_OK(ans)) {
+        freq = _scan_frequency.frequency / 100.f;
+
+        if (freq != m_ScanFrequency) {
+          retryCount++;
+
+          if (retryCount < 4) {
+            goto TryAgain;
+          } else {
+            ydlidar::console.error("Failed to set scan frequency...");
+          }
+        }
+
+
+      } else {
+        ydlidar::console.warning("Failed to get scan frequency...");
+      }
+
+    } else {
+      ydlidar::console.warning("Failed to get scan frequency......");
     }
   } else {
     ydlidar::console.warning("current scan frequency[%f] is out of range.",
