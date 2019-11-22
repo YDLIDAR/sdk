@@ -56,7 +56,7 @@ bool  CYdLidar::doProcessSimple(node_info *nodes, size_t &count,
   }
 
   if (count == 0) {
-    count = 2048;
+    count = YDlidarDriver::MAX_SCAN_NODES;
   }
 
   //wait Scan data:
@@ -142,7 +142,7 @@ bool  CYdLidar::turnOff() {
 }
 
 bool CYdLidar::checkLidarAbnormal() {
-  node_info nodes[2048];
+  node_info nodes[YDlidarDriver::MAX_SCAN_NODES];
   size_t   count = _countof(nodes);
   int check_abnormal_count = 0;
 
@@ -158,6 +158,7 @@ bool CYdLidar::checkLidarAbnormal() {
       delay(check_abnormal_count * 1000);
     }
 
+    count = _countof(nodes);
     op_result =  lidarPtr->grabScanData(nodes, count);
 
     if (IS_OK(op_result)) {

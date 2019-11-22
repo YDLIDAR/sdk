@@ -337,6 +337,11 @@ class YDlidarDriver {
   */
   void clearDTR();
 
+  /**
+   * @brief flushSerial
+   */
+  void flushSerial();
+
 
  public:
   std::atomic<bool>     isConnected;  ///< 串口连接状体
@@ -413,6 +418,8 @@ class YDlidarDriver {
   bool CheckSumResult;
   bool Last_CheckSum_Result;
   uint16_t Valu8Tou16;
+
+  uint8_t *recvBuffer;
 
   std::string serial_port;///< 雷达端口
   FILE *fd;
