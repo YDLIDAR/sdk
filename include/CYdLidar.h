@@ -1,5 +1,6 @@
 ﻿
 #pragma once
+#include "line_feature.h"
 #include "utils.h"
 #include "ydlidar_driver.h"
 #include <math.h>
@@ -102,6 +103,11 @@ class YDLIDAR_API CYdLidar {
    */
   bool handleDeviceStatus();
 
+  /**
+   * @brief fitLineFeature
+   */
+  void fitLineFeature();
+
 
  private:
   bool isScanning;
@@ -114,6 +120,12 @@ class YDLIDAR_API CYdLidar {
   int m_FixedSize;
   int m_SampleRate;
   node_info *nodes;
+  //fit line
+  //line feature
+  std::vector<double> bearings;
+  std::vector<unsigned int> indices;
+  RangeData range_data;
+  line_feature::LineFeature line_feature_;
 
 };	// End of class
 

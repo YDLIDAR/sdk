@@ -35,6 +35,11 @@ CYdLidar::CYdLidar(): lidarPtr(0) {
   m_SampleRate        = 3;
   m_IgnoreArray.clear();
   nodes               = new node_info[YDlidarDriver::MAX_SCAN_NODES];
+
+  //fit line
+  indices.clear();
+  bearings.clear();
+  range_data.clear();
 }
 
 /*-------------------------------------------------------------
@@ -105,7 +110,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
 
     scan_msg.config.min_angle = angles::from_degrees(m_MinAngle);
     scan_msg.config.max_angle = angles::from_degrees(m_MaxAngle);
-    scan_msg.config.time_increment = scan_msg.config.scan_time / (double)(count - 1);
+    scan_msg.config.time_increment = scan_msg.config.scan_time / (double)(
+                                       count - 1);
     scan_msg.system_time_stamp = tim_scan_start;
     scan_msg.config.min_range = m_MinRange;
     scan_msg.config.max_range = m_MaxRange;
@@ -149,14 +155,25 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
         if (i < min_index) {
           min_index = i;
         }
+
         point.angle = angle;
         point.range = range;
         point.intensity = intensity;
         scan_msg.data.push_back(point);
       }
 
+      //fit line data cache
+      if (range >= m_MinRange) {
+        bearings.push_back(angle);
+        indices.push_back(indices.size());
+        range_data.ranges.push_back(range);
+        range_data.xs.push_back(cos(angle)*range);
+        range_data.ys.push_back(sin(angle)*range);
+      }
+
     }
 
+    fitLineFeature();
     scan_msg.system_time_stamp = tim_scan_start + min_index * m_pointTime;
     return true;
 
@@ -168,6 +185,22 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
 
   return false;
 
+}
+
+void CYdLidar::fitLineFeature() {
+  line_feature_.setCachedRangeData(bearings, indices, range_data);
+  std::vector<gline> glines;
+  line_feature_.extractLines(glines);
+
+  //fit line completed....
+  for (std::vector<gline>::const_iterator it = glines.begin();
+       it != glines.end(); ++it) {
+
+  }
+
+  bearings.clear();
+  indices.clear();
+  range_data.clear();
 }
 
 
@@ -192,8 +225,10 @@ bool  CYdLidar::turnOn() {
       return false;
     }
   }
+
   m_pointTime = lidarPtr->getPointTime();
   m_packageTime = lidarPtr->getPackageTime();
+
   if (checkLidarAbnormal()) {
     lidarPtr->stop();
     fprintf(stderr,
@@ -284,7 +319,8 @@ bool CYdLidar::checkLidarAbnormal() {
           }
 
           scan_time = 1.0 * static_cast<int64_t>(end_time - start_time) / 1e9;
-          if (scan_time > 0.04 && scan_time < 1.0) {
+
+          if (scan_time > 0.05 && scan_time < 0.5) {
             m_SampleRate = static_cast<int>((count / scan_time + 500) / 1000);
             m_pointTime = 1e9 / (m_SampleRate * 1000);
           }
