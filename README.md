@@ -7,7 +7,7 @@ Visit EAI Website for more details about [YDLIDAR](http://www.ydlidar.com/) .
 
 How to build YDLIDAR SDK samples
 =====================================================================
-    $ git clone https://github.com/yangfuyuan/sdk
+    $ git clone https://github.com/ydlidar/sdk
     $ cd sdk
     $ git checkout TG30
     $ cd ..
