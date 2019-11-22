@@ -94,6 +94,7 @@ class YDLIDAR_API CYdLidar {
   uint8_t Major;
   uint8_t Minjor;
   YDlidarDriver *lidarPtr;
+  node_info *nodes;
 
 };	// End of class
 

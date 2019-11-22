@@ -505,6 +505,7 @@ class YDlidarDriver {
   bool CheckSumResult;
   bool Last_CheckSum_Result;
   uint16_t Valu8Tou16;
+  uint8_t *recvBuffer;
 
   std::string serial_port;///< 雷达端口
 
