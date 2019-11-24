@@ -107,6 +107,12 @@ class YDlidarDriver {
   uint32_t getPointTime() const;
 
   /**
+   * @brief updatePointTime
+   * @param time
+   */
+  void updatePointTime(const uint32_t &time);
+
+  /**
    * @brief getPackageTime
    * @return
    */

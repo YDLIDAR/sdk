@@ -17,7 +17,7 @@ struct node_info {
   uint16_t   sync_quality;//!信号质量
   uint16_t   angle_q6_checkbit; //!测距点角度
   uint16_t   distance_q2; //! 当前测距点距离
-  uint64_t   stamp; //! 时间戳
+  uint64_t   dstamp; //! 延时间戳
   uint8_t    scan_frequence;//! 特定版本此值才有效,无效值是0
 } __attribute__((packed)) ;
 
@@ -142,7 +142,7 @@ struct LaserConfig {
     scan_time = data.scan_time;
     min_range = data.min_range;
     max_range = data.max_range;
-    fixed_size= data.fixed_size;
+    fixed_size = data.fixed_size;
     return *this;
   }
 };

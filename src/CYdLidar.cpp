@@ -20,7 +20,7 @@ CYdLidar::CYdLidar(): lidarPtr(0) {
   m_AutoReconnect     = false;
   m_MaxAngle          = 180.f;
   m_MinAngle          = -180.f;
-  m_MaxRange          = 6.0;
+  m_MaxRange          = 12.0;
   m_MinRange          = 0.08;
   m_AbnormalCheckCount = 2;
   isScanning          = false;
@@ -101,16 +101,17 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
 
     uint64_t scan_time = m_pointTime * (count - 1);
     tim_scan_end -= m_packageTime;
+    tim_scan_end -= nodes[0].dstamp;
     tim_scan_end += m_OffsetTime * 1e9;
     tim_scan_end -= m_pointTime;
     tim_scan_start = tim_scan_end -  scan_time ;
-    last_node_time = tim_scan_end;
 
     if (last_node_time >= tim_scan_end) {
       tim_scan_end = last_node_time + m_pointTime;
       tim_scan_start = tim_scan_end - scan_time;
     }
 
+    last_node_time = tim_scan_end;
     scan_msg.config.scan_time = static_cast<float>(1.0 * scan_time / 1e9);
     scan_msg.config.fixed_size = m_FixedSize;
 
@@ -118,11 +119,9 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     scan_msg.config.max_angle = angles::from_degrees(m_MaxAngle);
     scan_msg.config.time_increment = scan_msg.config.scan_time / (double)(
                                        count - 1);
-    scan_msg.system_time_stamp = tim_scan_start;
+    scan_msg.system_time_stamp = tim_scan_end;
     scan_msg.config.min_range = m_MinRange;
     scan_msg.config.max_range = m_MaxRange;
-    int min_index = count;
-
 
     for (int i = 0; i < count; i++) {
       angle = (float)((nodes[i].angle_q6_checkbit >>
@@ -158,10 +157,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
       }
 
       if (angle >= scan_msg.config.min_angle && angle <= scan_msg.config.max_angle) {
-        if (i < min_index) {
-          min_index = i;
-        }
-
         point.angle = angle;
         point.range = range;
         point.intensity = intensity;
@@ -180,7 +175,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     }
 
     fitLineFeature();
-    scan_msg.system_time_stamp = tim_scan_start + min_index * m_pointTime;
     return true;
 
   } else {
@@ -329,6 +323,7 @@ bool CYdLidar::checkLidarAbnormal() {
           if (scan_time > 0.05 && scan_time < 0.5) {
             m_SampleRate = static_cast<int>((count / scan_time + 500) / 1000);
             m_pointTime = 1e9 / (m_SampleRate * 1000);
+            lidarPtr->updatePointTime(m_pointTime);
           }
 
           data.push_back(count);

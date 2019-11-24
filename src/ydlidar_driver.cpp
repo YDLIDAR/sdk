@@ -256,6 +256,10 @@ uint32_t YDlidarDriver::getPointTime() const {
   return m_pointTime;
 }
 
+void YDlidarDriver::updatePointTime(const uint32_t &time) {
+  m_pointTime = time;
+}
+
 uint32_t YDlidarDriver::getPackageTime() const {
   return m_packageTime;
 }
@@ -538,6 +542,7 @@ int YDlidarDriver::cacheScanData() {
       if (local_buf[pos].sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
         if ((local_scan[0].sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT)) {
           _lock.lock();//timeout lock, wait resource copy
+          local_scan[0].dstamp = local_buf[pos].dstamp;
           memcpy(scan_node_buf, local_scan, scan_count * sizeof(node_info));
           scan_node_count = scan_count;
           _dataEvent.set();
@@ -915,6 +920,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   }
 
   uint8_t package_CT = (packages.package_CT & 0x01);
+  (*node).dstamp = 0;
 
 
   if (package_CT == CT_Normal) {
@@ -972,6 +978,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     (*node).sync_quality        = 0;
     (*node).angle_q6_checkbit   = LIDAR_RESP_MEASUREMENT_CHECKBIT;
     (*node).distance_q2         = 0;
+    (*node).dstamp              = 0;
   }
 
 
@@ -981,7 +988,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   if (package_Sample_Index >= nowPackageNum) {
     package_Sample_Index = 0;
     CheckSumResult = false;
-
   }
 
   return RESULT_OK;
@@ -1009,9 +1015,24 @@ result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,
     nodebuffer[recvNodeCount++] = node;
 
     if (node.sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
+      size_t size = _serial->available();
+      uint64_t delayTime = 0;
+
+      if (size > 10) {
+        size_t packageNum = size / 90;
+        size_t Number = size % 90;
+        delayTime = packageNum * 40 * m_pointTime;
+
+        if (Number > 10) {
+          delayTime += m_pointTime * ((Number - 10) / 2);
+        }
+      }
+
+      nodebuffer[recvNodeCount - 1].dstamp = size * trans_delay + delayTime;
       count = recvNodeCount;
       return RESULT_OK;
     }
+
 
     if (recvNodeCount == count) {
       return RESULT_OK;
@@ -1146,13 +1167,13 @@ result_t YDlidarDriver::ascendScanData(node_info *nodebuffer, size_t count) {
 
   for (i = (int)zero_pos; i < (int)count; i++) {
     tmpbuffer[i - zero_pos] = nodebuffer[i];
-    tmpbuffer[i - zero_pos].stamp = nodebuffer[i - zero_pos].stamp;
+//    tmpbuffer[i - zero_pos].stamp = nodebuffer[i - zero_pos].stamp;
   }
 
   for (i = 0; i < (int)zero_pos; i++) {
     tmpbuffer[i + (int)count - zero_pos] = nodebuffer[i];
-    tmpbuffer[i + (int)count - zero_pos].stamp = nodebuffer[i +
-        (int)count - zero_pos].stamp;
+//    tmpbuffer[i + (int)count - zero_pos].stamp = nodebuffer[i +
+//        (int)count - zero_pos].stamp;
   }
 
   memcpy(nodebuffer, tmpbuffer, count * sizeof(node_info));
