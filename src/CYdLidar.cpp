@@ -43,7 +43,7 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr), global_nodes(nullptr) {
   m_pointTime = 1e9 / 5000;
   last_node_time = getTime();
   node_counts         = 720;
-  m_FilterDataNoise = false;
+  m_FilterDataNoise = true;
 
 }
 
@@ -133,6 +133,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
                            sys_scan_start_time) * 1.0 / 1e9);
     uint32_t scan_time = m_pointTime * (count - 1);
     sys_scan_end_time -= m_pointTime;
+    sys_scan_end_time -= global_nodes[0].dstamp;
     sys_scan_start_time = sys_scan_end_time -  scan_time ;
 
     if (static_cast<int>(sys_scan_start_time - last_node_time) > -20e6 &&
@@ -225,7 +226,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
         }
 
         if ((point.angle < last_point.angle &&
-            fabs(point.angle - last_point.angle) < 20) && m_FilterDataNoise) {
+             fabs(point.angle - last_point.angle) < 20) && m_FilterDataNoise) {
           last_data.push_back(point);
         } else {
           last_point = point;
@@ -405,6 +406,7 @@ bool CYdLidar::checkLidarAbnormal() {
       delay(check_abnormal_count * 1000);
     }
 
+    count = YDlidarDriver::MAX_SCAN_NODES;
     op_result =  lidarPtr->grabScanData(global_nodes, count);
 
     if (IS_OK(op_result)) {
