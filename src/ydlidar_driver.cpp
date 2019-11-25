@@ -60,8 +60,6 @@ YDlidarDriver::YDlidarDriver():
 
   m_pointTime         = 1e9 / 5000;
   trans_delay         = 0;
-  m_node_time_ns      = getTime();
-  m_node_last_time_ns = getTime();
   scan_frequence      = 0;
   m_sampling_rate     = -1;
   model.model   = -1;
@@ -398,6 +396,8 @@ result_t YDlidarDriver::waitForData(size_t data_count, uint32_t timeout,
 result_t YDlidarDriver::checkAutoConnecting() {
   result_t ans = RESULT_FAIL;
   isAutoconnting = true;
+  int retryCount = 0;
+  int retryConnect = 0;
 #ifdef DEBUG
 
   if (NULL != fd) {
@@ -419,11 +419,24 @@ result_t YDlidarDriver::checkAutoConnecting() {
         }
       }
     }
+    retryCount++;
+    delay(retryCount * 100);
+
+    if (retryCount > 100) {
+      retryCount = 100;
+    }
 
     while (isAutoReconnect &&
            connect(serial_port.c_str(), m_baudrate) != RESULT_OK) {
-      delay(200);
+      retryConnect++;
+      delay(200 * retryConnect);
+
+      if (retryConnect > 25) {
+        retryConnect = 25;
+      }
     }
+
+    retryConnect = 0;
 
     if (!isAutoReconnect) {
       isScanning = false;
@@ -466,8 +479,6 @@ int YDlidarDriver::cacheScanData() {
   size_t         scan_count = 0;
   result_t       ans = RESULT_FAIL;
   memset(local_scan, 0, sizeof(node_info)*MAX_SCAN_NODES);
-  m_node_time_ns  = getTime();
-  m_node_last_time_ns = getTime();
   flushSerial();
   waitScanData(local_buf, count);
   int timeout_count   = 0;
@@ -495,7 +506,6 @@ int YDlidarDriver::cacheScanData() {
 
           if (IS_OK(ans)) {
             timeout_count = 0;
-            m_node_last_time_ns = getTime();
             local_scan[0].sync_flag = Node_NotSync;
           } else {
             isScanning = false;
@@ -530,8 +540,6 @@ int YDlidarDriver::cacheScanData() {
 
           if (NULL != fd) {
             fprintf(fd, "system time: %llu\n", getTime());
-            fprintf(fd, "node time: %llu\n", m_node_time_ns);
-            fprintf(fd, "last node time: %llu\n", m_node_last_time_ns);
             fprintf(fd, "scan time: %f\n", m_pointTime * scan_count / 1e9);
             fprintf(fd, "system scan time: %f\n", (getTime() - sys_time) / 1e9);
             fprintf(fd, "scan count: %lu\n", scan_count);
@@ -541,6 +549,7 @@ int YDlidarDriver::cacheScanData() {
 
 #endif
           _lock.lock();//timeout lock, wait resource copy
+          local_scan[0].dstamp = local_buf[pos].dstamp;
           memcpy(scan_node_buf, local_scan, scan_count * sizeof(node_info));
           scan_node_count = scan_count;
           _dataEvent.set();
@@ -886,6 +895,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   }
 
   (*node).sync_quality = Node_Default_Quality;
+  (*node).dstamp = 0;
 
   if (CheckSumResult) {
     if (isIntensity()) {
@@ -970,40 +980,12 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     nowPackageNum = packages.nowPackageNum;
   }
 
-  if ((*node).sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
-    m_node_last_time_ns = m_node_time_ns;
-    uint64_t current_time_ns = getTime();
-    uint64_t delay_time_ns = (nowPackageNum * PackageSampleBytes + PackagePaidBytes)
-                             * trans_delay +
-                             (nowPackageNum - 1) * m_pointTime;
-    m_node_time_ns = current_time_ns - delay_time_ns;
-
-    if (current_time_ns <= delay_time_ns) {
-      m_node_time_ns = current_time_ns;
-    }
-
-    if (m_node_time_ns < m_node_last_time_ns) {
-      if ((m_node_last_time_ns - m_node_time_ns) < 1e9 / 15) {
-        m_node_time_ns = m_node_last_time_ns;
-      }
-    } else {//Optimize starting point timestamp
-      if ((m_node_time_ns - m_node_last_time_ns) < 8 * 1e6 && !data_header_error
-          && CheckSumResult && LastCheckSumResult) {
-        m_node_time_ns = m_node_last_time_ns;
-      }
-    }
-
-    LastCheckSumResult = CheckSumResult;
-
-  }
-
   (*node).scan_frequence  = scan_frequence;
-  (*node).stamp = m_node_time_ns + package_Sample_Index * m_pointTime;
   package_Sample_Index++;
 
   if (package_Sample_Index >= nowPackageNum) {
     package_Sample_Index = 0;
-    m_node_time_ns = (*node).stamp + m_pointTime;
+    CheckSumResult = false;
   }
 
   return RESULT_OK;
@@ -1032,6 +1014,20 @@ result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,
     nodebuffer[recvNodeCount++] = node;
 
     if (node.sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
+      size_t size = _serial->available();
+      uint64_t delayTime = 0;
+
+      if (size > 10) {
+        size_t packageNum = size / 90;
+        size_t Number = size % 90;
+        delayTime = packageNum * 40 * m_pointTime;
+
+        if (Number > 10) {
+          delayTime += m_pointTime * ((Number - 10) / 2);
+        }
+      }
+
+      nodebuffer[recvNodeCount - 1].dstamp = size * trans_delay + delayTime;
       count = recvNodeCount;
       return RESULT_OK;
     }
@@ -1169,13 +1165,13 @@ result_t YDlidarDriver::ascendScanData(node_info *nodebuffer, size_t count) {
 
   for (i = (int)zero_pos; i < (int)count; i++) {
     tmpbuffer[i - zero_pos] = nodebuffer[i];
-    tmpbuffer[i - zero_pos].stamp = nodebuffer[i - zero_pos].stamp;
+//    tmpbuffer[i - zero_pos].stamp = nodebuffer[i - zero_pos].stamp;
   }
 
   for (i = 0; i < (int)zero_pos; i++) {
     tmpbuffer[i + (int)count - zero_pos] = nodebuffer[i];
-    tmpbuffer[i + (int)count - zero_pos].stamp = nodebuffer[i +
-        (int)count - zero_pos].stamp;
+//    tmpbuffer[i + (int)count - zero_pos].stamp = nodebuffer[i +
+//        (int)count - zero_pos].stamp;
   }
 
   memcpy(nodebuffer, tmpbuffer, count * sizeof(node_info));
