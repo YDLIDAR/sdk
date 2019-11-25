@@ -39,7 +39,8 @@ static string basename(const string &path);
 static string dirname(const string &path);
 static bool path_exists(const string &path);
 static string realpath(const string &path);
-static string usb_sysfs_friendly_name(const string &sys_usb_path, string &device_id);
+static string usb_sysfs_friendly_name(const string &sys_usb_path,
+                                      string &device_id);
 static vector<string> get_sysfs_info(const string &device_path);
 static string read_line(const string &file);
 static string usb_sysfs_hw_string(const string &sysfs_path);
@@ -140,7 +141,8 @@ usb_sysfs_friendly_name(const string &sys_usb_path, string &device_id) {
     return "";
   }
 
-  return format("%s %s %s", manufacturer.c_str(), product.c_str(), serial.c_str());
+  return format("%s %s %s", manufacturer.c_str(), product.c_str(),
+                serial.c_str());
 }
 
 vector<string>
@@ -153,7 +155,8 @@ get_sysfs_info(const string &device_path) {
 
   string device_id;
 
-  string sys_device_path = format("/sys/class/tty/%s/device", device_name.c_str());
+  string sys_device_path = format("/sys/class/tty/%s/device",
+                                  device_name.c_str());
 
   if (device_name.compare(0, 6, "ttyUSB") == 0) {
     sys_device_path = dirname(dirname(realpath(sys_device_path)));
@@ -260,6 +263,7 @@ format(const char *format, ...) {
   }
 
   free(buffer);
+  buffer = NULL;
 
   return result;
 }
@@ -276,7 +280,8 @@ usb_sysfs_hw_string(const string &sysfs_path) {
 
   string pid = read_line(sysfs_path + "/idProduct");
 
-  return format("USB VID:PID=%s:%s %s", vid.c_str(), pid.c_str(), serial_number.c_str());
+  return format("USB VID:PID=%s:%s %s", vid.c_str(), pid.c_str(),
+                serial_number.c_str());
 }
 
 vector<PortInfo>
