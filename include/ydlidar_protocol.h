@@ -99,7 +99,7 @@ struct node_info {
   uint16_t   sync_quality;//!intensity
   uint16_t   angle_q6_checkbit; //!angle
   uint16_t   distance_q2; //! distance
-  uint64_t   stamp; //! timestamp
+  uint64_t   dstamp; //! timestamp
   uint8_t    scan_frequence;//! scan frequency
 } __attribute__((packed)) ;
 

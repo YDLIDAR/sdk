@@ -15,9 +15,9 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.0.9 |   2019-08-26  |
+| SDK     |  2.1.0 |   2019-11-25  |
 
-- [fixed] Fixed G4Pro.
+- [fixed] Event wait.
 
 
 
@@ -61,7 +61,7 @@ windows:
 
 You should see YDLIDAR's scan result in the console:
 
-	[YDLIDAR]:SDK Version: 2.0.9
+	[YDLIDAR]:SDK Version: 2.1.0
 	[YDLIDAR]:Lidar running correctly ! The health status: good
 	[YDLIDAR] Connection established in [/dev/ttyUSB0][230400]:
 	Firmware version: 1.2
@@ -143,6 +143,10 @@ example angle parsing:
 
 Upgrade Log
 ---------------
+
+2019-11-25 version: 2.1.0
+	   
+   1.Event wait.
 
 2019-08-26 version: 2.0.9
 	   
