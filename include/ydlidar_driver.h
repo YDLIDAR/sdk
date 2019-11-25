@@ -504,8 +504,6 @@ class YDlidarDriver {
   bool m_intensities;					///< intensity
   uint32_t m_baudrate;				///< serial baudrate
   bool isSupportMotorCtrl;			///<
-  uint64_t m_node_time_ns;			///< time stamp
-  uint64_t m_node_last_time_ns;       ///< time stamp
   uint32_t m_pointTime;				///< two laser point time intervals
   uint32_t trans_delay;				///< serial transfer on byte time
   int m_sampling_rate;					///< sample rate
