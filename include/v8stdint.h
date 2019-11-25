@@ -77,6 +77,8 @@ typedef int32_t result_t;
 
 #define INVALID_TIMESTAMP (0)
 
+//#define USE_LOCK_FILE 1
+
 enum {
   DEVICE_DRIVER_TYPE_SERIALPORT = 0x0,
   DEVICE_DRIVER_TYPE_TCP = 0x1,
@@ -139,7 +141,8 @@ set_signal_handler(int signal_value, signal_handler_t signal_handler)
     int error_status = strerror_r(errno, error_string, error_length);
 
     if (error_status != 0) {
-      throw std::runtime_error("Failed to get error string for errno: " + std::to_string(errno));
+      throw std::runtime_error("Failed to get error string for errno: " +
+                               std::to_string(errno));
     }
 
 #endif

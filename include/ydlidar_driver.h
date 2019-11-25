@@ -96,6 +96,12 @@ class YDlidarDriver {
   uint32_t getPointTime() const;
 
   /**
+   * @brief updatePointTime
+   * @param time
+   */
+  void updatePointTime(const uint32_t &time);
+
+  /**
   * @brief 设置雷达是否带信号质量 \n
   * 连接成功后，必须使用::disconnect函数关闭
   * @param[in] isintensities    是否带信号质量:
@@ -387,8 +393,6 @@ class YDlidarDriver {
   bool m_intensities;					///< 信号质量状体
   uint32_t m_baudrate;				///< 波特率
   bool isSupportMotorCtrl;			///< 是否支持电机控制
-  uint64_t m_node_time_ns;			///< 时间戳
-  uint64_t m_node_last_time_ns;       ///< 时间戳
   uint32_t m_pointTime;				///< 激光点直接时间间隔
   uint32_t trans_delay;				///< 串口传输一个byte时间
 

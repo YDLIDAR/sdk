@@ -28,10 +28,10 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   Major               = 0;
   Minjor              = 0;
   m_IgnoreArray.clear();
-  m_pointTime         = 1e9 / 4000;
+  m_pointTime         = 1e9 / 3000;
   last_node_time      = getTime();
-  m_FixedSize         = 720;
-  m_SampleRate        = 4;
+  m_FixedSize         = 360;
+  m_SampleRate        = 3;
   print               = false;
   m_GlassNoise        = true;
   m_SunNoise          = true;
@@ -99,6 +99,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
 
     uint64_t scan_time = m_pointTime * (count - 1);
     tim_scan_end -= m_pointTime;
+    tim_scan_end -= global_nodes[0].dstamp;
     tim_scan_start = tim_scan_end -  scan_time ;
 
     int64_t timeDiff = tim_scan_start - last_node_time;
@@ -113,7 +114,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
 
     scan_msg.config.min_angle = angles::from_degrees(m_MinAngle);
     scan_msg.config.max_angle = angles::from_degrees(m_MaxAngle);
-    scan_msg.config.time_increment = scan_msg.config.scan_time / (double)count;
+    scan_msg.config.time_increment = scan_msg.config.scan_time / (double)(
+                                       count - 1);
     scan_msg.system_time_stamp = tim_scan_start;
     scan_msg.config.min_range = m_MinRange;
     scan_msg.config.max_range = m_MaxRange;
@@ -166,7 +168,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
 
     }
 
-    scan_msg.system_time_stamp = tim_scan_start + min_index * m_pointTime;
+//    scan_msg.system_time_stamp = tim_scan_start + min_index * m_pointTime;
     return true;
 
   } else {
@@ -286,9 +288,10 @@ bool CYdLidar::checkLidarAbnormal() {
 
           scan_time = 1.0 * static_cast<int64_t>(end_time - start_time) / 1e9;
 
-          if (scan_time > 0.04 && scan_time < 1.0) {
+          if (scan_time > 0.05 && scan_time < 0.3) {
             m_SampleRate = static_cast<int>((count / scan_time + 500) / 1000);
             m_pointTime = 1e9 / (m_SampleRate * 1000);
+            lidarPtr->updatePointTime(m_pointTime);
 
             if (m_SampleRate == 3) {
             }
@@ -370,6 +373,7 @@ bool CYdLidar::getDeviceInfo() {
   }
 
   if (devinfo.model != YDlidarDriver::YDLIDAR_S4 &&
+      devinfo.model != YDlidarDriver::YDLIDAR_G4 &&
       !lidarPtr->isSingleChannel()) {
     printf("[YDLIDAR INFO] Current SDK does not support current lidar models[%d]\n",
            devinfo.model);
