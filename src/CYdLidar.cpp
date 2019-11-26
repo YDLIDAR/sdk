@@ -2,6 +2,7 @@
 #include "common.h"
 #include <map>
 #include <angles.h>
+#include <numeric>
 
 using namespace std;
 using namespace ydlidar;
