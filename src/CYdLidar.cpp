@@ -328,7 +328,7 @@ bool CYdLidar::getDeviceInfo() {
       devinfo.model != YDlidarDriver::YDLIDAR_TG50) {
     ydlidar::console.error("[YDLIDAR INFO] Current SDK does not support current lidar models[%d]",
                            devinfo.model);
-    //return false;
+    return false;
   }
 
   std::string model = "G6";
@@ -460,7 +460,7 @@ bool CYdLidar::checkScanFrequency() {
   float freq = 7.4f;
   scan_frequency _scan_frequency;
   float hz = 0;
-  result_t ans;
+  result_t ans = RESULT_FAIL;
   m_ScanFrequency += m_FrequencyOffset;
   int retryCount = 0;
 
@@ -604,7 +604,7 @@ bool CYdLidar::checkStatus() {
   bool ret = getDeviceHealth();
 
   if (!ret) {
-    delay(2000);
+    delay(1000);
     ret = getDeviceHealth();
 
     if (!ret) {
@@ -613,7 +613,7 @@ bool CYdLidar::checkStatus() {
   }
 
   if (!getDeviceInfo()) {
-    delay(2000);
+    delay(1000);
     ret = getDeviceInfo();
 
     if (!ret) {
@@ -651,7 +651,7 @@ bool CYdLidar::initialize() {
   }
 
   if (!checkStatus()) {
-    ydlidar::console.warning("[CYdLidar::initialize] Error initializing YDLIDAR scanner.because of failure in scan mode.");
+    ydlidar::console.warning("[CYdLidar::initialize] Error initializing YDLIDAR scanner.Failed to get Device information.");
     return false;
   }
 

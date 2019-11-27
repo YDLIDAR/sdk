@@ -1,7 +1,7 @@
-YDLIDAR SDK PACKAGE V1.4.1
+YDLIDAR SDK PACKAGE V1.4.2
 =====================================================================
 
-SDK [test](https://github.com/yangfuyuan/sdk) application for YDLIDAR
+SDK [test](https://github.com/ydlidar/sdk) application for YDLIDAR
 
 Visit EAI Website for more details about [YDLIDAR](http://www.ydlidar.com/) .
 
@@ -132,6 +132,12 @@ code:
 
 Upgrade Log
 =====================================================================
+
+2019-11-27 version:1.4.2
+
+  1.define USE_LOCK_FILE macros 
+
+  2.use steady time for wait.
 
 2019-05-10 version:1.4.1
 
