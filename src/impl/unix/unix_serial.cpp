@@ -37,7 +37,9 @@
 #endif
 
 #include "unix_serial.h"
+#ifdef USE_LOCK_FILE
 #include <lock.h>
+#endif
 
 #ifndef TIOCINQ
 #ifdef FIONREAD
@@ -662,11 +664,14 @@ bool Serial::SerialImpl::open() {
 
   pid = -1;
   pid = getpid();
+#ifdef USE_LOCK_FILE
 
   if (LOCK(port_.c_str(), pid)) {
     fprintf(stderr, "Could not lock serial port for exclusive access\n");
     return false;
   }
+
+#endif
 
   fd_ = ::open(port_.c_str(),
                O_RDWR | O_NOCTTY | O_NONBLOCK | O_APPEND | O_NDELAY);
@@ -679,66 +684,99 @@ bool Serial::SerialImpl::open() {
 
       case ENODEV:
         fprintf(stderr, "Device not found\n");
+        fflush(stderr);
+#ifdef USE_LOCK_FILE
         UNLOCK(port_.c_str(), pid);
+#endif
         return false;
 #ifdef ENOENT
 
       case ENOENT:
         fprintf(stderr, "Device not found\n");
+        fflush(stderr);
+#ifdef USE_LOCK_FILE
         UNLOCK(port_.c_str(), pid);
+#endif
         return false;
 #endif
 
       case EACCES:
         fprintf(stderr, "Permission Error\n");
+        fflush(stderr);
+#ifdef USE_LOCK_FILE
         UNLOCK(port_.c_str(), pid);
+#endif
         return false;
 
       case EBUSY:
         fprintf(stderr, "busy Permission Error \n");
+        fflush(stderr);
+#ifdef USE_LOCK_FILE
         UNLOCK(port_.c_str(), pid);
+#endif
         return false;
 
       case EAGAIN:
         fprintf(stderr, "Device disappeared from the system\n");
+        fflush(stderr);
+#ifdef USE_LOCK_FILE
         UNLOCK(port_.c_str(), pid);
+#endif
         return false;
 
       case EIO:
         fprintf(stderr, "Device disappeared from the system\n");
+        fflush(stderr);
+#ifdef USE_LOCK_FILE
         UNLOCK(port_.c_str(), pid);
+#endif
         return false;
 
       case EBADF:
         fprintf(stderr, "Device disappeared from the system\n");
+        fflush(stderr);
+#ifdef USE_LOCK_FILE
         UNLOCK(port_.c_str(), pid);
+#endif
         return false;
 #ifdef EINVAL
 
       case EINVAL:
         fprintf(stderr, "UnsupportedOperationError\n");
+        fflush(stderr);
+#ifdef USE_LOCK_FILE
         UNLOCK(port_.c_str(), pid);
+#endif
         return false;
 #endif
 #ifdef ENOIOCTLCMD
 
       case ENOIOCTLCMD:
         fprintf(stderr, "UnsupportedOperationError\n");
+        fflush(stderr);
+#ifdef USE_LOCK_FILE
         UNLOCK(port_.c_str(), pid);
+#endif
         return false;
 #endif
 #ifdef ENOTTY
 
       case ENOTTY:
         fprintf(stderr, "UnsupportedOperationError\n");
+        fflush(stderr);
+#ifdef USE_LOCK_FILE
         UNLOCK(port_.c_str(), pid);
+#endif
         return false;
 #endif
 #ifdef EPERM
 
       case EPERM:
         fprintf(stderr, "Permission Error\n");
+        fflush(stderr);
+#ifdef USE_LOCK_FILE
         UNLOCK(port_.c_str(), pid);
+#endif
         return false;
 #endif
 
@@ -746,7 +784,10 @@ bool Serial::SerialImpl::open() {
       case EMFILE:
       default:
         fprintf(stderr, "Failed to open %s:%d\n", port_.c_str(), errno);
+        fflush(stderr);
+#ifdef USE_LOCK_FILE
         UNLOCK(port_.c_str(), pid);
+#endif
         return false;
     }
   }
@@ -754,7 +795,9 @@ bool Serial::SerialImpl::open() {
   termios tio;
 
   if (!getTermios(&tio)) {
+#ifdef USE_LOCK_FILE
     UNLOCK(port_.c_str(), pid);
+#endif
     return false;
   }
 
@@ -765,16 +808,18 @@ bool Serial::SerialImpl::open() {
   set_flowcontrol(&tio, flowcontrol_);
 
   if (!setTermios(&tio)) {
+#ifdef USE_LOCK_FILE
     UNLOCK(port_.c_str(), pid);
+#endif
     return false;
   }
 
   if (!setBaudrate(baudrate_)) {
+#ifdef USE_LOCK_FILE
     UNLOCK(port_.c_str(), pid);
+#endif
     return false;
   }
-
-  flush();
 
   // Update byte_time_ based on the new settings.
   uint32_t bit_time_ns = 1e9 / baudrate_;
@@ -797,7 +842,9 @@ void Serial::SerialImpl::close() {
       ::close(fd_);
     }
 
+#ifdef USE_LOCK_FILE
     UNLOCK(port_.c_str(), pid);
+#endif
     fd_ = -1;
     is_open_ = false;
   }
