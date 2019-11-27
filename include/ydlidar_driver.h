@@ -152,6 +152,12 @@ class YDlidarDriver {
   */
   result_t stop();
 
+  /**
+   * @brief stopScan
+   * @return
+   */
+  result_t stopScan();
+
 
   /**
   * @brief 获取激光数据 \n
@@ -519,7 +525,6 @@ class YDlidarDriver {
 
   enum {
     DEFAULT_TIMEOUT 	= 2000,    /**< 默认超时时间. */
-    DEFAULT_HEART_BEAT 	= 1000, /**< 默认检测掉电功能时间. */
     MAX_SCAN_NODES 		= 3600,	   /**< 最大扫描点数. */
     DEFAULT_TIMEOUT_COUNT = 1,
   };
@@ -536,10 +541,10 @@ class YDlidarDriver {
     YDLIDAR_G10			= 10,/**< G10雷达型号代号. */
     YDLIDAR_S4B 		= 11,/**< S4B雷达型号代号. */
     YDLIDAR_S2 			= 12,/**< S2雷达型号代号. */
-    YDLIDAR_G6          = 13,/**< G25雷达型号代号. */
-    YDLIDAR_TG15        = 100,/**< TG雷达型号代号. */
-    YDLIDAR_TG30        = 101,/**< TG雷达型号代号. */
-    YDLIDAR_TG50        = 102,/**< TG雷达型号代号. */
+    YDLIDAR_G6      = 13,/**< G25雷达型号代号. */
+    YDLIDAR_TG15    = 100,/**< TG15雷达型号代号. */
+    YDLIDAR_TG30    = 101,/**< T30雷达型号代号. */
+    YDLIDAR_TG50    = 102,/**< TG50雷达型号代号. */
 
     YDLIDAR_Tail,/**< 雷达型号代号. */
 
@@ -553,19 +558,19 @@ class YDlidarDriver {
   };
 
   enum {
-    YDLIDAR_F4_BAUD		= 115200, /**< F4雷达型号波特率. */
-    YDLIDAR_T1_BAUD		= 115200, /**< T1雷达型号波特率. */
-    YDLIDAR_F2_BAUD		= 115200, /**< F2雷达型号波特率. */
-    YDLIDAR_S4_BAUD		= 115200, /**< S4雷达型号波特率. */
-    YDLIDAR_G4_BAUD		= 230400, /**< G4雷达型号波特率. */
-    YDLIDAR_X4_BAUD		= 128000, /**< X4雷达型号波特率. */
+    YDLIDAR_F4_BAUD		  = 115200, /**< F4雷达型号波特率. */
+    YDLIDAR_T1_BAUD		  = 115200, /**< T1雷达型号波特率. */
+    YDLIDAR_F2_BAUD		  = 115200, /**< F2雷达型号波特率. */
+    YDLIDAR_S4_BAUD		  = 115200, /**< S4雷达型号波特率. */
+    YDLIDAR_G4_BAUD		  = 230400, /**< G4雷达型号波特率. */
+    YDLIDAR_X4_BAUD		  = 128000, /**< X4雷达型号波特率. */
     YDLIDAR_G4PRO_BAUD	= 230400, /**< G4PRO雷达型号波特率. */
     YDLIDAR_F4PRO_BAUD	= 128000, /**< F4PRO雷达型号波特率. */
-    YDLIDAR_G4C_BAUD	= 115200, /**< G4C雷达型号波特率. */
-    YDLIDAR_G10_BAUD	= 230400,/**< G10雷达型号波特率. */
-    YDLIDAR_S4B_BAUD 	= 153600,/**< S4B雷达型号波特率. */
-    YDLIDAR_S2_BAUD 	= 115200,/**< S2雷达型号波特率. */
-    YDLIDAR_G6_BAUD 	= 512000,/**< G25雷达型号波特率. */
+    YDLIDAR_G4C_BAUD	  = 115200, /**< G4C雷达型号波特率. */
+    YDLIDAR_G10_BAUD	  = 230400,/**< G10雷达型号波特率. */
+    YDLIDAR_S4B_BAUD   	= 153600,/**< S4B雷达型号波特率. */
+    YDLIDAR_S2_BAUD 	  = 115200,/**< S2雷达型号波特率. */
+    YDLIDAR_G6_BAUD 	  = 512000,/**< G25雷达型号波特率. */
     YDLIDAR_TG15_BAUD 	= 512000,/**< TG15雷达型号波特率. */
     YDLIDAR_TG30_BAUD 	= 512000,/**< TG30雷达型号波特率. */
     YDLIDAR_TG50_BAUD 	= 512000,/**< TG50雷达型号波特率. */
@@ -574,23 +579,23 @@ class YDlidarDriver {
 
   };
 
-  node_info      	scan_node_buf[3600];  ///< 激光点信息
+  node_info      	*scan_node_buf;  ///< 激光点信息
   size_t         	scan_node_count;      ///< 激光点数
   Event          	_dataEvent;			 ///< 数据同步事件
   Locker         	_lock;				///< 线程锁
-  Locker 			_serial_lock;                ///< 串口锁
+  Locker 			    _serial_lock;                ///< 串口锁
   Thread 	       	_thread;				///< 线程id
 
  private:
   int PackageSampleBytes;             ///< 一个包包含的激光点数
   serial::Serial *_serial;			///< 串口
-  int m_sampling_rate;					///< 采样频率
-  int model;
-  uint32_t m_baudrate;					///< 波特率
-  bool isSupportMotorCtrl;			///< 是否支持电机控制
-  uint32_t m_pointTime;				///< 激光点直接时间间隔
+  int         m_sampling_rate;					///< 采样频率
+  int         model;
+  uint32_t    m_baudrate;					///< 波特率
+  bool        isSupportMotorCtrl;			///< 是否支持电机控制
+  uint32_t    m_pointTime;				///< 激光点直接时间间隔
   uint32_t    m_packageTime;        ///零位包传送时间
-  uint32_t trans_delay;				///< 串口传输一个byte时间
+  uint32_t    trans_delay;				///< 串口传输一个byte时间
 
   node_packages packages;
 
@@ -611,6 +616,7 @@ class YDlidarDriver {
 
   std::string serial_port;///< 雷达端口
   uint8_t *recvBuffer;
+  int retryCount;
 
 };
 }

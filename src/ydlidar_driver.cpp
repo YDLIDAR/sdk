@@ -45,7 +45,9 @@ YDlidarDriver::YDlidarDriver():
   CheckSumResult = false;
   Last_CheckSum_Result = false;
   Valu8Tou16 = 0;
+  retryCount = 0;
 
+  scan_node_buf = new node_info[MAX_SCAN_NODES];  ///< 激光点信息
   recvBuffer = new uint8_t[sizeof(node_packages)];
 
 
@@ -75,6 +77,11 @@ YDlidarDriver::~YDlidarDriver() {
   if (recvBuffer) {
     delete[] recvBuffer;
     recvBuffer = NULL;
+  }
+
+  if (scan_node_buf) {
+    delete[] scan_node_buf;
+    scan_node_buf = NULL;
   }
 
 }
@@ -111,14 +118,7 @@ result_t YDlidarDriver::connect(const char *port_path, uint32_t baudrate) {
     isConnected = true;
   }
 
-
-  {
-    ScopedLocker l(_lock);
-    sendCommand(LIDAR_CMD_FORCE_STOP);
-    delay(10);
-    sendCommand(LIDAR_CMD_STOP);
-  }
-
+  stopScan();
   clearDTR();
 
   return RESULT_OK;
@@ -326,7 +326,7 @@ result_t YDlidarDriver::waitResponseHeader(lidar_ans_header *header,
   uint32_t startTs = getms();
   uint8_t  recvBuffer[sizeof(lidar_ans_header)];
   uint8_t  *headerBuffer = reinterpret_cast<uint8_t *>(header);
-  uint32_t waitTime;
+  uint32_t waitTime = 0;
 
   while ((waitTime = getms() - startTs) <= timeout) {
     size_t remainSize = sizeof(lidar_ans_header) - recvPos;
@@ -406,11 +406,24 @@ bool YDlidarDriver::autoReconnectLidar() {
       isConnected = false;
     }
   }
+  retryCount++;
+  delay(100 * retryCount);
+
+  if (retryCount > 100) {
+    retryCount = 100;
+  }
+
+  int retryConnect = 0;
 
   while (isAutoReconnect &&
          connect(serial_port.c_str(), m_baudrate) != RESULT_OK) {
     fprintf(stderr, "Connection to the lidar serial port failed!!!\n");
-    delay(200);
+    retryConnect++;
+    delay(200 * retryConnect);
+
+    if (retryConnect > 25) {
+      retryConnect = 25;
+    }
   }
 
   if (!isAutoReconnect) {
@@ -450,6 +463,7 @@ int YDlidarDriver::cacheScanData() {
   waitScanData(local_buf, count);
 
   int timeout_count = 0;
+  retryCount = 0;
 
   while (isScanning) {
     if ((ans = waitScanData(local_buf, count)) != RESULT_OK) {
@@ -481,6 +495,7 @@ int YDlidarDriver::cacheScanData() {
       }
     } else {
       timeout_count = 0;
+      retryCount = 0;
     }
 
     for (size_t pos = 0; pos < count; ++pos) {
@@ -527,7 +542,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
     while ((waitTime = getms() - startTs) <= timeout) {
       size_t remainSize = PackagePaidBytes - recvPos;
-      size_t recvSize;
+      size_t recvSize = 0;
       result_t ans = waitForData(remainSize, timeout - waitTime, &recvSize);
 
       if (!IS_OK(ans)) {
@@ -685,7 +700,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
       while ((waitTime = getms() - startTs) <= timeout) {
         size_t remainSize = package_Sample_Num * PackageSampleBytes - recvPos;
-        size_t recvSize;
+        size_t recvSize = 0;
         result_t ans = waitForData(remainSize, timeout - waitTime, &recvSize);
 
         if (!IS_OK(ans)) {
@@ -813,7 +828,7 @@ result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,
   size_t     recvNodeCount =  0;
   uint32_t   startTs = getms();
   uint32_t   waitTime = 0;
-  result_t ans;
+  result_t ans = RESULT_FAIL;
 
   while ((waitTime = getms() - startTs) <= timeout && recvNodeCount < count) {
     node_info node;
@@ -1120,12 +1135,7 @@ result_t YDlidarDriver::startScan(bool force, uint32_t timeout) {
   stop();
   startMotor();
   checkTransTime();
-  {
-    ScopedLocker l(_lock);
-    sendCommand(LIDAR_CMD_FORCE_STOP);
-    delay(1);
-    sendCommand(LIDAR_CMD_STOP);
-  }
+  stopScan();
   delay(100);
   flushCache();
   {
@@ -1179,12 +1189,7 @@ result_t YDlidarDriver::startAutoScan(bool force, uint32_t timeout) {
   }
 
   startMotor();
-  {
-    ScopedLocker l(_lock);
-    sendCommand(LIDAR_CMD_FORCE_STOP);
-    delay(1);
-    sendCommand(LIDAR_CMD_STOP);
-  }
+  stopScan();
   delay(100);
   flushCache();
   {
@@ -1226,16 +1231,19 @@ result_t YDlidarDriver::stop() {
   }
 
   disableDataGrabbing();
+  stopScan();
+  stopMotor();
+
+  return RESULT_OK;
+}
+
+result_t YDlidarDriver::stopScan() {
   {
     ScopedLocker l(_lock);
     sendCommand(LIDAR_CMD_FORCE_STOP);
     delay(10);
     sendCommand(LIDAR_CMD_STOP);
   }
-
-  stopMotor();
-
-  return RESULT_OK;
 }
 
 /************************************************************************/
