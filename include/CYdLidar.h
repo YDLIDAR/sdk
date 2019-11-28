@@ -114,6 +114,7 @@ class YDLIDAR_API CYdLidar {
   bool isScanning;
   int node_counts ;
   float m_FrequencyOffset;
+  int model;
 
   YDlidarDriver *lidarPtr;
   node_info *nodes;

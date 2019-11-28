@@ -85,6 +85,7 @@ struct node_info {
   uint16_t   sync_quality;//!信号质量
   uint16_t   angle_q6_checkbit; //!测距点角度
   uint16_t   distance_q2; //! 当前测距点距离
+  uint64_t   dstamp;
   uint8_t
   scan_frequence;//! 特定版本此值才有效,无效值是0, 当前扫描频率current_frequence = scan_frequence/10.0
 } __attribute__((packed)) ;

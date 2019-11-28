@@ -71,6 +71,8 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
+  int baudrate = 512000;
+
   float frequency = 10.0;
   std::string info = "Please Input the lidar Scan frequency: ";
 
@@ -93,6 +95,7 @@ int main(int argc, char *argv[]) {
 
 
   laser.setSerialPort(port);
+  laser.setSerialBaudrate(baudrate);
   laser.setAutoReconnect(true);//hot plug
   laser.setMaxRange(64.0);
   laser.setMinRange(0.1);

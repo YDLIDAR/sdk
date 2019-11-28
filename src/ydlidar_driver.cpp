@@ -458,7 +458,7 @@ int YDlidarDriver::cacheScanData() {
   size_t         count = 128;
   node_info      local_scan[MAX_SCAN_NODES];
   size_t         scan_count = 0;
-  result_t            ans;
+  result_t       ans = RESULT_FAIL;
   memset(local_scan, 0, sizeof(local_scan));
   waitScanData(local_buf, count);
 
@@ -502,6 +502,7 @@ int YDlidarDriver::cacheScanData() {
       if (local_buf[pos].sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
         if ((local_scan[0].sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT)) {
           _lock.lock();//timeout lock, wait resource copy
+          local_scan[0].dstamp = local_buf[pos].dstamp;
           memcpy(scan_node_buf, local_scan, scan_count * sizeof(node_info));
           scan_node_count = scan_count;
           _dataEvent.set();
@@ -759,6 +760,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   }
 
   (*node).sync_quality = Node_Default_Quality;
+  (*node).dstamp = 0;
 
   if (CheckSumResult) {
     (*node).distance_q2 = packages.packageSampleDistance[package_Sample_Index];
@@ -768,7 +770,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
                                               *node).distance_q2 / 2.0))) /
                                             155.3) / ((*node).distance_q2 / 2.0))) * 180.0 / 3.1415) * 64.0);
 
-      if (this->model == YDLIDAR_TG30) {
+      if (this->model >= YDLIDAR_TG15) {
         AngleCorrectForDistance = 0.0;
       }
     } else {
@@ -840,6 +842,20 @@ result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,
     nodebuffer[recvNodeCount++] = node;
 
     if (node.sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
+      size_t size = _serial->available();
+      uint64_t delayTime = 0;
+
+      if (size > 10) {
+        size_t packageNum = size / 90;
+        size_t Number = size % 90;
+        delayTime = packageNum * 40 * m_pointTime;
+
+        if (Number > 10) {
+          delayTime += m_pointTime * ((Number - 10) / 2);
+        }
+      }
+
+      nodebuffer[recvNodeCount - 1].dstamp = size * trans_delay + delayTime;
       count = recvNodeCount;
       return RESULT_OK;
     }
@@ -1098,14 +1114,29 @@ void YDlidarDriver::checkTransTime() {
   switch (m_sampling_rate) {
     case YDLIDAR_RATE_4K:
       m_pointTime = 1e9 / 10000;
+
+      if (model == YDLIDAR_G4) {
+        m_pointTime = 1e9 / 4000;
+      }
+
       break;
 
     case YDLIDAR_RATE_8K:
       m_pointTime = 1e9 / 16000;
+
+      if (model == YDLIDAR_G4) {
+        m_pointTime = 1e9 / 8000;
+      }
+
       break;
 
     case YDLIDAR_RATE_9K:
       m_pointTime = 1e9 / 18000;
+
+      if (model == YDLIDAR_G4) {
+        m_pointTime = 1e9 / 9000;
+      }
+
       break;
 
     case YDLIDAR_RATE_10K:
