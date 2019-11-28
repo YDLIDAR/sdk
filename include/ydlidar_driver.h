@@ -146,6 +146,12 @@ class YDlidarDriver {
     */
   result_t stop();
 
+  /**
+   * @brief stopScan
+   * @return
+   */
+  result_t stopScan();
+
 
   /**
   * @brief 获取激光数据 \n

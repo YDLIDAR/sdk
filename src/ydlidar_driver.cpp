@@ -138,12 +138,7 @@ result_t YDlidarDriver::connect(const char *port_path, uint32_t baudrate) {
   trans_delay = _serial->getByteTime();
   m_packageTime = trans_delay * (PackagePaidBytes + PackageSampleBytes);
   m_isConnected = true;
-  {
-    ScopedLocker l(_lock);
-    sendCommand(LIDAR_CMD_FORCE_STOP);
-    delay(10);
-    sendCommand(LIDAR_CMD_STOP);
-  }
+  stopScan();
   delay(50);
   clearDTR();
 
@@ -497,11 +492,18 @@ int YDlidarDriver::cacheScanData() {
               retryCount = 1000;
             }
 
+            int retryConnect = 0;
+
             while (isAutoReconnect &&
                    connect(serial_port.c_str(), m_baudrate) != RESULT_OK) {
               printf("Waiting for the Lidar serial port[%s] to be available in [%d]\n",
                      serial_port.c_str(), m_baudrate);
-              delay(1000);
+              retryConnect++;
+              delay(200 * retryConnect);
+
+              if (retryConnect > 20) {
+                retryConnect = 20;
+              }
             }
 
             if (!isAutoReconnect) {
@@ -1269,16 +1271,24 @@ result_t YDlidarDriver::stop() {
   }
 
   disableDataGrabbing();
+  stopScan();
+  delay(10);
+  stopMotor();
+
+  return RESULT_OK;
+}
+
+result_t YDlidarDriver::stopScan() {
+  if (!m_isConnected) {
+    return RESULT_FAIL;
+  }
+
   {
     ScopedLocker l(_lock);
     sendCommand(LIDAR_CMD_FORCE_STOP);
     delay(10);
     sendCommand(LIDAR_CMD_STOP);
   }
-  delay(10);
-  stopMotor();
-
-  return RESULT_OK;
 }
 
 std::string YDlidarDriver::getSDKVersion() {

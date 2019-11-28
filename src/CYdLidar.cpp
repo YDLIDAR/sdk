@@ -2,6 +2,7 @@
 #include "common.h"
 #include <map>
 #include "angles.h"
+#include <numeric>
 
 
 using namespace std;
@@ -83,6 +84,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
   size_t   count = YDlidarDriver::MAX_SCAN_NODES;
   //  wait Scan data:
   uint64_t tim_scan_start = getTime();
+  uint64_t startTs = tim_scan_start;
   result_t op_result =  lidarPtr->grabScanData(nodes, count);
   uint64_t tim_scan_end = getTime();
 
@@ -106,9 +108,14 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     tim_scan_end -= m_pointTime;
     tim_scan_start = tim_scan_end -  scan_time ;
 
-    if (last_node_time >= tim_scan_end) {
-      tim_scan_end = last_node_time + m_pointTime;
-      tim_scan_start = tim_scan_end - scan_time;
+    if (tim_scan_start < startTs) {
+      tim_scan_start = startTs;
+      tim_scan_end = tim_scan_start + scan_time;
+    }
+
+    if ((last_node_time + m_pointTime) >= tim_scan_start) {
+      tim_scan_start = last_node_time + m_pointTime;
+      tim_scan_end = tim_scan_start + scan_time;
     }
 
     last_node_time = tim_scan_end;
@@ -187,6 +194,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
 
 }
 
+
+//fit line
 void CYdLidar::fitLineFeature() {
   line_feature_.setCachedRangeData(bearings, indices, range_data);
   std::vector<gline> glines;
@@ -320,7 +329,7 @@ bool CYdLidar::checkLidarAbnormal() {
 
           scan_time = 1.0 * static_cast<int64_t>(end_time - start_time) / 1e9;
 
-          if (scan_time > 0.05 && scan_time < 0.5) {
+          if (scan_time > 0.05 && scan_time < 0.3) {
             m_SampleRate = static_cast<int>((count / scan_time + 500) / 1000);
             m_pointTime = 1e9 / (m_SampleRate * 1000);
             lidarPtr->updatePointTime(m_pointTime);

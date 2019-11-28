@@ -115,6 +115,7 @@ class Thread {
 
     if (res == PTHREAD_CANCELED) {
       printf("%lu thread has been canceled\n", this->_handle);
+      fflush(stdout);
       this->_handle = 0;
     }
 
