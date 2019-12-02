@@ -15,9 +15,9 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  1.4.1 |   2019-06-19  |
+| SDK     |  1.4.2 |   2019-12-02  |
 
-- [new feature] support G4C.
+- [feat] fixed new verison G4C.
 
 
 
@@ -59,7 +59,7 @@ windows:
 
 You should see YDLIDAR's scan result in the console:
 
-	[YDLIDAR]:SDK Version: 1.4.1
+	[YDLIDAR]:SDK Version: 1.4.2
 	[YDLIDAR]:Lidar running correctly ! The health status: good
 	[YDLIDAR] Connection established in [/dev/ttyUSB0][115200]:
 	Firmware version: 1.2

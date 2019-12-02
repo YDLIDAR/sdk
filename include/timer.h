@@ -26,7 +26,7 @@
 #error CLOCK_MONOTONIC is not defined
 #endif
 #undef HAS_CLOCK_GETTIME
-#undef HAS_SYSTEM_TIME
+#define HAS_SYSTEM_TIME 1
 
 static inline void delay(uint32_t ms) {
   while (ms >= 1000) {
