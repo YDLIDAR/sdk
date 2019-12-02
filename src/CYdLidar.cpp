@@ -144,7 +144,11 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
     for (; i < count; i++) {
 
-      range = static_cast<float>(nodes[i].distance_q2 / 2000.f);
+      if (model == YDlidarDriver::YDLIDAR_G4) {
+        range = static_cast<float>(nodes[i].distance_q2 / 4000.f);
+      } else {
+        range = static_cast<float>(nodes[i].distance_q2 / 2000.f);
+      }
 
       intensity = static_cast<float>((nodes[i].sync_quality >>
                                       LIDAR_RESP_MEASUREMENT_QUALITY_SHIFT));
@@ -183,8 +187,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
           outscan.intensities[index] = intensity;
         }
       }
-
-
     }
 
     return true;
@@ -367,6 +369,7 @@ bool CYdLidar::getDeviceInfo() {
 
     case YDlidarDriver::YDLIDAR_TG50:
       modelName = "TG50";
+      break;
 
     default:
       break;
@@ -423,6 +426,7 @@ void CYdLidar::checkSampleRate() {
 
       case 20:
         _samp_rate = YDlidarDriver::YDLIDAR_RATE_10K;
+        break;
 
       default:
         _samp_rate = _rate.rate;
@@ -500,6 +504,7 @@ void CYdLidar::checkSampleRate() {
       case YDlidarDriver::YDLIDAR_RATE_10K:
         node_counts = 2800;
         _samp_rate = 20;
+        break;
 
       default:
         break;
