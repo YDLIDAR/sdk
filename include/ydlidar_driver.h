@@ -523,6 +523,8 @@ class YDlidarDriver {
 
   std::string serial_port;///< lidar serial port
   std::vector<float> m_IgnoreArray;//
+  uint8_t *recvBuffer;
+  int retryCount;
 
 };
 }
