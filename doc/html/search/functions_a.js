@@ -27,5 +27,6 @@ var searchData=
   ['startmotor',['startMotor',['../classydlidar_1_1_y_dlidar_driver.html#a2e686ef1ce60f3241352a798330f760b',1,'ydlidar::YDlidarDriver']]],
   ['startscan',['startScan',['../classydlidar_1_1_y_dlidar_driver.html#a62888da8520422b7daaae89c2935460b',1,'ydlidar::YDlidarDriver']]],
   ['stop',['stop',['../classydlidar_1_1_y_dlidar_driver.html#a7aa354e88eeb6984be4d18eae6367a0b',1,'ydlidar::YDlidarDriver']]],
-  ['stopmotor',['stopMotor',['../classydlidar_1_1_y_dlidar_driver.html#a6cdf0c5a7ddf2375c1392c3a0e65edfe',1,'ydlidar::YDlidarDriver']]]
+  ['stopmotor',['stopMotor',['../classydlidar_1_1_y_dlidar_driver.html#a6cdf0c5a7ddf2375c1392c3a0e65edfe',1,'ydlidar::YDlidarDriver']]],
+  ['stopscan',['stopScan',['../classydlidar_1_1_y_dlidar_driver.html#a18689e3a98f8f1cfc90796f4afbb6aaa',1,'ydlidar::YDlidarDriver']]]
 ];

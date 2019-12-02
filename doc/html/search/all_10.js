@@ -2,10 +2,9 @@ var searchData=
 [
   ['sampling_5frate',['sampling_rate',['../structsampling__rate.html',1,'']]],
   ['scan_5fexposure',['scan_exposure',['../structscan__exposure.html',1,'']]],
-  ['scan_5ffrequence',['scan_frequence',['../structnode__info.html#a718a8a2f94497d5edea2be4550f74348',1,'node_info']]],
   ['scan_5ffrequency',['scan_frequency',['../structscan__frequency.html',1,'']]],
   ['scan_5fheart_5fbeat',['scan_heart_beat',['../structscan__heart__beat.html',1,'']]],
-  ['scan_5fnode_5fbuf',['scan_node_buf',['../classydlidar_1_1_y_dlidar_driver.html#ac8ac6e6722dc5dbb5e592036824c2bd8',1,'ydlidar::YDlidarDriver']]],
+  ['scan_5fnode_5fbuf',['scan_node_buf',['../classydlidar_1_1_y_dlidar_driver.html#a486f56ec5c3459774e6b395ef8bd202b',1,'ydlidar::YDlidarDriver']]],
   ['scan_5fnode_5fcount',['scan_node_count',['../classydlidar_1_1_y_dlidar_driver.html#a106fc563bb42f19e84e8d9db1e7856fe',1,'ydlidar::YDlidarDriver']]],
   ['scan_5fpoints',['scan_points',['../structscan__points.html',1,'']]],
   ['scan_5frotation',['scan_rotation',['../structscan__rotation.html',1,'']]],
@@ -40,7 +39,6 @@ var searchData=
   ['setstopbits',['setStopbits',['../classserial_1_1_serial.html#a0c690a31516cd11c521ba3aff4bafc4e',1,'serial::Serial']]],
   ['settimeout',['setTimeout',['../classserial_1_1_serial.html#a5b1a4e05b1690d29ba1ae14a9079434c',1,'serial::Serial::setTimeout(Timeout &amp;timeout)'],['../classserial_1_1_serial.html#a4b4be39af3e1c68bc6ac09cb55788c86',1,'serial::Serial::setTimeout(uint32_t inter_byte_timeout, uint32_t read_timeout_constant, uint32_t read_timeout_multiplier, uint32_t write_timeout_constant, uint32_t write_timeout_multiplier)']]],
   ['simpletimeout',['simpleTimeout',['../structserial_1_1_timeout.html#aa4fbd72e16f47c9aea9fb3c32ca17828',1,'serial::Timeout']]],
-  ['stamp',['stamp',['../structnode__info.html#a92f30331da1d7d95f9998dcd3886574c',1,'node_info']]],
   ['startautoscan',['startAutoScan',['../classydlidar_1_1_y_dlidar_driver.html#a75b64716b6c354f814d0b423404e4104',1,'ydlidar::YDlidarDriver']]],
   ['startmotor',['startMotor',['../classydlidar_1_1_y_dlidar_driver.html#a2e686ef1ce60f3241352a798330f760b',1,'ydlidar::YDlidarDriver']]],
   ['startscan',['startScan',['../classydlidar_1_1_y_dlidar_driver.html#a62888da8520422b7daaae89c2935460b',1,'ydlidar::YDlidarDriver']]],
@@ -48,5 +46,6 @@ var searchData=
   ['stop',['stop',['../classydlidar_1_1_y_dlidar_driver.html#a7aa354e88eeb6984be4d18eae6367a0b',1,'ydlidar::YDlidarDriver']]],
   ['stopbits_5ft',['stopbits_t',['../namespaceserial.html#af5b116611d6628a3aa8f788fdc09f469',1,'serial']]],
   ['stopmotor',['stopMotor',['../classydlidar_1_1_y_dlidar_driver.html#a6cdf0c5a7ddf2375c1392c3a0e65edfe',1,'ydlidar::YDlidarDriver']]],
+  ['stopscan',['stopScan',['../classydlidar_1_1_y_dlidar_driver.html#a18689e3a98f8f1cfc90796f4afbb6aaa',1,'ydlidar::YDlidarDriver']]],
   ['system_5ftime_5fstamp',['system_time_stamp',['../struct_laser_scan.html#a1bb6b997ce698fbc516bc20ab3ba3399',1,'LaserScan']]]
 ];

@@ -6,5 +6,5 @@ var searchData=
   ['isautoreconnect',['isAutoReconnect',['../classydlidar_1_1_y_dlidar_driver.html#aa9fe773e62367a784c888d97c1886661',1,'ydlidar::YDlidarDriver']]],
   ['isconnected',['isconnected',['../classydlidar_1_1_y_dlidar_driver.html#a918486cdb4f3fbe863ec2e1231168538',1,'ydlidar::YDlidarDriver::isconnected() const '],['../classydlidar_1_1_y_dlidar_driver.html#a4457578961d36ce22035d778c0fd7f06',1,'ydlidar::YDlidarDriver::isConnected()']]],
   ['isopen',['isOpen',['../classserial_1_1_serial.html#a48458f741d0fdcc5623b4daa079cbf78',1,'serial::Serial']]],
-  ['isscanning',['isscanning',['../classydlidar_1_1_y_dlidar_driver.html#ae37c037538f3acc3e488c7d3bbfcaece',1,'ydlidar::YDlidarDriver::isscanning() const '],['../classydlidar_1_1_y_dlidar_driver.html#a245115a8c8a4f98d988fbee06810d0a4',1,'ydlidar::YDlidarDriver::isScanning()']]]
+  ['isscanning',['isScanning',['../classydlidar_1_1_y_dlidar_driver.html#a245115a8c8a4f98d988fbee06810d0a4',1,'ydlidar::YDlidarDriver::isScanning()'],['../classydlidar_1_1_y_dlidar_driver.html#ae37c037538f3acc3e488c7d3bbfcaece',1,'ydlidar::YDlidarDriver::isscanning() const ']]]
 ];
