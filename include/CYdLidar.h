@@ -99,6 +99,7 @@ class YDLIDAR_API CYdLidar {
   uint64_t last_node_time;
   int m_FixedSize;
   int m_SampleRate;
+  node_info *nodes;
 
 };	// End of class
 

@@ -21,7 +21,7 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_ScanFrequency     = 7;
   isScanning          = false;
   frequencyOffset     = 0.4;
-  m_AbnormalCheckCount  = 2;
+  m_AbnormalCheckCount  = 4;
   m_Reversion         = true;
   m_OffsetTime        = 0.0;
   Major               = 0;
@@ -31,6 +31,9 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_FixedSize         = 600;
   m_SampleRate        = 4;
   m_IgnoreArray.clear();
+
+  nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
+
 }
 
 /*-------------------------------------------------------------
@@ -38,6 +41,11 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
 -------------------------------------------------------------*/
 CYdLidar::~CYdLidar() {
   disconnecting();
+
+  if (nodes) {
+    delete[] nodes;
+    nodes = nullptr;
+  }
 }
 
 void CYdLidar::disconnecting() {
@@ -68,10 +76,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     return false;
   }
 
-  node_info nodes[1024];
-  size_t   count = _countof(nodes);
-
-
+  size_t   count = YDlidarDriver::MAX_SCAN_NODES;
   //wait Scan data:
   uint64_t tim_scan_start = getTime();
   result_t op_result =  lidarPtr->grabScanData(nodes, count);
@@ -105,7 +110,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
 
     scan_msg.config.min_angle = angles::from_degrees(m_MinAngle);
     scan_msg.config.max_angle = angles::from_degrees(m_MaxAngle);
-    scan_msg.config.time_increment = scan_msg.config.scan_time / (double)count;
+    scan_msg.config.time_increment = scan_msg.config.scan_time / (double)(
+                                       count - 1);
     scan_msg.system_time_stamp = tim_scan_start;
     scan_msg.config.min_range = m_MinRange;
     scan_msg.config.max_range = m_MaxRange;
@@ -115,7 +121,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     for (int i = 0; i < count; i++) {
       angle = (float)((nodes[i].angle_q6_checkbit >>
                        LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f);
-      range = (float)nodes[i].distance_q / 1000.f;
+      range = (float)nodes[i].distance_q2 / 4000.f;
 
       angle = angles::from_degrees(angle);
 
@@ -224,8 +230,7 @@ bool  CYdLidar::turnOff() {
 }
 
 bool CYdLidar::checkLidarAbnormal() {
-  node_info nodes[1024];
-  size_t   count = _countof(nodes);
+  size_t   count = YDlidarDriver::MAX_SCAN_NODES;
   int check_abnormal_count = 0;
 
   if (m_AbnormalCheckCount < 2) {
@@ -240,6 +245,7 @@ bool CYdLidar::checkLidarAbnormal() {
       delay(check_abnormal_count * 1000);
     }
 
+    count = YDlidarDriver::MAX_SCAN_NODES;
     op_result =  lidarPtr->grabScanData(nodes, count);
 
     if (IS_OK(op_result)) {
@@ -344,6 +350,7 @@ void CYdLidar::checkSampleRate() {
   sampling_rate _rate;
   int _samp_rate = 4;
   int try_count;
+  _rate.rate = 0;
   result_t ans = lidarPtr->getSamplingRate(_rate);
 
   if (IS_OK(ans)) {
