@@ -47,6 +47,8 @@ class YDLIDAR_API CYdLidar {
                         private) ///< 设置和获取激光最大角度, 最大值180度(度)
   PropertyBuilderByName(float, MinAngle,
                         private) ///< 设置和获取激光最小角度, 最小值-180度(度)
+  PropertyBuilderByName(int, SampleRate,
+                        private) ///< 设置和获取激光采样频率
   PropertyBuilderByName(float, ScanFrequency,
                         private) ///< 设置和获取激光扫描频率(范围5HZ~12HZ)(HZ)
   PropertyBuilderByName(bool, FixedResolution,
@@ -117,6 +119,8 @@ class YDLIDAR_API CYdLidar {
   /** Returns true if the device information is correct, If it's not*/
   bool getDeviceInfo();
 
+  void checkSampleRate();
+
   /** Retruns true if the scan frequency is set to user's frequency is successful, If it's not*/
   bool checkScanFrequency();
 
@@ -131,12 +135,12 @@ class YDLIDAR_API CYdLidar {
   float   m_AngleOffset;
   bool    m_isAngleOffsetCorrected;
   float   frequencyOffset;
+  int   lidar_model;
   uint8_t Major;
   uint8_t Minjor;
   YDlidarDriver *lidarPtr;
   uint64_t node_duration;
   uint64_t last_node_time;
-  int m_SampleRate;
   node_info *global_nodes;
 
 };	// End of class

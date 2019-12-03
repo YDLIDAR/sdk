@@ -20,10 +20,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  1.4.2 |   2019-08-29  |
+| SDK     |  1.4.3 |   2019-12-03  |
 
 
-- [feature] offset angle.
+- [feature] support G4 G6 TG lidar.
 
 
 
@@ -67,7 +67,7 @@ windows:
 
 You should see YDLIDAR's scan result in the console:
 
-	[YDLIDAR]:SDK Version: 1.4.2
+	[YDLIDAR]:SDK Version: 1.4.3
 	[YDLIDAR]:Lidar running correctly ! The health status: good
 	[YDLIDAR] Connection established in [/dev/ttyUSB0][230400]:
 	Firmware version: 1.1
@@ -171,6 +171,10 @@ Coordinate System
 
 Upgrade Log
 ---------------
+
+2019-12-03 version 1.4.3
+
+   1.support G4 G6 TG lidar
 
 2019-08-29 version 1.4.2
 

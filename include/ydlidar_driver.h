@@ -463,7 +463,7 @@ class YDlidarDriver {
   enum {
     DEFAULT_TIMEOUT = 2000,    /**< 默认超时时间. */
     DEFAULT_HEART_BEAT = 1000, /**< 默认检测掉电功能时间. */
-    MAX_SCAN_NODES = 2048,	   /**< 最大扫描点数. */
+    MAX_SCAN_NODES = 3600,	   /**< 最大扫描点数. */
     DEFAULT_TIMEOUT_COUNT = 1,
   };
   enum {
@@ -484,6 +484,12 @@ class YDlidarDriver {
     YDLIDAR_G2B = 15,//230500
     YDLIDAR_G2C = 16,//230400
     YDLIDAR_G4B = 17,//230400
+    YDLIDAR_G4C = 18,//115200
+    YDLIDAR_G1      = 19,/**< G1雷达型号代号. */
+
+    YDLIDAR_TG15    = 100,/**< TG15雷达型号代号. */
+    YDLIDAR_TG30    = 101,/**< T30雷达型号代号. */
+    YDLIDAR_TG50    = 102,/**< TG50雷达型号代号. */
     YDLIDAR_Tail,
   };
 
@@ -495,7 +501,7 @@ class YDlidarDriver {
   };
 
 
-  node_info      scan_node_buf[2048];  ///< 激光点信息
+  node_info      *scan_node_buf;  ///< 激光点信息
   size_t         scan_node_count;      ///< 激光点数
   Event          _dataEvent;			 ///< 数据同步事件
   Locker         _lock;				///< 线程锁
@@ -533,8 +539,142 @@ class YDlidarDriver {
 
   std::string serial_port;///< 雷达端口
   uint8_t *globalRecvBuffer;
+  int retryCount;
 
 };
+
+inline std::string lidarModelToString(int model) {
+  std::string name = "unkown";
+
+  switch (model) {
+    case YDlidarDriver::YDLIDAR_F4:
+      name = "F4";
+      break;
+
+    case YDlidarDriver::YDLIDAR_T1:
+      name = "T1";
+
+      break;
+
+    case YDlidarDriver::YDLIDAR_F2:
+      name = "F2";
+
+      break;
+
+    case YDlidarDriver::YDLIDAR_S4:
+      name = "S4";
+
+      break;
+
+    case YDlidarDriver::YDLIDAR_G4:
+      name = "G4";
+
+      break;
+
+    case YDlidarDriver::YDLIDAR_X4:
+      name = "X4";
+
+      break;
+
+    case YDlidarDriver::YDLIDAR_G4PRO:
+      name = "G4PRO";
+
+      break;
+
+    case YDlidarDriver::YDLIDAR_F4PRO:
+      name = "F4PRO";
+
+      break;
+
+    case YDlidarDriver::YDLIDAR_G2_SS_1:
+      name = "R2";
+
+      break;
+
+    case YDlidarDriver::YDLIDAR_G10:
+      name = "G10";
+
+      break;
+
+    case YDlidarDriver::YDLIDAR_S4B:
+      name = "S4B";
+
+      break;
+
+    case YDlidarDriver::YDLIDAR_S2:
+      name = "S2";
+
+      break;
+
+    case YDlidarDriver::YDLIDAR_G6:
+      name = "G6";
+
+      break;
+
+    case YDlidarDriver::YDLIDAR_G2A:
+      name = "G2A";
+
+      break;
+
+    case YDlidarDriver::YDLIDAR_G2B:
+      name = "G2B";
+
+      break;
+
+    case YDlidarDriver::YDLIDAR_G2C:
+      name = "G2C";
+
+      break;
+
+    case YDlidarDriver::YDLIDAR_G4B:
+      name = "G4B";
+
+      break;
+
+    case YDlidarDriver::YDLIDAR_G4C:
+      name = "G4C";
+      break;
+
+    case YDlidarDriver::YDLIDAR_G1:
+      name = "G1";
+
+      break;
+
+    case YDlidarDriver::YDLIDAR_TG15:
+      name = "TG15";
+
+      break;
+
+    case YDlidarDriver::YDLIDAR_TG30:
+      name = "TG30";
+
+      break;
+
+    case YDlidarDriver::YDLIDAR_TG50:
+      name = "TG50";
+      break;
+
+    default:
+      name = "unkown";
+      break;
+  }
+
+  return name;
+}
+
+inline bool isOctaveLidar(int modle) {
+  bool ret = false;
+
+  if (modle == YDlidarDriver::YDLIDAR_G6 ||
+      modle == YDlidarDriver::YDLIDAR_TG15 ||
+      modle == YDlidarDriver::YDLIDAR_TG15 ||
+      modle == YDlidarDriver::YDLIDAR_TG15) {
+    ret = true;
+  }
+
+  return ret;
+}
+
 }
 
 #endif // YDLIDAR_DRIVER_H
