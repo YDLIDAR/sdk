@@ -11,6 +11,8 @@
 #include <assert.h>
 #endif
 
+#define UNUSED(x) (void)x
+
 #if defined(__ANDROID__)
 #define    pthread_cancel(x) 0
 #endif
@@ -21,14 +23,12 @@ class Thread {
  public:
 
   template <class CLASS, int (CLASS::*PROC)(void)> static Thread
-  ThreadCreateObjectFunctor(
-    CLASS *pthis) {
+  ThreadCreateObjectFunctor(CLASS *pthis) {
     return createThread(createThreadAux<CLASS, PROC>, pthis);
   }
 
   template <class CLASS, int (CLASS::*PROC)(void) > static _size_t THREAD_PROC
-  createThreadAux(
-    void *param) {
+  createThreadAux(void *param) {
     return (static_cast<CLASS *>(param)->*PROC)();
   }
 
@@ -36,8 +36,7 @@ class Thread {
     Thread thread_(proc, param);
 #if defined(_WIN32)
     thread_._handle = (_size_t)(_beginthreadex(NULL, 0,
-                                (unsigned int (__stdcall *)(void *))proc, param,
-                                0, NULL));
+                                (unsigned int (__stdcall *)(void *))proc, param, 0, NULL));
 #else
     assert(sizeof(thread_._handle) >= sizeof(pthread_t));
 
