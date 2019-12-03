@@ -349,7 +349,7 @@ bool CYdLidar::getDeviceInfo() {
 void CYdLidar::checkSampleRate() {
   sampling_rate _rate;
   int _samp_rate = 4;
-  int try_count;
+  int try_count = 0;
   _rate.rate = 0;
   result_t ans = lidarPtr->getSamplingRate(_rate);
 
