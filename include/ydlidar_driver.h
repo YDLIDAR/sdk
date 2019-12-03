@@ -662,18 +662,66 @@ inline std::string lidarModelToString(int model) {
   return name;
 }
 
-inline bool isOctaveLidar(int modle) {
+inline bool isOctaveLidar(int model) {
   bool ret = false;
 
-  if (modle == YDlidarDriver::YDLIDAR_G6 ||
-      modle == YDlidarDriver::YDLIDAR_TG15 ||
-      modle == YDlidarDriver::YDLIDAR_TG15 ||
-      modle == YDlidarDriver::YDLIDAR_TG15) {
+  if (model == YDlidarDriver::YDLIDAR_G6 ||
+      model == YDlidarDriver::YDLIDAR_TG15 ||
+      model == YDlidarDriver::YDLIDAR_TG30 ||
+      model == YDlidarDriver::YDLIDAR_TG50) {
     ret = true;
   }
 
   return ret;
 }
+
+inline bool hasSampleRate(int model) {
+  bool ret = false;
+
+  if (model == YDlidarDriver::YDLIDAR_G4 ||
+      model == YDlidarDriver::YDLIDAR_G6 ||
+      model == YDlidarDriver::YDLIDAR_TG15 ||
+      model == YDlidarDriver::YDLIDAR_TG50 ||
+      model == YDlidarDriver::YDLIDAR_TG30) {
+    ret = true;
+  }
+
+  return ret;
+}
+
+inline bool hasZeroAngle(int model) {
+  bool ret = false;
+
+  if (model == YDlidarDriver::YDLIDAR_G2_SS_1 ||
+      model == YDlidarDriver::YDLIDAR_G2A ||
+      model == YDlidarDriver::YDLIDAR_G2B ||
+      model == YDlidarDriver::YDLIDAR_G2C ||
+      model == YDlidarDriver::YDLIDAR_G1) {
+    ret = true;
+  }
+
+  return ret;
+}
+
+inline bool isSupportLidar(int model) {
+  bool ret = true;
+
+  if (model != YDlidarDriver::YDLIDAR_G2A &&
+      model != YDlidarDriver::YDLIDAR_G2B &&
+      model != YDlidarDriver::YDLIDAR_G2C &&
+      model != YDlidarDriver::YDLIDAR_G4 &&
+      model != YDlidarDriver::YDLIDAR_G6 &&
+      model != YDlidarDriver::YDLIDAR_G4C &&
+      model != YDlidarDriver::YDLIDAR_G1 &&
+      model != YDlidarDriver::YDLIDAR_TG15 &&
+      model != YDlidarDriver::YDLIDAR_TG30 &&
+      model != YDlidarDriver::YDLIDAR_TG50) {
+    ret = false;
+  }
+
+  return ret;
+}
+
 
 }
 

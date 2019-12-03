@@ -93,6 +93,36 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  int baudrate = 230400;
+  printf("0. 115200\n");
+  printf("1. 230400\n");
+  printf("2. 512000\n");
+
+  while (ydlidar::ok()) {
+    printf("Please select the lidar baudrate:");
+    std::string number;
+    std::cin >> number;
+
+    if ((size_t)atoi(number.c_str()) > 2) {
+      continue;
+    }
+
+    if (atoi(number.c_str()) == 0) {
+      baudrate = 115200;
+    } else if (atoi(number.c_str()) == 1) {
+      baudrate = 230400;
+    } else  {
+      baudrate = 512000;
+    }
+
+    break;
+  }
+
+  if (!ydlidar::ok()) {
+    return 0;
+  }
+
+
   std::string input_frequency;
   float frequency = 8.0;
 
@@ -115,7 +145,7 @@ int main(int argc, char *argv[]) {
 
   CYdLidar laser;
   laser.setSerialPort(port);
-  laser.setSerialBaudrate(230400);
+  laser.setSerialBaudrate(baudrate);
   laser.setFixedResolution(false);
   laser.setReversion(true); //
   laser.setAutoReconnect(true);//hot plug

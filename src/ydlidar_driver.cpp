@@ -1127,7 +1127,7 @@ void YDlidarDriver::checkTransDelay() {
         case YDLIDAR_RATE_4K:
           sample_rate = 10000;
 
-          if (model == YDLIDAR_G4) {
+          if (!isOctaveLidar(model)) {
             sample_rate = 4000;
           }
 
@@ -1136,7 +1136,7 @@ void YDlidarDriver::checkTransDelay() {
         case YDLIDAR_RATE_8K:
           sample_rate = 16000;
 
-          if (model == YDLIDAR_G4) {
+          if (!isOctaveLidar(model)) {
             sample_rate = 8000;
           }
 
@@ -1145,7 +1145,7 @@ void YDlidarDriver::checkTransDelay() {
         case YDLIDAR_RATE_9K:
           sample_rate = 18000;
 
-          if (model == YDLIDAR_G4) {
+          if (!isOctaveLidar(model)) {
             sample_rate = 9000;
           }
 
@@ -1154,7 +1154,7 @@ void YDlidarDriver::checkTransDelay() {
         case YDLIDAR_RATE_10K:
           sample_rate = 10000;
 
-          if (model == YDLIDAR_G4) {
+          if (!isOctaveLidar(model)) {
             sample_rate = 20000;
           }
 
@@ -1163,7 +1163,7 @@ void YDlidarDriver::checkTransDelay() {
         default:
           sample_rate = 18000;
 
-          if (model == YDLIDAR_G4) {
+          if (!isOctaveLidar(model)) {
             sample_rate = 9000;
           }
 

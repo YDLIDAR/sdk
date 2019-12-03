@@ -368,12 +368,7 @@ bool CYdLidar::getDeviceInfo() {
     return false;
   }
 
-  if (devinfo.model != YDlidarDriver::YDLIDAR_G2A &&
-      devinfo.model != YDlidarDriver::YDLIDAR_G2B &&
-      devinfo.model != YDlidarDriver::YDLIDAR_G2C &&
-      devinfo.model != YDlidarDriver::YDLIDAR_G4 &&
-      devinfo.model != YDlidarDriver::YDLIDAR_G4C &&
-      devinfo.model != YDlidarDriver::YDLIDAR_G1) {
+  if (!isSupportLidar(devinfo.model)) {
     printf("[YDLIDAR INFO] Current SDK does not support current lidar models[%s]\n",
            lidarModelToString(devinfo.model).c_str());
     return false;
@@ -457,11 +452,7 @@ bool CYdLidar::getDeviceInfo() {
 
   printf("\n");
 
-  if (devinfo.model == YDlidarDriver::YDLIDAR_G4 ||
-      devinfo.model == YDlidarDriver::YDLIDAR_G6 ||
-      devinfo.model == YDlidarDriver::YDLIDAR_TG15 ||
-      devinfo.model == YDlidarDriver::YDLIDAR_TG50 ||
-      devinfo.model == YDlidarDriver::YDLIDAR_TG30) {
+  if (hasSampleRate(devinfo.model)) {
     checkSampleRate();
   }
 
@@ -477,12 +468,7 @@ bool CYdLidar::getDeviceInfo() {
 
   checkScanFrequency();
 
-  if (devinfo.model != YDlidarDriver::YDLIDAR_G4 &&
-      devinfo.model != YDlidarDriver::YDLIDAR_G6 &&
-      devinfo.model != YDlidarDriver::YDLIDAR_G4C &&
-      devinfo.model != YDlidarDriver::YDLIDAR_TG15 &&
-      devinfo.model != YDlidarDriver::YDLIDAR_TG30 &&
-      devinfo.model != YDlidarDriver::YDLIDAR_TG50) {
+  if (hasZeroAngle(devinfo.model)) {
     checkCalibrationAngle(serial_number);
   }
 
@@ -520,7 +506,7 @@ void CYdLidar::checkSampleRate() {
         break;
     }
 
-    if (lidar_model == YDlidarDriver::YDLIDAR_G4) {
+    if (!isOctaveLidar(lidar_model)) {
       _rate.rate = 2;
       _samp_rate = 9;
       try_count = 0;
@@ -559,7 +545,7 @@ void CYdLidar::checkSampleRate() {
         _samp_rate = 10;
         node_counts = 1440;
 
-        if (lidar_model == YDlidarDriver::YDLIDAR_G4) {
+        if (!isOctaveLidar(lidar_model)) {
           _samp_rate = 4;
           node_counts = 720;
         }
@@ -570,7 +556,7 @@ void CYdLidar::checkSampleRate() {
         node_counts = 2400;
         _samp_rate = 16;
 
-        if (lidar_model == YDlidarDriver::YDLIDAR_G4) {
+        if (!isOctaveLidar(lidar_model)) {
           _samp_rate = 8;
           node_counts = 1440;
         }
@@ -581,7 +567,7 @@ void CYdLidar::checkSampleRate() {
         node_counts = 2600;
         _samp_rate = 18;
 
-        if (lidar_model == YDlidarDriver::YDLIDAR_G4) {
+        if (!isOctaveLidar(lidar_model)) {
           _samp_rate = 9;
           node_counts = 1440;
         }
@@ -592,7 +578,7 @@ void CYdLidar::checkSampleRate() {
         node_counts = 2800;
         _samp_rate = 20;
 
-        if (lidar_model == YDlidarDriver::YDLIDAR_G4) {
+        if (!isOctaveLidar(lidar_model)) {
           _samp_rate = 10;
           node_counts = 1440;
         }
