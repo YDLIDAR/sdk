@@ -14,16 +14,16 @@ If you are using ROS (Robot Operating System), please use our open-source [ROS D
 Licence
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 
-The SDK itself is licensed under BSD [License](license)
+The SDK itself is licensed under BSD [license](license)
 
 Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  1.4.3 |   2019-12-03  |
+| SDK     |  1.4.4 |   2019-12-05  |
 
 
-- [feature] support G4 G6 TG lidar.
+- [feature] Supports all standard Lidars.
 
 
 
@@ -40,14 +40,23 @@ Dataset
 
 How to build YDLIDAR SDK samples
 ---------------
+
     $ git clone https://github.com/ydlidar/sdk
+
     $ cd sdk
-    $ git checkout G2
+
+    $ git checkout master
+
     $ cd ..
+
     $ mkdir build
+
     $ cd build
+
     $ cmake ../sdk
+
     $ make			###linux
+
     $ vs open Project.sln	###windows
 
 How to run YDLIDAR SDK samples
@@ -67,7 +76,7 @@ windows:
 
 You should see YDLIDAR's scan result in the console:
 
-	[YDLIDAR]:SDK Version: 1.4.3
+	[YDLIDAR]:SDK Version: 1.4.4
 	[YDLIDAR]:Lidar running correctly ! The health status: good
 	[YDLIDAR] Connection established in [/dev/ttyUSB0][230400]:
 	Firmware version: 1.1
@@ -86,74 +95,8 @@ You should see YDLIDAR's scan result in the console:
 
 Data structure
 -------------------------------------------------------------------------------------------------------------------------------------------------------
-
-data structure:
-
-    //! A struct for returning configuration from the YDLIDAR
-    struct LaserConfig {
-
-        //! Start angle for the laser scan [rad].  0 is forward and angles are measured clockwise when viewing YDLIDAR from the top.
-        float min_angle;
-
-        //! Stop angle for the laser scan [rad].   0 is forward and angles are measured clockwise when viewing YDLIDAR from the top.
-        float max_angle;
-
-        //! Scan resolution [rad].
-        float ang_increment;
-
-        //! Scan resoltuion [ns]
-        float time_increment;
-
-        //! Time between scans
-        float scan_time;
-
-        //! Minimum range [m]
-        float min_range;
-
-        //! Maximum range [m]
-        float max_range;
-
-        //! Range Resolution [m]
-        float range_res;
-
-      };
-
-
-      struct LaserScan {
-
-        //! Array of ranges
-        std::vector<float> ranges;
-
-        //! Array of intensities
-        std::vector<float> intensities;
-
-        //! Self reported time stamp in nanoseconds
-        uint64_t self_time_stamp;
-
-        //! System time when first range was measured in nanoseconds
-        uint64_t system_time_stamp;
-
-        //! Configuration of scan
-        LaserConfig config;
-
-      };
-
-example angle parsing:
-
-    LaserScan scan;
-
-    for(size_t i =0; i < scan.ranges.size(); i++) {
-
-      // current angle
-      double angle = scan.config.min_angle + i*scan.config.ang_increment;// radian format
-
-      //current distance
-      double distance = scan.ranges[i];//meters
-
-      //current intensity
-      int intensity = scan.intensities[i];
-
-    }
+	
+See [the protocol page](include/ydlidar_protocol.h) for more info.
     
 
 Coordinate System
@@ -162,15 +105,12 @@ Coordinate System
 ![Coordinate](image/image.png  "Coordinate")
 
 
-
-### The relationship between the angle value and the data structure in the above figure:
-
-	double current_angle =  scan.config.min_angle + index*scan.config.ang_increment;// radian format
-	doube Angle = current_angle*180/M_PI;//Angle fomat
-
-
 Upgrade Log
 ---------------
+
+2019-12-03 version 1.4.4
+
+   1.Supports all standard Lidars.
 
 2019-12-03 version 1.4.3
 
