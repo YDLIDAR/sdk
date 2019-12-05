@@ -55,7 +55,6 @@
 #define M_PI 3.1415926
 #endif
 
-#define DEG2RAD(x) ((x)*M_PI/180.)
 #define SUNNOISEINTENSITY 0xff
 #define GLASSNOISEINTENSITY 0xfe
 
@@ -101,15 +100,12 @@
 #define LIDAR_CMD_ENABLE_CONST_FREQ        0x0E
 #define LIDAR_CMD_DISABLE_CONST_FREQ       0x0F
 
-#define LIDAR_CMD_GET_OFFSET_ANGLE        0x93
+#define LIDAR_CMD_GET_OFFSET_ANGLE          0x93
 #define LIDAR_CMD_SAVE_SET_EXPOSURE         0x94
 #define LIDAR_CMD_SET_LOW_EXPOSURE          0x95
 #define LIDAR_CMD_ADD_EXPOSURE       	    0x96
 #define LIDAR_CMD_DIS_EXPOSURE       	    0x97
 
-
-#define LIDAR_CMD_SET_HEART_BEAT        0xD9
-#define LIDAR_CMD_SET_SETPOINTSFORONERINGFLAG  0xae
 
 #define PackageSampleMaxLngth 0x100
 typedef enum {
@@ -226,13 +222,16 @@ struct lidar_ans_header {
 #endif
 
 struct LaserPoint {
+  //! lidar angle
   float angle;
+  //! lidar range
   float range;
+  //! lidar intensity
   float intensity;
   LaserPoint &operator = (const LaserPoint &data) {
-    angle = data.angle;
-    range = data.range;
-    intensity = data.intensity;
+    this->angle = data.angle;
+    this->range = data.range;
+    this->intensity = data.intensity;
     return *this;
   }
 };
@@ -266,20 +265,36 @@ struct LaserConfig {
 };
 
 
+//struct LaserScan {
+//  //! Array of ranges
+//  std::vector<float> ranges;
+//  //! Array of intensities
+//  std::vector<float> intensities;
+//  //! System time when first range was measured in nanoseconds
+//  uint64_t system_time_stamp;
+//  //! Configuration of scan
+//  LaserConfig config;
+//  LaserScan &operator = (const LaserScan &data) {
+//    this->ranges = data.ranges;
+//    this->intensities = data.intensities;
+//    system_time_stamp = data.system_time_stamp;
+//    config = data.config;
+//    return *this;
+//  }
+//};
+
 struct LaserScan {
-  //! Array of ranges
-  std::vector<float> ranges;
-  //! Array of intensities
-  std::vector<float> intensities;
   //! System time when first range was measured in nanoseconds
-  uint64_t system_time_stamp;
+  uint64_t stamp;
+  //! Array of lidar points
+  std::vector<LaserPoint> points;
   //! Configuration of scan
   LaserConfig config;
   LaserScan &operator = (const LaserScan &data) {
-    this->ranges = data.ranges;
-    this->intensities = data.intensities;
-    system_time_stamp = data.system_time_stamp;
-    config = data.config;
+    this->points = data.points;
+    this->stamp = data.stamp;
+    this->config = data.config;
     return *this;
   }
+
 };

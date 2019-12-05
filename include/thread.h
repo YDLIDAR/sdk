@@ -102,7 +102,7 @@ class Thread {
 #else
     UNUSED(timeout);
     void *res;
-    int s;
+    int s = -1;
     s = pthread_cancel((pthread_t)(this->_handle));
 
     if (s != 0) {

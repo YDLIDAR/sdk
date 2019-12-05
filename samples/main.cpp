@@ -34,6 +34,7 @@
 #include "CYdLidar.h"
 #include <iostream>
 #include <string>
+#include <algorithm>
 using namespace std;
 using namespace ydlidar;
 
@@ -94,27 +95,30 @@ int main(int argc, char *argv[]) {
   }
 
   int baudrate = 230400;
-  printf("0. 115200\n");
-  printf("1. 230400\n");
-  printf("2. 512000\n");
+  std::map<int, int> baudrateList;
+  baudrateList[0] = 115200;
+  baudrateList[1] = 128000;
+  baudrateList[2] = 153600;
+  baudrateList[3] = 230400;
+  baudrateList[4] = 512000;
+
+  printf("Baudrate:\n");
+
+  for (std::map<int, int>::iterator it = baudrateList.begin();
+       it != baudrateList.end(); it++) {
+    printf("%d. %d\n", it->first, it->second);
+  }
 
   while (ydlidar::ok()) {
     printf("Please select the lidar baudrate:");
     std::string number;
     std::cin >> number;
 
-    if ((size_t)atoi(number.c_str()) > 2) {
+    if ((size_t)atoi(number.c_str()) > baudrateList.size()) {
       continue;
     }
 
-    if (atoi(number.c_str()) == 0) {
-      baudrate = 115200;
-    } else if (atoi(number.c_str()) == 1) {
-      baudrate = 230400;
-    } else  {
-      baudrate = 512000;
-    }
-
+    baudrate = baudrateList[atoi(number.c_str())];
     break;
   }
 
@@ -122,16 +126,45 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
+  bool isSingleChannel = false;
+  bool isTOFLidar = false;
+  std::string input_channel;
+  std::string input_tof;
+  printf("Whether the Lidar is one-way communication[yes/no]:");
+  std::cin >> input_channel;
+  std::transform(input_channel.begin(), input_channel.end(),
+                 input_channel.begin(),
+  [](unsigned char c) {
+    return std::tolower(c);  // correct
+  });
+
+  if (input_channel.find("yes") != std::string::npos) {
+    isSingleChannel = true;
+
+    printf("Whether the Lidar is a TOF Lidar [yes/no]:");
+    std::cin >> input_tof;
+    std::transform(input_tof.begin(), input_tof.end(),
+                   input_tof.begin(),
+    [](unsigned char c) {
+      return std::tolower(c);  // correct
+    });
+
+    if (input_tof.find("yes") != std::string::npos) {
+      isTOFLidar = true;
+    }
+  }
+
 
   std::string input_frequency;
+
   float frequency = 8.0;
 
-  while (ydlidar::ok()) {
+  while (ydlidar::ok() && !isSingleChannel) {
     printf("Please enter the lidar scan frequency[5-12]:");
     std::cin >> input_frequency;
     frequency = atof(input_frequency.c_str());
 
-    if (frequency <= 12.0 && frequency >= 5.0) {
+    if (frequency <= 12.0 && frequency >= 3.0) {
       break;
     }
 
@@ -143,25 +176,37 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
-  CYdLidar laser;
-  laser.setSerialPort(port);
-  laser.setSerialBaudrate(baudrate);
-  laser.setFixedResolution(false);
-  laser.setReversion(true); //
-  laser.setAutoReconnect(true);//hot plug
 
+
+
+  CYdLidar laser;
+  //<! lidar port
+  laser.setSerialPort(port);
+  //<! lidar baudrate
+  laser.setSerialBaudrate(baudrate);
+
+  //<! fixed angle resolution
+  laser.setFixedResolution(false);
+  //<! rotate 180
+  laser.setReversion(true); //rotate 180
+  //<! Counterclockwise
+  laser.setInverted(true);//ccw
+  laser.setAutoReconnect(true);//hot plug
+  //<! one-way communication
+  laser.setSingleChannel(isSingleChannel);
+
+  //<! tof lidar
+  laser.setTOFLidar(isTOFLidar);
   //unit: °
   laser.setMaxAngle(180);
   laser.setMinAngle(-180);
 
   //unit: m
   laser.setMinRange(0.1);
-  laser.setMaxRange(16.0);
+  laser.setMaxRange(32.0);
 
   //unit: Hz
   laser.setScanFrequency(frequency);
-
-
   std::vector<float> ignore_array;
   ignore_array.clear();
   laser.setIgnoreArray(ignore_array);
@@ -178,8 +223,8 @@ int main(int argc, char *argv[]) {
 
     if (laser.doProcessSimple(scan, hardError)) {
       fprintf(stdout, "Scan received[%llu]: %u ranges is [%f]Hz\n",
-              scan.system_time_stamp,
-              (unsigned int)scan.ranges.size(), 1.0 / scan.config.scan_time);
+              scan.stamp,
+              (unsigned int)scan.points.size(), 1.0 / scan.config.scan_time);
       fflush(stdout);
     } else {
       fprintf(stderr, "Failed to get Lidar Data\n");

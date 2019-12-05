@@ -55,6 +55,8 @@ class YDLIDAR_API CYdLidar {
                         private) ///< 设置和获取激光是否是固定角度分辨率
   PropertyBuilderByName(bool, Reversion,
                         private) ///< 设置和获取是否旋转激光180度
+  PropertyBuilderByName(bool, Inverted,
+                        private)///< 设置是否反转激光方向(顺时针，　逆时针）
   PropertyBuilderByName(bool, AutoReconnect,
                         private) ///< 设置异常是否开启重新连接
   PropertyBuilderByName(int, SerialBaudrate,
@@ -67,19 +69,24 @@ class YDLIDAR_API CYdLidar {
                         private) ///< 设置和获取激光剔除点
   PropertyBuilderByName(float, OffsetTime,
                         private) ///<
+  PropertyBuilderByName(bool, SingleChannel,
+                        private) ///< 是否是单通信雷达
+  PropertyBuilderByName(bool, TOFLidar,
+                        private) ///< 是否是TOF雷达
 
 
  public:
   CYdLidar(); //!< Constructor
   virtual ~CYdLidar();  //!< Destructor: turns the laser off.
-  /**
+  /*!
    * @brief initialize
    * @return
    */
   bool initialize();  //!< Attempts to connect and turns the laser on. Raises an exception on error.
 
   // Return true if laser data acquistion succeeds, If it's not
-  bool doProcessSimple(LaserScan &outscan, bool &hardwareError);
+  bool doProcessSimple(LaserScan &outscan,
+                       bool &hardwareError);
 
   //Turn on the motor enable
   bool  turnOn();  //!< See base class docs
@@ -97,41 +104,67 @@ class YDLIDAR_API CYdLidar {
   bool isAngleOffetCorrected() const;
 
  protected:
-  /** Returns true if communication has been established with the device. If it's not,
+  /*! Returns true if communication has been established with the device. If it's not,
     *  try to create a comms channel.
     * \return false on error.
     */
   bool  checkCOMMs();
 
-  /** Returns true if health status and device information has been obtained with the device. If it's not,
+  /*! Returns true if health status and device information has been obtained with the device. If it's not,
     * \return false on error.
     */
   bool  checkStatus();
 
-  /** Returns true if the normal scan runs with the device. If it's not,
+  /*! Returns true if the normal scan runs with the device. If it's not,
     * \return false on error.
     */
   bool checkHardware();
 
-  /** Returns true if the device is in good health, If it's not*/
+  /*! Returns true if the device is in good health, If it's not*/
   bool getDeviceHealth();
 
-  /** Returns true if the device information is correct, If it's not*/
+  /*! Returns true if the device information is correct, If it's not*/
   bool getDeviceInfo();
 
+  /*!
+   * @brief checkSampleRate
+   */
   void checkSampleRate();
 
-  /** Retruns true if the scan frequency is set to user's frequency is successful, If it's not*/
+  /*! Retruns true if the scan frequency is set to user's frequency is successful, If it's not*/
   bool checkScanFrequency();
 
-  /** returns true if the lidar data is normal, If it's not*/
+  /*! returns true if the lidar data is normal, If it's not*/
   bool checkLidarAbnormal();
 
+  /*!
+   * @brief checkCalibrationAngle
+   * @param serialNumber
+   */
   void checkCalibrationAngle(const std::string &serialNumber);
+
+  /*!
+    * @brief isRangeValid
+    * @param reading
+    * @return
+    */
+  bool isRangeValid(double reading) const;
+
+  /*!
+   * @brief isRangeIgnore
+   * @param angle
+   * @return
+   */
+  bool isRangeIgnore(double angle) const;
+
+  /*!
+   * @brief handleSingleChannelDevice
+   */
+  void handleSingleChannelDevice();
 
  private:
   bool    isScanning;
-  int     node_counts ;
+  int     m_FixedSize ;
   float   m_AngleOffset;
   bool    m_isAngleOffsetCorrected;
   float   frequencyOffset;
@@ -139,7 +172,7 @@ class YDLIDAR_API CYdLidar {
   uint8_t Major;
   uint8_t Minjor;
   YDlidarDriver *lidarPtr;
-  uint64_t node_duration;
+  uint64_t m_PointTime;
   uint64_t last_node_time;
   node_info *global_nodes;
 

@@ -43,7 +43,7 @@ void HPtimer_reset();
 #endif
 uint32_t getHDTimer();
 uint64_t getCurrentTime();
-}
+} // namespace impl
 
 
 #define getms() impl::getHDTimer()
