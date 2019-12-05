@@ -207,7 +207,6 @@ class Event {
     if (ret != 0) {
       fprintf(stderr, "Failed to init condattr...\n");
       fflush(stderr);
-      exit(1);
     }
 
     ret = pthread_condattr_setclock(&_cond_cattr, CLOCK_MONOTONIC);
