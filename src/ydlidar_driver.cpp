@@ -767,7 +767,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     float sampleAngle = IntervalSampleAngle * package_Sample_Index;
 
     if (m_IgnoreArray.size() != 0) {//eliminate the specified range angle.
-      double angle = (FirstSampleAngle + sampleAngle) /
+      double angle = (FirstSampleAngle + sampleAngle + AngleCorrectForDistance) /
                      64.0;
 
       angle = 360 - angle;
