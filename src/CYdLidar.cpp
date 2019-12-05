@@ -186,14 +186,14 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan,
     outscan.config.time_increment = outscan.config.scan_time / (double)(count - 1);
     outscan.config.min_range = m_MinRange;
     outscan.config.max_range = m_MaxRange;
-    outscan.config.angle_increment = (outscan.config.max_angle -
-                                      outscan.config.min_angle) / (all_node_count - 1);
     outscan.stamp = tim_scan_start;
     outscan.points.clear();
 
     if (m_FixedResolution) {
       all_node_count = m_FixedSize;
     }
+    outscan.config.angle_increment = (outscan.config.max_angle -
+                                      outscan.config.min_angle) / (all_node_count - 1);
 
     float range = 0.0;
     float intensity = 0.0;
