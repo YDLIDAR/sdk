@@ -702,7 +702,7 @@ inline std::string lidarModelToString(int model) {
       break;
 
     case YDlidarDriver::YDLIDAR_G1:
-      name = "G1";
+      name = "G1(5K)";
 
       break;
 
@@ -804,7 +804,7 @@ inline int lidarModelDefaultSampleRate(int model) {
       break;
 
     case YDlidarDriver::YDLIDAR_G1:
-      sample_rate = 9;
+      sample_rate = 5;
       break;
 
     case YDlidarDriver::YDLIDAR_TG15:
