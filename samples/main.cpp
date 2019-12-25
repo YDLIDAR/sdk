@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
     std::cin >> number;
     frequency = atof(number.c_str());
 
-    if (frequency >= 3 &&  frequency <= 12) {
+    if (frequency >= 3 &&  frequency <= 15) {
       break;
     }
 

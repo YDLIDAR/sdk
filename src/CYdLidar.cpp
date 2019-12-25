@@ -527,7 +527,7 @@ bool CYdLidar::checkScanFrequency() {
   int retryCount = 0;
 
   if (3.0 - m_FrequencyOffset <= m_ScanFrequency &&
-      m_ScanFrequency <= 12 + m_FrequencyOffset) {
+      m_ScanFrequency <= 15 + m_FrequencyOffset) {
     ans = lidarPtr->getScanFrequency(_scan_frequency);
 
     if (!IS_OK(ans)) {
