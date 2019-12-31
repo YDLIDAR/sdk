@@ -68,10 +68,10 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   Major               = 0;
   Minjor              = 0;
   m_IgnoreArray.clear();
-  m_PointTime         = 1e9 / 5000;
+  m_PointTime         = 1e9 / 8000;
   m_OffsetTime        = 0.0;
   m_AngleOffset       = 0.0;
-  lidar_model = YDlidarDriver::YDLIDAR_G2B;
+  lidar_model = YDlidarDriver::YDLIDAR_TG30;
   last_node_time = getTime();
   global_nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
 }
@@ -192,6 +192,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan,
     if (m_FixedResolution) {
       all_node_count = m_FixedSize;
     }
+
     outscan.config.angle_increment = (outscan.config.max_angle -
                                       outscan.config.min_angle) / (all_node_count - 1);
 
@@ -364,12 +365,16 @@ bool CYdLidar::checkLidarAbnormal() {
 
       if (!m_SingleChannel && IS_OK(op_result)) {
         return !IS_OK(op_result);
+//        if (fabs(scan_time - 1.0 / m_ScanFrequency) < 0.03) {
+//          break;
+//        }
       }
     }
 
-    if (IS_OK(op_result) && lidarPtr->getSingleChannel()) {
+    if (IS_OK(op_result)) {
       data.push_back(count);
       int collection = 0;
+      int lastSampleRate = 0;
 
       while (collection < 5) {
         count = YDlidarDriver::MAX_SCAN_NODES;
@@ -379,7 +384,7 @@ bool CYdLidar::checkLidarAbnormal() {
 
 
         if (IS_OK(op_result)) {
-          if (abs(data.front() - count) > 10) {
+          if (std::abs(data.front() - count) > 10) {
             data.erase(data.begin());
           }
 
@@ -391,13 +396,33 @@ bool CYdLidar::checkLidarAbnormal() {
             lidarPtr->setPointTime(m_PointTime);
           }
 
+          if (!lidarPtr->getSingleChannel()) {
+            if (fabs(scan_time - 1.0 / m_ScanFrequency) < 0.03) {
+              int SampleRate = static_cast<int>((count / scan_time + 500) / 1000);
+
+              if (SampleRate == lastSampleRate) {
+                if (m_SampleRate != SampleRate) {
+                  m_SampleRate = SampleRate;
+                  m_FixedSize = m_SampleRate * 1000 / (m_ScanFrequency - 0.1);
+                  printf("[YDLIDAR]:Fixed Size: %d\n", m_FixedSize);
+                  printf("[YDLIDAR]:Sample Rate: %dK\n", m_SampleRate);
+                }
+
+                m_PointTime = 1e9 / (m_SampleRate * 1000);
+                lidarPtr->setPointTime(m_PointTime);
+              }
+
+              lastSampleRate = SampleRate;
+            }
+          }
+
           data.push_back(count);
         }
 
         collection++;
       }
 
-      if (data.size() > 1) {
+      if (data.size() > 1 && lidarPtr->getSingleChannel()) {
         int total = accumulate(data.begin(), data.end(), 0);
         int mean =  total / data.size(); //mean value
         m_FixedSize = (static_cast<int>((mean + 5) / 10)) * 10;
@@ -466,7 +491,7 @@ bool CYdLidar::getDeviceInfo() {
   }
 
   frequencyOffset     = 0.4;
-  std::string model = "G2";
+  std::string model = "TG30";
   lidar_model = devinfo.model;
   model = lidarModelToString(devinfo.model);
   bool intensity = hasIntensity(devinfo.model);
@@ -554,6 +579,13 @@ void CYdLidar::checkSampleRate() {
   int _samp_rate = 20;
   int try_count = 0;
   m_FixedSize = 2880;
+
+  if (lidar_model == YDlidarDriver::YDLIDAR_TG30) {
+    m_FixedSize = 1440;
+    m_SampleRate = 8;
+    return;
+  }
+
   result_t ans = lidarPtr->getSamplingRate(_rate);
 
   if (IS_OK(ans)) {

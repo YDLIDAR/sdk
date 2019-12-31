@@ -46,11 +46,11 @@ YDlidarDriver::YDlidarDriver():
   m_intensities       = false;
   isAutoReconnect     = true;
   isAutoconnting      = false;
-  m_baudrate          = 230400;
+  m_baudrate          = 512000;
   isSupportMotorDtrCtrl  = true;
   scan_node_count     = 0;
-  sample_rate         = 5000;
-  m_PointTime         = 1e9 / 5000;
+  sample_rate         = 8000;
+  m_PointTime         = 1e9 / 8000;
   trans_delay         = 0;
   scan_frequence      = 0;
   m_sampling_rate     = -1;
@@ -1330,7 +1330,7 @@ void YDlidarDriver::setIntensities(const bool &isintensities) {
     }
 
     globalRecvBuffer = new uint8_t[isintensities ? sizeof(node_package) : sizeof(
-                                     node_packages)];
+                                                   node_packages)];
   }
 
   m_intensities = isintensities;
@@ -1356,6 +1356,12 @@ void YDlidarDriver::checkTransDelay() {
   //calc stamp
   trans_delay = _serial->getByteTime();
   sample_rate = lidarModelDefaultSampleRate(model) * 1000;
+
+  if (model == YDLIDAR_TG30) {
+    m_sampling_rate = 8000;
+    m_PointTime = 1e9 / sample_rate;
+    return;
+  }
 
   switch (model) {
     case YDLIDAR_G4://g4

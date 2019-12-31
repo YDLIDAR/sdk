@@ -35,6 +35,7 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <cctype>
 using namespace std;
 using namespace ydlidar;
 
@@ -157,14 +158,14 @@ int main(int argc, char *argv[]) {
 
   std::string input_frequency;
 
-  float frequency = 8.0;
+  float frequency = 10.0;
 
   while (ydlidar::ok() && !isSingleChannel) {
-    printf("Please enter the lidar scan frequency[5-12]:");
+    printf("Please enter the lidar scan frequency[3-15.7]:");
     std::cin >> input_frequency;
     frequency = atof(input_frequency.c_str());
 
-    if (frequency <= 12.0 && frequency >= 3.0) {
+    if (frequency <= 15.7 && frequency >= 3.0) {
       break;
     }
 
