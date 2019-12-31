@@ -48,7 +48,7 @@ using namespace angles;
 -------------------------------------------------------------*/
 CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_SerialPort        = "";
-  m_SerialBaudrate    = 230400;
+  m_SerialBaudrate    = 512000;
   m_FixedResolution   = true;
   m_Reversion         = true;
   m_Inverted          = true;//
@@ -59,10 +59,10 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_MinAngle          = -180.f;
   m_MaxRange          = 32.0;
   m_MinRange          = 0.1;
-  m_SampleRate        = 5;
+  m_SampleRate        = 8;
   m_ScanFrequency     = 10;
   isScanning          = false;
-  m_FixedSize         = 720;
+  m_FixedSize         = 1440;
   frequencyOffset     = 0.4;
   m_AbnormalCheckCount  = 4;
   Major               = 0;
@@ -365,9 +365,6 @@ bool CYdLidar::checkLidarAbnormal() {
 
       if (!m_SingleChannel && IS_OK(op_result)) {
         return !IS_OK(op_result);
-//        if (fabs(scan_time - 1.0 / m_ScanFrequency) < 0.03) {
-//          break;
-//        }
       }
     }
 

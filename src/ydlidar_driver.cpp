@@ -1358,7 +1358,7 @@ void YDlidarDriver::checkTransDelay() {
   sample_rate = lidarModelDefaultSampleRate(model) * 1000;
 
   if (model == YDLIDAR_TG30) {
-    m_sampling_rate = 8000;
+    sample_rate = 8000;
     m_PointTime = 1e9 / sample_rate;
     return;
   }

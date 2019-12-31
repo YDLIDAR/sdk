@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  int baudrate = 230400;
+  int baudrate = 512000;
   std::map<int, int> baudrateList;
   baudrateList[0] = 115200;
   baudrateList[1] = 128000;
@@ -103,25 +103,25 @@ int main(int argc, char *argv[]) {
   baudrateList[3] = 230400;
   baudrateList[4] = 512000;
 
-  printf("Baudrate:\n");
+//  printf("Baudrate:\n");
 
-  for (std::map<int, int>::iterator it = baudrateList.begin();
-       it != baudrateList.end(); it++) {
-    printf("%d. %d\n", it->first, it->second);
-  }
+//  for (std::map<int, int>::iterator it = baudrateList.begin();
+//       it != baudrateList.end(); it++) {
+//    printf("%d. %d\n", it->first, it->second);
+//  }
 
-  while (ydlidar::ok()) {
-    printf("Please select the lidar baudrate:");
-    std::string number;
-    std::cin >> number;
+//  while (ydlidar::ok()) {
+//    printf("Please select the lidar baudrate:");
+//    std::string number;
+//    std::cin >> number;
 
-    if ((size_t)atoi(number.c_str()) > baudrateList.size()) {
-      continue;
-    }
+//    if ((size_t)atoi(number.c_str()) > baudrateList.size()) {
+//      continue;
+//    }
 
-    baudrate = baudrateList[atoi(number.c_str())];
-    break;
-  }
+//    baudrate = baudrateList[atoi(number.c_str())];
+//    break;
+//  }
 
   if (!ydlidar::ok()) {
     return 0;
@@ -129,31 +129,31 @@ int main(int argc, char *argv[]) {
 
   bool isSingleChannel = false;
   bool isTOFLidar = false;
-  std::string input_channel;
-  std::string input_tof;
-  printf("Whether the Lidar is one-way communication[yes/no]:");
-  std::cin >> input_channel;
-  std::transform(input_channel.begin(), input_channel.end(),
-                 input_channel.begin(),
-  [](unsigned char c) {
-    return std::tolower(c);  // correct
-  });
+//  std::string input_channel;
+//  std::string input_tof;
+//  printf("Whether the Lidar is one-way communication[yes/no]:");
+//  std::cin >> input_channel;
+//  std::transform(input_channel.begin(), input_channel.end(),
+//                 input_channel.begin(),
+//  [](unsigned char c) {
+//    return std::tolower(c);  // correct
+//  });
 
-  if (input_channel.find("yes") != std::string::npos) {
-    isSingleChannel = true;
+//  if (input_channel.find("yes") != std::string::npos) {
+//    isSingleChannel = true;
 
-    printf("Whether the Lidar is a TOF Lidar [yes/no]:");
-    std::cin >> input_tof;
-    std::transform(input_tof.begin(), input_tof.end(),
-                   input_tof.begin(),
-    [](unsigned char c) {
-      return std::tolower(c);  // correct
-    });
+//    printf("Whether the Lidar is a TOF Lidar [yes/no]:");
+//    std::cin >> input_tof;
+//    std::transform(input_tof.begin(), input_tof.end(),
+//                   input_tof.begin(),
+//    [](unsigned char c) {
+//      return std::tolower(c);  // correct
+//    });
 
-    if (input_tof.find("yes") != std::string::npos) {
-      isTOFLidar = true;
-    }
-  }
+//    if (input_tof.find("yes") != std::string::npos) {
+//      isTOFLidar = true;
+//    }
+//  }
 
 
   std::string input_frequency;
@@ -227,6 +227,10 @@ int main(int argc, char *argv[]) {
               scan.stamp,
               (unsigned int)scan.points.size(), 1.0 / scan.config.scan_time);
       fflush(stdout);
+
+      for (int i = 0; i < scan.points.size(); i++) {
+        printf("angle: %f, distance: %f\n", scan.points[i].angle, scan.points[i].range);
+      }
     } else {
       fprintf(stderr, "Failed to get Lidar Data\n");
       fflush(stderr);
