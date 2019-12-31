@@ -379,7 +379,7 @@ bool CYdLidar::checkLidarAbnormal() {
 
 
         if (IS_OK(op_result)) {
-          if (abs(data.front() - count) > 10) {
+          if (abs((long)data.front() - (long)count) > 10) {
             data.erase(data.begin());
           }
 
