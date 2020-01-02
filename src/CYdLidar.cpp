@@ -192,6 +192,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan,
     if (m_FixedResolution) {
       all_node_count = m_FixedSize;
     }
+
     outscan.config.angle_increment = (outscan.config.max_angle -
                                       outscan.config.min_angle) / (all_node_count - 1);
 
@@ -362,8 +363,12 @@ bool CYdLidar::checkLidarAbnormal() {
       scan_time = 1.0 * static_cast<int64_t>(end_time - start_time) / 1e9;
       buffer_count++;
 
-      if (!m_SingleChannel && IS_OK(op_result)) {
-        return !IS_OK(op_result);
+      if (IS_OK(op_result)) {
+        if (CalculateSampleRate(count)) {
+          return !IS_OK(op_result);
+        } else if (!lidarPtr->getSingleChannel() && buffer_count > 2) {
+          return !IS_OK(op_result);
+        }
       }
     }
 
@@ -381,6 +386,10 @@ bool CYdLidar::checkLidarAbnormal() {
         if (IS_OK(op_result)) {
           if (abs(data.front() - count) > 10) {
             data.erase(data.begin());
+          }
+
+          if (CalculateSampleRate(count)) {
+            return !IS_OK(op_result);
           }
 
           scan_time = 1.0 * static_cast<int64_t>(end_time - start_time) / 1e9;
@@ -691,6 +700,25 @@ void CYdLidar::checkSampleRate() {
   }
 
   m_SampleRate = _samp_rate;
+}
+
+
+bool CYdLidar::CalculateSampleRate(int count) {
+  for (int i = 0; i < count; i++) {
+    if (global_nodes[i].scan_frequence != 0) {
+      double scanfrequency  = global_nodes[i].scan_frequence / 10.0;
+      m_SampleRate = static_cast<int>((count * scanfrequency + 500) / 1000);
+      m_PointTime = 1e9 / (m_SampleRate * 1000);
+      m_FixedSize = m_SampleRate * 1000 / (m_ScanFrequency - 0.1);
+      lidarPtr->setPointTime(m_PointTime);
+      printf("[YDLIDAR]:Fixed Size: %d\n", m_FixedSize);
+      printf("[YDLIDAR]:Sample Rate: %dK\n", m_SampleRate);
+      fflush(stdout);
+      return true;
+    }
+  }
+
+  return false;
 }
 /*-------------------------------------------------------------
                         checkScanFrequency

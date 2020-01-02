@@ -131,6 +131,13 @@ class YDLIDAR_API CYdLidar {
    */
   void checkSampleRate();
 
+  /**
+   * @brief CalculateSampleRate
+   * @param count
+   * @return
+   */
+  bool CalculateSampleRate(int count);
+
   /*! Retruns true if the scan frequency is set to user's frequency is successful, If it's not*/
   bool checkScanFrequency();
 
