@@ -182,6 +182,7 @@ class YDLIDAR_API CYdLidar {
   uint64_t m_PointTime;
   uint64_t last_node_time;
   node_info *global_nodes;
+  std::map<int, int> SampleRateMap;
 
 };	// End of class
 

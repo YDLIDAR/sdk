@@ -342,6 +342,7 @@ bool CYdLidar::checkLidarAbnormal() {
   result_t op_result = RESULT_FAIL;
   std::vector<int> data;
   int buffer_count  = 0;
+  SampleRateMap.clear();
 
   while (check_abnormal_count < m_AbnormalCheckCount) {
     //Ensure that the voltage is insufficient or the motor resistance is high, causing an abnormality.
@@ -354,7 +355,8 @@ bool CYdLidar::checkLidarAbnormal() {
     uint64_t end_time = 0;
     op_result = RESULT_OK;
 
-    while (buffer_count < 10 && scan_time < 0.05 && IS_OK(op_result)) {
+    while (buffer_count < 10 && (scan_time < 0.05 ||
+                                 !lidarPtr->getSingleChannel()) && IS_OK(op_result)) {
       start_time = getTime();
       count = YDlidarDriver::MAX_SCAN_NODES;
       op_result =  lidarPtr->grabScanData(global_nodes, count);
@@ -363,7 +365,7 @@ bool CYdLidar::checkLidarAbnormal() {
       buffer_count++;
 
       if (IS_OK(op_result)) {
-        if (CalculateSampleRate(count) && buffer_count > 2) {
+        if (CalculateSampleRate(count)) {
           if (!lidarPtr->getSingleChannel()) {
             return !IS_OK(op_result);
           }
@@ -705,6 +707,42 @@ void CYdLidar::checkSampleRate() {
   m_SampleRate = _samp_rate;
 }
 
+inline bool isValidSampleRate(std::map<int, int>  smap) {
+  if (smap.size() < 1) {
+    return false;
+  }
+
+  if (smap.size() == 1) {
+    if (smap.begin()->second > 1) {
+      return true;
+    }
+
+    return false;
+  }
+
+  return false;
+}
+
+inline void removeExceptionSample(std::map<int, int> &smap) {
+  if (smap.size() < 2) {
+    return;
+  }
+
+  std::map<int, int >::iterator last = smap.begin();
+  std::map<int, int >::iterator its = smap.begin();
+
+  while (its != smap.end()) {
+    if (last->second > its->second) {
+      smap.erase(its++);
+    } else if (last->second < its->second) {
+      its = smap.erase(last);
+      last = its;
+      its++;
+    } else {
+      its++;
+    }
+  }
+}
 
 bool CYdLidar::CalculateSampleRate(int count) {
   if (count < 1) {
@@ -720,17 +758,43 @@ bool CYdLidar::CalculateSampleRate(int count) {
       scanfrequency = global_nodes[0].scan_frequence / 10.0;
     }
 
-    m_SampleRate = static_cast<int>((count * scanfrequency + 500) / 1000);
-    m_PointTime = 1e9 / (m_SampleRate * 1000);
-    lidarPtr->setPointTime(m_PointTime);
+    int samplerate = static_cast<int>((count * scanfrequency + 500) / 1000);
 
-    if (!m_SingleChannel) {
-      m_FixedSize = m_SampleRate * 1000 / (m_ScanFrequency - 0.1);
+    if (isTOFLidar(m_LidarType)) {
+      if (samplerate % 2 == 1 && samplerate > 9) {
+        return false;
+      }
     }
 
-    printf("[YDLIDAR]:Fixed Size: %d\n", m_FixedSize);
-    printf("[YDLIDAR]:Sample Rate: %dK\n", m_SampleRate);
-    return true;
+    int count = 0;
+
+    if (SampleRateMap.find(samplerate) != SampleRateMap.end()) {
+      count = SampleRateMap[samplerate];
+    }
+
+    count++;
+    SampleRateMap[samplerate] =  count;
+
+    if (isValidSampleRate(SampleRateMap)) {
+      m_PointTime = 1e9 / (m_SampleRate * 1000);
+      lidarPtr->setPointTime(m_PointTime);
+
+      if (!m_SingleChannel) {
+        m_FixedSize = m_SampleRate * 1000 / (m_ScanFrequency - 0.1);
+      }
+
+      printf("[YDLIDAR]:Fixed Size: %d\n", m_FixedSize);
+      printf("[YDLIDAR]:Sample Rate: %dK\n", m_SampleRate);
+      return true;
+    } else {
+      if (SampleRateMap.size() > 1) {
+        SampleRateMap.clear();
+      }
+
+//      removeExceptionSample(SampleRateMap);
+    }
+
+
   }
 
   return false;
