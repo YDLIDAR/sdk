@@ -58,7 +58,7 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_MaxAngle          = 180.f;
   m_MinAngle          = -180.f;
   m_MaxRange          = 64.0;
-  m_MinRange          = 0.05;
+  m_MinRange          = 0.01;
   m_SampleRate        = 20;
   m_ScanFrequency     = 10;
   isScanning          = false;
@@ -384,7 +384,7 @@ bool CYdLidar::checkLidarAbnormal() {
         end_time = getTime();
 
         if (IS_OK(op_result)) {
-          if (abs(data.front() - count) > 10) {
+          if (std::abs(static_cast<int>(data.front() - count)) > 10) {
             data.erase(data.begin());
           }
 
