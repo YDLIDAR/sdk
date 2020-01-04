@@ -46,11 +46,11 @@ YDlidarDriver::YDlidarDriver():
   m_intensities       = false;
   isAutoReconnect     = true;
   isAutoconnting      = false;
-  m_baudrate          = 230400;
+  m_baudrate          = 512000;
   isSupportMotorDtrCtrl  = true;
   scan_node_count     = 0;
-  sample_rate         = 5000;
-  m_PointTime         = 1e9 / 5000;
+  sample_rate         = 20000;
+  m_PointTime         = 1e9 / 20000;
   trans_delay         = 0;
   scan_frequence      = 0;
   m_sampling_rate     = -1;
@@ -58,7 +58,7 @@ YDlidarDriver::YDlidarDriver():
   retryCount          = 0;
   has_device_header   = false;
   m_SingleChannel     = false;
-  m_TOFLidar          = false;
+  m_LidarType         = TYPE_TOF;
 
   //解析参数
   PackageSampleBytes  = 2;
@@ -508,6 +508,7 @@ int YDlidarDriver::cacheScanData() {
         if ((local_scan[0].sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT)) {
           _lock.lock();//timeout lock, wait resource copy
           local_scan[0].stamp = local_buf[pos].stamp;
+          local_scan[0].scan_frequence = local_buf[pos].scan_frequence;
           memcpy(scan_node_buf, local_scan, scan_count * sizeof(node_info));
           scan_node_count = scan_count;
           _dataEvent.set();
@@ -936,10 +937,13 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     package_CT = packages.package_CT;
   }
 
+  (*node).scan_frequence = 0;
+
   if ((package_CT & 0x01) == CT_Normal) {
     (*node).sync_flag = Node_NotSync;
   } else {
     (*node).sync_flag = Node_Sync;
+    (*node).scan_frequence  = scan_frequence;
   }
 
   (*node).sync_quality = Node_Default_Quality;
@@ -962,17 +966,16 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     }
 
     if ((*node).distance_q2 != 0) {
-      if (isOctaveLidar(model)) {
-        AngleCorrectForDistance = (int32_t)(((atan(((21.8 * (155.3 - ((
-                                                *node).distance_q2 / 2.0))) / 155.3) / ((
-                                                    *node).distance_q2 / 2.0))) * 180.0 / 3.1415) * 64.0);
-      } else  {
-        if (!m_TOFLidar || !m_SingleChannel) {
+      if (!isTOFLidar(m_LidarType)) {
+        if (isOctaveLidar(model)) {
+          AngleCorrectForDistance = (int32_t)(((atan(((21.8 * (155.3 - ((
+                                                  *node).distance_q2 / 2.0))) / 155.3) / ((
+                                                      *node).distance_q2 / 2.0))) * 180.0 / 3.1415) * 64.0);
+        } else  {
           AngleCorrectForDistance = (int32_t)(((atan(((21.8 * (155.3 - ((
                                                   *node).distance_q2 / 4.0))) / 155.3) / ((
                                                       *node).distance_q2 / 4.0))) * 180.0 / 3.1415) * 64.0);
         }
-
       }
     } else {
       AngleCorrectForDistance = 0;
@@ -1013,7 +1016,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     nowPackageNum = packages.nowPackageNum;
   }
 
-  (*node).scan_frequence  = scan_frequence;
   package_Sample_Index++;
 
   if (package_Sample_Index >= nowPackageNum) {
@@ -1061,6 +1063,7 @@ result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,
       }
 
       nodebuffer[recvNodeCount - 1].stamp = size * trans_delay + delayTime;
+      nodebuffer[recvNodeCount - 1].scan_frequence = node.scan_frequence;
       count = recvNodeCount;
       return RESULT_OK;
     }
@@ -1330,7 +1333,7 @@ void YDlidarDriver::setIntensities(const bool &isintensities) {
     }
 
     globalRecvBuffer = new uint8_t[isintensities ? sizeof(node_package) : sizeof(
-                                     node_packages)];
+                                                   node_packages)];
   }
 
   m_intensities = isintensities;

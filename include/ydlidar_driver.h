@@ -75,8 +75,8 @@ class YDlidarDriver {
  public:
   PropertyBuilderByName(bool, SingleChannel,
                         private) ///< 是否是单通信雷达
-  PropertyBuilderByName(bool, TOFLidar,
-                        private) ///< 是否是TOF雷达
+  PropertyBuilderByName(bool, LidarType,
+                        private) ///< 雷达类型
   PropertyBuilderByName(uint32_t, PointTime,
                         private) ///< 连个激光点之间采样时间间隔
   /*!
@@ -834,10 +834,7 @@ inline int lidarModelDefaultSampleRate(int model) {
 inline bool isOctaveLidar(int model) {
   bool ret = false;
 
-  if (model == YDlidarDriver::YDLIDAR_G6 ||
-      model == YDlidarDriver::YDLIDAR_TG15 ||
-      model == YDlidarDriver::YDLIDAR_TG30 ||
-      model == YDlidarDriver::YDLIDAR_TG50) {
+  if (model == YDlidarDriver::YDLIDAR_G6) {
     ret = true;
   }
 
@@ -966,13 +963,23 @@ inline bool isSupportScanFrequency(int model, double frequency) {
   bool ret = false;
 
   if (model >= YDlidarDriver::YDLIDAR_TG15) {
-    if (3 <= frequency && frequency <= 12) {
+    if (3 <= frequency && frequency <= 15.7) {
       ret = true;
     }
   } else {
-    if (5 <= frequency && frequency <= 12) {
+    if (5 <= frequency && frequency <= 15.7) {
       ret = true;
     }
+  }
+
+  return ret;
+}
+
+inline bool isTOFLidar(int type) {
+  bool ret = false;
+
+  if (type == TYPE_TOF) {
+    ret = true;
   }
 
   return ret;

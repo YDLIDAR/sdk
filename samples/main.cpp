@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  int baudrate = 230400;
+  int baudrate = 512000;
   std::map<int, int> baudrateList;
   baudrateList[0] = 115200;
   baudrateList[1] = 128000;
@@ -160,11 +160,11 @@ int main(int argc, char *argv[]) {
   float frequency = 8.0;
 
   while (ydlidar::ok() && !isSingleChannel) {
-    printf("Please enter the lidar scan frequency[5-12]:");
+    printf("Please enter the lidar scan frequency[3-15.7]:");
     std::cin >> input_frequency;
     frequency = atof(input_frequency.c_str());
 
-    if (frequency <= 12.0 && frequency >= 3.0) {
+    if (frequency <= 15.7 && frequency >= 3.0) {
       break;
     }
 
@@ -196,14 +196,14 @@ int main(int argc, char *argv[]) {
   laser.setSingleChannel(isSingleChannel);
 
   //<! tof lidar
-  laser.setTOFLidar(isTOFLidar);
+  laser.setLidarType(isTOFLidar);
   //unit: °
   laser.setMaxAngle(180);
   laser.setMinAngle(-180);
 
   //unit: m
-  laser.setMinRange(0.1);
-  laser.setMaxRange(32.0);
+  laser.setMinRange(0.01);
+  laser.setMaxRange(64.0);
 
   //unit: Hz
   laser.setScanFrequency(frequency);

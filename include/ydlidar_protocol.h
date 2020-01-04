@@ -119,6 +119,12 @@ typedef enum {
 #define PackagePaidBytes 10
 #define PH 0x55AA
 
+typedef enum {
+  TYPE_TOF = 0,
+  TYPE_TRIANGLE  = 1,
+  TYPE_Tail,
+} LidarTypeID;
+
 #if defined(_WIN32)
 #pragma pack(1)
 #endif
