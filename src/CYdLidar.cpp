@@ -289,9 +289,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan,
 
       {
         touch_info point;
-        double degree_angle = angles::from_degrees(angle);
-        point.laser_x = range * cos(degree_angle) * 1000;//unit mm
-        point.laser_y = range * sin(degree_angle) * 1000;// unit mm
+        point.laser_x = range * cos(angle) * 1000;//unit mm
+        point.laser_y = range * sin(angle) * 1000;// unit mm
         {
           int coeff = m_LidarPose.reversion ? -1 : 1;
           double degree_theta = angles::from_degrees(m_LidarPose.theta);

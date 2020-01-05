@@ -34,6 +34,11 @@
 #include "CYdLidar.h"
 #include <iostream>
 #include <string>
+#include <signal.h>
+#include <chrono>
+#include <thread>
+#include <memory>
+#include <array>
 #include <algorithm>
 #include <cctype>
 #include <regex>
