@@ -31,14 +31,18 @@
 *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
+#include "serial.h"
+#include "ActiveSocket.h"
 #include "ydlidar_driver.h"
 #include "common.h"
 #include <math.h>
 using namespace impl;
+using namespace serial;
 
 namespace ydlidar {
 
-YDlidarDriver::YDlidarDriver():
+YDlidarDriver::YDlidarDriver(uint8_t type):
+  m_DriverType(type),
   _serial(NULL) {
   isConnected         = false;
   isScanning          = false;
@@ -127,9 +131,29 @@ result_t YDlidarDriver::connect(const char *port_path, uint32_t baudrate) {
   m_baudrate = baudrate;
   serial_port = string(port_path);
 
-  if (!_serial) {
-    _serial = new serial::Serial(port_path, m_baudrate,
-                                 serial::Timeout::simpleTimeout(DEFAULT_TIMEOUT));
+  if (m_DriverType != YDLIDAR_TYPE_SERIAL &&
+      m_DriverType != YDLIDAR_TYPE_TCP) {
+    m_DriverType = YDLIDAR_TYPE_SERIAL;
+  }
+
+  {
+    if (!_serial) {
+      switch (m_DriverType) {
+        case YDLIDAR_TYPE_SERIAL:
+          _serial = new serial::Serial(port_path, m_baudrate,
+                                       serial::Timeout::simpleTimeout(DEFAULT_TIMEOUT));
+
+          break;
+
+        case YDLIDAR_TYPE_TCP:
+          _serial = new CActiveSocket();
+
+        default:
+          break;
+      }
+    }
+
+    _serial->bindport(port_path, baudrate);
   }
 
   {
@@ -179,7 +203,7 @@ void YDlidarDriver::flushSerial() {
   size_t len = _serial->available();
 
   if (len) {
-    _serial->read(len);
+    _serial->readSize(len);
   }
 
   delay(20);

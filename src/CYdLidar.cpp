@@ -55,6 +55,7 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_AutoReconnect     = true;
   m_SingleChannel     = false;
   m_LidarType         = TYPE_TRIANGLE;
+  m_DeviceType        = YDLIDAR_TYPE_SERIAL;
   m_MaxAngle          = 180.f;
   m_MinAngle          = -180.f;
   m_MaxRange          = 64.0;
@@ -843,7 +844,7 @@ void CYdLidar::checkCalibrationAngle(const std::string &serialNumber) {
 bool  CYdLidar::checkCOMMs() {
   if (!lidarPtr) {
     // create the driver instance
-    lidarPtr = new YDlidarDriver();
+    lidarPtr = new YDlidarDriver(m_DeviceType);
 
     if (!lidarPtr) {
       fprintf(stderr, "Create Driver fail\n");

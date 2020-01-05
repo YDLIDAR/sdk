@@ -73,6 +73,7 @@ class YDLIDAR_API CYdLidar {
                         private) ///< 是否是单通信雷达
   PropertyBuilderByName(int, LidarType,
                         private) ///< 雷达类型
+  PropertyBuilderByName(int, DeviceType, private) ///< 设备连接类型
 
 
  public:

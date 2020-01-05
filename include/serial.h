@@ -7,6 +7,7 @@
 #include <cstring>
 #include <sstream>
 #include "v8stdint.h"
+#include "ChannelDevice.h"
 
 namespace serial {
 
@@ -106,7 +107,7 @@ struct Timeout {
 /*!
 * Class that provides a portable serial port interface.
 */
-class Serial  {
+class Serial : public ChannelDevice {
  public:
   /*!
   * Creates a Serial object and opens the port if a port is specified,
@@ -172,7 +173,7 @@ class Serial  {
   void closePort();
 
   /*! Return the number of characters in the buffer. */
-  size_t available();
+  virtual size_t available();
 
   /*! Block until there is serial data to read or read_timeout_constant
   * number of milliseconds have elapsed. The return value is true when
@@ -194,7 +195,8 @@ class Serial  {
    * @param returned_size
    * @return
    */
-  int waitfordata(size_t data_count, uint32_t timeout, size_t *returned_size);
+  virtual int waitfordata(size_t data_count, uint32_t timeout,
+                          size_t *returned_size);
 
 
   /**
@@ -272,7 +274,7 @@ class Serial  {
   * \return A std::string containing the data read from the port.
   *
   */
-  std::string read(size_t size = 1);
+  virtual std::string readSize(size_t size = 1);
 
   /*! Reads in a line or until a given delimiter has been processed.
   *
@@ -285,7 +287,8 @@ class Serial  {
   * \return A size_t representing the number of bytes read.
   *
   */
-  size_t readline(std::string &buffer, size_t size = 65536, std::string eol = "\n");
+  size_t readline(std::string &buffer, size_t size = 65536,
+                  std::string eol = "\n");
 
   /*! Reads in a line or until a given delimiter has been processed.
   *

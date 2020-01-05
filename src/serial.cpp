@@ -131,7 +131,7 @@ size_t Serial::read(std::string &buffer, size_t size) {
   return bytes_read;
 }
 
-string Serial::read(size_t size) {
+string Serial::readSize(size_t size) {
   std::string buffer;
   this->read(buffer, size);
   return buffer;

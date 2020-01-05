@@ -51,7 +51,7 @@
 #include <stdlib.h>
 #include <atomic>
 #include <map>
-#include "serial.h"
+#include "ChannelDevice.h"
 #include "locker.h"
 #include "thread.h"
 #include "ydlidar_protocol.h"
@@ -65,7 +65,6 @@
 
 
 using namespace std;
-using namespace serial;
 
 namespace ydlidar {
 
@@ -84,7 +83,7 @@ class YDlidarDriver {
   * A constructor.
   * A more elaborate description of the constructor.
   */
-  YDlidarDriver();
+  explicit YDlidarDriver(uint8_t type = YDLIDAR_TYPE_SERIAL);
 
   /*!
   * A destructor.
@@ -525,7 +524,8 @@ class YDlidarDriver {
 
  private:
   int PackageSampleBytes;            ///< 一个包包含的激光点数
-  serial::Serial *_serial;			///< 串口
+  uint8_t     m_DriverType;     ///接口类型SERIAL or TCP
+  ChannelDevice *_serial;			///< 串口
   bool m_intensities;				///< 信号质量状体
   uint32_t m_baudrate;				///< 波特率
   bool isSupportMotorDtrCtrl;	    ///< 是否支持电机控制

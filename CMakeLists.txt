@@ -29,7 +29,7 @@ add_subdirectory(samples)
 
 add_library(ydlidar_driver STATIC ${SDK_SRC})
 IF (WIN32)
-target_link_libraries(ydlidar_driver setupapi Winmm)
+target_link_libraries(ydlidar_driver setupapi Winmm ws2_32)
 ELSE()
 target_link_libraries(ydlidar_driver rt pthread)
 ENDIF()                    

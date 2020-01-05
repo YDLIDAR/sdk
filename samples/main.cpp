@@ -36,6 +36,7 @@
 #include <string>
 #include <algorithm>
 #include <cctype>
+#include <regex>
 using namespace std;
 using namespace ydlidar;
 
@@ -51,76 +52,22 @@ int main(int argc, char *argv[]) {
   printf("  |_| |____/|_____|___|____/_/   \\_\\_| \\_\\ \n");
   printf("\n");
   fflush(stdout);
-  std::string port;
   ydlidar::init(argc, argv);
+  std::string port;
+  std::string baud;
+  printf("Please enter the lidar serial port or IP:");
+  std::cin >> port;
+  printf("Please enter the lidar serial baud rate or network port:");
+  std::cin >> baud;
+  int baudrate = atoi(baud.c_str());
+  regex reg("(\\d{1,3}).(\\d{1,3}).(\\d{1,3}).(\\d{1,3})");
+  smatch m;
+  uint8_t driver_type;
 
-  std::map<std::string, std::string> ports =
-    ydlidar::YDlidarDriver::lidarPortList();
-  std::map<std::string, std::string>::iterator it;
-
-  if (ports.size() == 1) {
-    port = ports.begin()->second;
+  if (regex_match(port, m, reg)) {
+    driver_type = YDLIDAR_TYPE_TCP;
   } else {
-    int id = 0;
-
-    for (it = ports.begin(); it != ports.end(); it++) {
-      printf("%d. %s\n", id, it->first.c_str());
-      id++;
-    }
-
-    if (ports.empty()) {
-      printf("Not Lidar was detected. Please enter the lidar serial port:");
-      std::cin >> port;
-    } else {
-      while (ydlidar::ok()) {
-        printf("Please select the lidar port:");
-        std::string number;
-        std::cin >> number;
-
-        if ((size_t)atoi(number.c_str()) >= ports.size()) {
-          continue;
-        }
-
-        it = ports.begin();
-        id = atoi(number.c_str());
-
-        while (id) {
-          id--;
-          it++;
-        }
-
-        port = it->second;
-        break;
-      }
-    }
-  }
-
-  int baudrate = 230400;
-  std::map<int, int> baudrateList;
-  baudrateList[0] = 115200;
-  baudrateList[1] = 128000;
-  baudrateList[2] = 153600;
-  baudrateList[3] = 230400;
-  baudrateList[4] = 512000;
-
-  printf("Baudrate:\n");
-
-  for (std::map<int, int>::iterator it = baudrateList.begin();
-       it != baudrateList.end(); it++) {
-    printf("%d. %d\n", it->first, it->second);
-  }
-
-  while (ydlidar::ok()) {
-    printf("Please select the lidar baudrate:");
-    std::string number;
-    std::cin >> number;
-
-    if ((size_t)atoi(number.c_str()) > baudrateList.size()) {
-      continue;
-    }
-
-    baudrate = baudrateList[atoi(number.c_str())];
-    break;
+    driver_type = YDLIDAR_TYPE_SERIAL;
   }
 
   if (!ydlidar::ok()) {
@@ -192,19 +139,21 @@ int main(int argc, char *argv[]) {
   laser.setSerialPort(port);
   //<! lidar baudrate
   laser.setSerialBaudrate(baudrate);
+  //<! lidar connect type
+  laser.setDeviceType(driver_type);//network or serial
 
   //<! fixed angle resolution
   laser.setFixedResolution(false);
   //<! rotate 180
   laser.setReversion(false); //rotate 180
   //<! Counterclockwise
-  laser.setInverted(false);//ccw
+  laser.setInverted(false);//false:顺时针， true: 逆时针
   laser.setAutoReconnect(true);//hot plug
   //<! one-way communication
-  laser.setSingleChannel(isSingleChannel);
+  laser.setSingleChannel(isSingleChannel);//true: TX8 TX20 S2
 
   //<! tof lidar
-  laser.setLidarType(!isTOFLidar);
+  laser.setLidarType(!isTOFLidar);//tof: TG15, TG30, TG50, TX8 TX20
   //unit: °
   laser.setMaxAngle(180);
   laser.setMinAngle(-180);
@@ -234,6 +183,12 @@ int main(int argc, char *argv[]) {
               scan.stamp,
               (unsigned int)scan.points.size(), 1.0 / scan.config.scan_time);
       fflush(stdout);
+
+      for (int i = 0; i < scan.points.size(); i++) {
+        LaserPoint point = scan.points[i];
+//        point.angle;//当前角度弧度
+//        point.range;//当前距离米
+      }
     } else {
       fprintf(stderr, "Failed to get Lidar Data\n");
       fflush(stderr);
