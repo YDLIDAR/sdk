@@ -46,7 +46,7 @@ YDlidarDriver::YDlidarDriver():
   m_intensities       = false;
   isAutoReconnect     = true;
   isAutoconnting      = false;
-  m_baudrate          = 230400;
+  m_baudrate          = 128000;
   isSupportMotorDtrCtrl  = true;
   scan_node_count     = 0;
   sample_rate         = 5000;
@@ -57,8 +57,8 @@ YDlidarDriver::YDlidarDriver():
   model               = -1;
   retryCount          = 0;
   has_device_header   = false;
-  m_SingleChannel     = false;
-  m_LidarType         = TYPE_TOF;
+  m_SingleChannel     = true;
+  m_LidarType         = TYPE_TRIANGLE;
 
   //解析参数
   PackageSampleBytes  = 2;

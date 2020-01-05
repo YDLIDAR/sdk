@@ -48,21 +48,21 @@ using namespace angles;
 -------------------------------------------------------------*/
 CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_SerialPort        = "";
-  m_SerialBaudrate    = 230400;
-  m_FixedResolution   = true;
+  m_SerialBaudrate    = 128000;
+  m_FixedResolution   = false;
   m_Reversion         = false;
   m_Inverted          = false;//
   m_AutoReconnect     = true;
-  m_SingleChannel     = false;
+  m_SingleChannel     = true;
   m_LidarType         = TYPE_TRIANGLE;
   m_MaxAngle          = 180.f;
   m_MinAngle          = -180.f;
-  m_MaxRange          = 64.0;
-  m_MinRange          = 0.01;
+  m_MaxRange          = 12.0;
+  m_MinRange          = 0.1;
   m_SampleRate        = 5;
-  m_ScanFrequency     = 10;
+  m_ScanFrequency     = 8;
   isScanning          = false;
-  m_FixedSize         = 720;
+  m_FixedSize         = 625;
   frequencyOffset     = 0.4;
   m_AbnormalCheckCount  = 4;
   Major               = 0;
@@ -71,7 +71,7 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_PointTime         = 1e9 / 5000;
   m_OffsetTime        = 0.0;
   m_AngleOffset       = 0.0;
-  lidar_model = YDLIDAR_G2B;
+  lidar_model = YDLIDAR_S2;
   last_node_time = getTime();
   global_nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
   m_ParseSuccess = false;
@@ -469,17 +469,10 @@ bool CYdLidar::checkLidarAbnormal() {
 
       if (IS_OK(op_result)) {
         handleDeviceInfoPackage(count);
-
-        if (CalculateSampleRate(count)) {
-          if (!lidarPtr->getSingleChannel()) {
-            return !IS_OK(op_result);
-          }
-        }
       }
-
     }
 
-    if (IS_OK(op_result) && lidarPtr->getSingleChannel()) {
+    if (IS_OK(op_result)) {
       data.push_back(count);
       int collection = 0;
 
@@ -489,22 +482,13 @@ bool CYdLidar::checkLidarAbnormal() {
         op_result =  lidarPtr->grabScanData(global_nodes, count);
         end_time = getTime();
 
-
         if (IS_OK(op_result)) {
           if (std::abs(static_cast<int>(data.front() - count)) > 10) {
             data.erase(data.begin());
           }
 
           handleDeviceInfoPackage(count);
-          CalculateSampleRate(count);
           scan_time = 1.0 * static_cast<int64_t>(end_time - start_time) / 1e9;
-
-          if (scan_time > 0.05 && scan_time < 0.5 && lidarPtr->getSingleChannel()) {
-            m_SampleRate = static_cast<int>((count / scan_time + 500) / 1000);
-            m_PointTime = 1e9 / (m_SampleRate * 1000);
-            lidarPtr->setPointTime(m_PointTime);
-          }
-
           data.push_back(count);
         }
 
@@ -519,7 +503,6 @@ bool CYdLidar::checkLidarAbnormal() {
         printf("[YDLIDAR]:Sample Rate: %dK\n", m_SampleRate);
         return false;
       }
-
     }
 
     check_abnormal_count++;
@@ -583,8 +566,8 @@ bool CYdLidar::getDeviceInfo() {
   std::string model = "G2";
   lidar_model = devinfo.model;
   model = lidarModelToString(devinfo.model);
-  bool intensity = hasIntensity(devinfo.model);
-  int defalutSampleRate = lidarModelDefaultSampleRate(devinfo.model);
+  bool intensity = false;//hasIntensity(devinfo.model);
+//  int defalutSampleRate = lidarModelDefaultSampleRate(devinfo.model);
 
   std::string serial_number;
   lidarPtr->setIntensities(intensity);
@@ -605,7 +588,7 @@ bool CYdLidar::getDeviceInfo() {
   if (hasSampleRate(devinfo.model)) {
     checkSampleRate();
   } else {
-    m_SampleRate = defalutSampleRate;
+    m_SampleRate = 5;//defalutSampleRate;
   }
 
   printf("[YDLIDAR INFO] Current Sampling Rate : %dK\n", m_SampleRate);

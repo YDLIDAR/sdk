@@ -20,11 +20,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  1.4.5 |   2020-01-04  |
+| SDK     |  1.4.5 |   2020-01-05  |
 
 
-- [feature] Supports new and old protocol tof lidar.
-- [feature] Display of version number and serial number of single communication lidar.
+- [feature] Supports S2 5k for single channel lidar.
 
 
 
@@ -50,7 +49,7 @@ How to build YDLIDAR SDK samples
 
     $ cd sdk
 
-    $ git checkout TOF
+    $ git checkout S2_5K
 
     $ cd ..
 
@@ -86,13 +85,12 @@ You should see YDLIDAR's scan result in the console:
 	[YDLIDAR] Connection established in [/dev/ttyUSB0][512000]:
 	Firmware version: 1.3
 	Hardware version: 1
-	Model: TG30
+	Model: S2
 	Serial: 2020010200010001
-	[YDLIDAR INFO] Current Sampling Rate : 20K
-	[YDLIDAR INFO] Current Scan Frequency : 15.000000Hz
+	[YDLIDAR INFO] Current Sampling Rate : 5K
 	[YDLIDAR INFO] Now YDLIDAR is scanning ......
-	Scan received: 1329 ranges
-	Scan received: 1329 ranges
+	Scan received: 612 ranges
+	Scan received: 613 ranges
 	
 	
 
