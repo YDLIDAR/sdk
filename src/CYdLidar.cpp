@@ -76,6 +76,14 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   last_node_time = getTime();
   global_nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
   m_ParseSuccess = false;
+
+  m_MaxScreenX = 1920;
+  m_MinScreenX = 0;
+  m_MaxScreenY = 1080;
+  m_MinScreenY = 0;
+  m_LidarPose.x = 960;
+  m_LidarPose.y = -260;
+  m_LidarPose.theta = -90;
 }
 
 /*-------------------------------------------------------------
@@ -143,11 +151,17 @@ bool CYdLidar::isRangeIgnore(double angle) const {
   return ret;
 }
 
+bool CYdLidar::inBox(const float &x, const float &y) const {
+  return (x < m_MaxScreenY && x > m_MinScreenX && y < m_MaxScreenY &&
+          y > m_MinScreenY);
+}
+
 
 /*-------------------------------------------------------------
 						doProcessSimple
 -------------------------------------------------------------*/
 bool  CYdLidar::doProcessSimple(LaserScan &outscan,
+                                std::vector<touch_info> &outPoints,
                                 bool &hardwareError) {
   hardwareError			= false;
 
@@ -272,6 +286,29 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan,
       }
 
       handleDeviceInfoPackage(count);
+
+      {
+        touch_info point;
+        double degree_angle = angles::from_degrees(angle);
+        point.laser_x = range * cos(degree_angle) * 1000;//unit mm
+        point.laser_y = range * sin(degree_angle) * 1000;// unit mm
+        {
+          int coeff = m_LidarPose.reversion ? -1 : 1;
+          double degree_theta = angles::from_degrees(m_LidarPose.theta);
+          point.screen_x = m_LidarPose.x + point.laser_x * cos(degree_theta) -
+                           coeff * point.laser_y * sin(degree_theta);//mm
+          point.screen_y = m_LidarPose.y + coeff * point.laser_y * cos(degree_theta)
+                           + point.laser_x * sin(degree_theta);//mm
+
+          if (inBox(point.screen_x, point.screen_y) &&
+              (fabs(point.screen_x - m_LidarPose.x) > 0.1 ||
+               fabs(point.screen_y - m_LidarPose.y) > 0.1)) {
+            outPoints.push_back(point);
+          }
+        }
+      }
+
+
     }
 
     return true;

@@ -132,6 +132,14 @@ typedef enum {
 #pragma pack(1)
 #endif
 
+struct touch_info {
+  float       screen_x;   /**<屏幕坐标系X(mm). */
+  float       screen_y;   /**<屏幕坐标系Y(mm). */
+  float       laser_x;    /**<雷达坐标系X(mm). */
+  float       laser_y;   /**<雷达坐标系Y(mm). */
+} __attribute__((packed)) ;
+
+
 struct node_info {
   uint8_t    sync_flag;  //sync flag
   uint16_t   sync_quality;//!信号质量
@@ -231,6 +239,13 @@ struct lidar_ans_header {
 #if defined(_WIN32)
 #pragma pack()
 #endif
+
+struct LaserPose {
+  float   x;      /**< 雷达在屏幕坐标系中的X位置(mm). */
+  float   y;      /**< 雷达在屏幕坐标系中的Y位置(mm). */
+  float   theta;  /**< 雷达在屏幕坐标系中的朝向(度). */
+  bool    reversion; /**< 雷达表面朝向(false: 朝外, true:朝里). */
+};
 
 struct LaserPoint {
   //! lidar angle

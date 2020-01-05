@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 2.8)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 include_directories(include)
 include_directories(src)
+include_directories(input_lite)
+
 
 IF (WIN32)
 FILE(GLOB SDK_SRC 
@@ -26,6 +28,7 @@ FILE(GLOB SDK_SRC
 ENDIF()
 
 add_subdirectory(samples)
+add_subdirectory(input_lite)
 
 add_library(ydlidar_driver STATIC ${SDK_SRC})
 IF (WIN32)

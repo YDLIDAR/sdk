@@ -345,7 +345,6 @@ class YDlidarDriver {
                               uint32_t timeout = DEFAULT_TIMEOUT);
 
  protected:
-
   /*!
   * @brief 创建解析雷达数据线程 \n
   * @note 创建解析雷达数据线程之前，必须使用::startScan函数开启扫图成功

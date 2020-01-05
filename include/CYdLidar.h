@@ -39,6 +39,11 @@
 using namespace ydlidar;
 
 class YDLIDAR_API CYdLidar {
+  PropertyBuilderByName(float, MaxScreenX, private)
+  PropertyBuilderByName(float, MinScreenX, private)
+  PropertyBuilderByName(float, MaxScreenY, private)
+  PropertyBuilderByName(float, MinScreenY, private)
+  PropertyBuilderByName(LaserPose, LidarPose, private)
   PropertyBuilderByName(float, MaxRange,
                         private) ///< 设置和获取激光最大测距范围(m)
   PropertyBuilderByName(float, MinRange,
@@ -86,7 +91,7 @@ class YDLIDAR_API CYdLidar {
   bool initialize();  //!< Attempts to connect and turns the laser on. Raises an exception on error.
 
   // Return true if laser data acquistion succeeds, If it's not
-  bool doProcessSimple(LaserScan &outscan,
+  bool doProcessSimple(LaserScan &outscan, std::vector<touch_info> &outPoints,
                        bool &hardwareError);
 
   //Turn on the motor enable
@@ -173,6 +178,14 @@ class YDLIDAR_API CYdLidar {
    * @return
    */
   bool isRangeIgnore(double angle) const;
+
+  /**
+   * @brief inBox
+   * @param x
+   * @param y
+   * @return
+   */
+  bool inBox(const float &x, const float &y) const;
 
   /*!
    * @brief handleSingleChannelDevice
