@@ -1086,6 +1086,10 @@ result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,
       size_t PackageSize = (m_intensities ? INTENSITY_NORMAL_PACKAGE_SIZE :
                             NORMAL_PACKAGE_SIZE);
 
+      if (node.scan_frequence) {
+        m_PointTime = 1e9 / (480 * node.scan_frequence / 10);
+      }
+
       if (size > PackagePaidBytes && size < PackagePaidBytes * PackageSize) {
         size_t packageNum = size / PackageSize;
         size_t Number = size % PackageSize;

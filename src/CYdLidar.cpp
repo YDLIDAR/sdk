@@ -48,7 +48,7 @@ using namespace angles;
 -------------------------------------------------------------*/
 CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_SerialPort        = "";
-  m_SerialBaudrate    = 230400;
+  m_SerialBaudrate    = 153600;
   m_FixedResolution   = true;
   m_Reversion         = false;
   m_Inverted          = false;//
@@ -57,9 +57,9 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_LidarType         = TYPE_TRIANGLE;
   m_MaxAngle          = 180.f;
   m_MinAngle          = -180.f;
-  m_MaxRange          = 64.0;
+  m_MaxRange          = 12.0;
   m_MinRange          = 0.01;
-  m_SampleRate        = 5;
+  m_SampleRate        = 3;
   m_ScanFrequency     = 10;
   isScanning          = false;
   m_FixedSize         = 720;
@@ -68,10 +68,10 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   Major               = 0;
   Minjor              = 0;
   m_IgnoreArray.clear();
-  m_PointTime         = 1e9 / 5000;
+  m_PointTime         = 1e9 / 3000;
   m_OffsetTime        = 0.0;
   m_AngleOffset       = 0.0;
-  lidar_model = YDLIDAR_G2B;
+  lidar_model = YDLIDAR_S4B;
   last_node_time = getTime();
   global_nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
   m_ParseSuccess = false;
@@ -166,6 +166,10 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan,
 
   // Fill in scan data:
   if (IS_OK(op_result)) {
+    if (global_nodes[0].scan_frequence) {
+      m_PointTime = 1e9 / (480 * global_nodes[0].scan_frequence / 10);
+    }
+
     uint64_t scan_time = m_PointTime * (count - 1);
     tim_scan_end += m_OffsetTime * 1e9;
     tim_scan_end -= m_PointTime;
