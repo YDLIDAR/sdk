@@ -172,7 +172,7 @@ bool CSimpleSocket::open() {
     SetSendTimeout(DEFAULT_REV_TIMEOUT_SEC, DEFAULT_REV_TIMEOUT_USEC);
   }
 
-  SetBlocking();
+//  SetBlocking();
 
   if (!m_open) {
     Close();
@@ -515,8 +515,21 @@ int32_t CSimpleSocket::Send(const uint8_t *pBuf, size_t bytesToSend) {
               break;
             }
 
+#if defined(_WIN32)
+            m_nBytesSent = SEND(m_socket, pBuf, bytesToSend, 0);
+#else
             m_nBytesSent = SEND(m_socket, pBuf, bytesToSend, MSG_NOSIGNAL);
+#endif
             TranslateSocketError();
+
+            if (GetSocketError() == CSimpleSocket::SocketTimedout) {
+              m_timer.SetEndTime();
+
+              if (m_timer.GetMilliSeconds() > DEFAULT_REV_TIMEOUT_SEC * 1000) {
+                SetSocketError(CSimpleSocket::SocketTimedout);
+                break;
+              }
+            }
 
             if (GetSocketError() == CSimpleSocket::SocketEwouldblock) {
               break;
@@ -721,7 +734,11 @@ bool CSimpleSocket::SetReceiveTimeout(int32_t nRecvTimeoutSec,
                                       int32_t nRecvTimeoutUsec) {
   bool bRetVal = true;
   memset(&m_stRecvTimeout, 0, sizeof(struct timeval));
+#if defined(_WIN32)
+  m_stRecvTimeout.tv_sec = nRecvTimeoutSec * 1000;
+#else
   m_stRecvTimeout.tv_sec = nRecvTimeoutSec;
+#endif
   m_stRecvTimeout.tv_usec = nRecvTimeoutUsec;
 
   //--------------------------------------------------------------------------
@@ -746,7 +763,11 @@ bool CSimpleSocket::SetSendTimeout(int32_t nSendTimeoutSec,
                                    int32_t nSendTimeoutUsec) {
   bool bRetVal = true;
   memset(&m_stSendTimeout, 0, sizeof(struct timeval));
+#if defined(_WIN32)
+  m_stSendTimeout.tv_sec = nSendTimeoutSec * 1000;
+#else
   m_stSendTimeout.tv_sec = nSendTimeoutSec;
+#endif
   m_stSendTimeout.tv_usec = nSendTimeoutUsec;
 
   //--------------------------------------------------------------------------
@@ -894,11 +915,14 @@ int32_t CSimpleSocket::Receive(int32_t nMaxBytes, uint8_t *pBuffer) {
         }
 
         if (m_nBytesReceived <= 0) {
-//          if (!SetBlocking()) {
-//            printf("set Blocking  failed\n");
-//          }
+          if (GetSocketError() == CSimpleSocket::SocketTimedout) {
+            m_timer.SetEndTime();
 
-          break;
+            if (m_timer.GetMilliSeconds() > DEFAULT_REV_TIMEOUT_SEC * 1000) {
+              SetSocketError(CSimpleSocket::SocketTimedout);
+              break;
+            }
+          }
         }
 
         if (GetSocketError() == CSimpleSocket::SocketEwouldblock) {

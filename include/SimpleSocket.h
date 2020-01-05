@@ -354,7 +354,11 @@ class CSimpleSocket : public ChannelDevice {
   /// @return true if socket connection timeout was successfully set.
   void SetConnectTimeout(int32_t nConnectTimeoutSec,
                          int32_t nConnectTimeoutUsec = 0) {
+#if defined(_WIN32)
+    m_stConnectTimeout.tv_sec = nConnectTimeoutSec * 1000;
+#else
     m_stConnectTimeout.tv_sec = nConnectTimeoutSec;
+#endif
     m_stConnectTimeout.tv_usec = nConnectTimeoutUsec;
   };
 
