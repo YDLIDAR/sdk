@@ -43,7 +43,7 @@ YDlidarDriver::YDlidarDriver():
   isConnected         = false;
   isScanning          = false;
   //串口配置参数
-  m_intensities       = false;
+  m_intensities       = true;
   isAutoReconnect     = true;
   isAutoconnting      = false;
   m_baudrate          = 230400;
@@ -61,7 +61,7 @@ YDlidarDriver::YDlidarDriver():
   m_LidarType         = TYPE_TOF;
 
   //解析参数
-  PackageSampleBytes  = 2;
+  PackageSampleBytes  = 3;
   IntervalSampleAngle = 0.0;
   FirstSampleAngle    = 0;
   LastSampleAngle     = 0;

@@ -587,7 +587,7 @@ bool CYdLidar::getDeviceInfo() {
   std::string model = "G2";
   lidar_model = devinfo.model;
   model = lidarModelToString(devinfo.model);
-  bool intensity = hasIntensity(devinfo.model);
+  bool intensity = true;//hasIntensity(devinfo.model);
   int defalutSampleRate = lidarModelDefaultSampleRate(devinfo.model);
 
   std::string serial_number;
