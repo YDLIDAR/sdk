@@ -677,44 +677,44 @@ void CYdLidar::checkSampleRate() {
 
 
 bool CYdLidar::CalculateSampleRate(int count) {
-  for (int i = 0; i < count; i++) {
-    if (global_nodes[i].scan_frequence != 0) {
-      double scanfrequency  = global_nodes[i].scan_frequence / 10.0;
+  if (global_nodes[0].scan_frequence != 0) {
+    double scanfrequency  = global_nodes[0].scan_frequence / 10.0;
 
-      if (isTOFLidar(m_LidarType)) {
-        if (!isOldVersionTOFLidar(lidar_model, Major, Minjor)) {
-          scanfrequency  = global_nodes[i].scan_frequence / 10.0 + 3.0;
-        }
+    if (isTOFLidar(m_LidarType)) {
+      if (!isOldVersionTOFLidar(lidar_model, Major, Minjor)) {
+        scanfrequency  = global_nodes[0].scan_frequence / 10.0 + 3.0;
+      }
+    }
+
+    int samplerate = static_cast<int>((count * scanfrequency + 500) / 1000);
+    int cnt = 0;
+
+    if (SampleRateMap.find(samplerate) != SampleRateMap.end()) {
+      cnt = SampleRateMap[samplerate];
+    }
+
+    cnt++;
+    SampleRateMap[samplerate] =  count;
+
+    if (isValidSampleRate(SampleRateMap)) {
+      m_SampleRate = samplerate;
+      m_PointTime = 1e9 / (m_SampleRate * 1000);
+      lidarPtr->setPointTime(m_PointTime);
+
+      if (!m_SingleChannel) {
+        m_FixedSize = m_SampleRate * 1000 / (m_ScanFrequency - 0.1);
+        printf("[YDLIDAR]:Fixed Size: %d\n", m_FixedSize);
+        printf("[YDLIDAR]:Sample Rate: %dK\n", m_SampleRate);
       }
 
-      int samplerate = static_cast<int>((count * scanfrequency + 500) / 1000);
-      int count = 0;
-
-      if (SampleRateMap.find(samplerate) != SampleRateMap.end()) {
-        count = SampleRateMap[samplerate];
-      }
-
-      count++;
-      SampleRateMap[samplerate] =  count;
-
-      if (isValidSampleRate(SampleRateMap)) {
-        m_PointTime = 1e9 / (m_SampleRate * 1000);
-        lidarPtr->setPointTime(m_PointTime);
-
-        if (!m_SingleChannel) {
-          m_FixedSize = m_SampleRate * 1000 / (m_ScanFrequency - 0.1);
-          printf("[YDLIDAR]:Fixed Size: %d\n", m_FixedSize);
-          printf("[YDLIDAR]:Sample Rate: %dK\n", m_SampleRate);
-        }
-
-        return true;
-      } else {
-        if (SampleRateMap.size() > 1) {
-          SampleRateMap.clear();
-        }
+      return true;
+    } else {
+      if (SampleRateMap.size() > 1) {
+        SampleRateMap.clear();
       }
     }
   }
+
 
   return false;
 }
