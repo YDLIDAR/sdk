@@ -74,7 +74,6 @@ class YDLIDAR_API CYdLidar {
   PropertyBuilderByName(int, LidarType,
                         private) ///< 雷达类型
 
-
  public:
   CYdLidar(); //!< Constructor
   virtual ~CYdLidar();  //!< Destructor: turns the laser off.
@@ -145,7 +144,7 @@ class YDLIDAR_API CYdLidar {
    * @param count
    * @return
    */
-  bool CalculateSampleRate(int count);
+  bool CalculateSampleRate(int count, double scan_time);
 
   /*! Retruns true if the scan frequency is set to user's frequency is successful, If it's not*/
   bool checkScanFrequency();
@@ -215,5 +214,6 @@ class YDLIDAR_API CYdLidar {
   std::string m_lidarSoftVer;
   std::string m_lidarHardVer;
   std::string m_lidarSerialNum;
+  int defalutSampleRate;
 };	// End of class
 
