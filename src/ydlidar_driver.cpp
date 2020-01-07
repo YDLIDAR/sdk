@@ -46,11 +46,11 @@ YDlidarDriver::YDlidarDriver():
   m_intensities       = false;
   isAutoReconnect     = true;
   isAutoconnting      = false;
-  m_baudrate          = 512000;
+  m_baudrate          = 230400;
   isSupportMotorDtrCtrl  = true;
   scan_node_count     = 0;
-  sample_rate         = 20000;
-  m_PointTime         = 1e9 / 20000;
+  sample_rate         = 5000;
+  m_PointTime         = 1e9 / 5000;
   trans_delay         = 0;
   scan_frequence      = 0;
   m_sampling_rate     = -1;
@@ -85,6 +85,8 @@ YDlidarDriver::YDlidarDriver():
   IntervalSampleAngle_LastPackage = 0.0;
   globalRecvBuffer = new uint8_t[sizeof(node_packages)];
   scan_node_buf = new node_info[MAX_SCAN_NODES];
+  package_index = 0;
+  has_package_error = false;
 }
 
 YDlidarDriver::~YDlidarDriver() {
@@ -782,6 +784,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
                 scan_frequence = (currentByte & 0xFE) >> 1;
               }
             } else {
+              has_package_error = true;
               recvPos = 0;
               continue;
             }
@@ -797,6 +800,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
             if (currentByte & LIDAR_RESP_MEASUREMENT_CHECKBIT) {
               FirstSampleAngle = currentByte;
             } else {
+              has_package_error = true;
               recvPos = 0;
               continue;
             }
@@ -813,6 +817,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
             if (currentByte & LIDAR_RESP_MEASUREMENT_CHECKBIT) {
               LastSampleAngle = currentByte;
             } else {
+              has_package_error = true;
               recvPos = 0;
               continue;
             }
@@ -923,6 +928,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
     if (CheckSumCal != CheckSum) {
       CheckSumResult = false;
+      has_package_error = true;
     } else {
       CheckSumResult = true;
     }
@@ -937,13 +943,36 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     package_CT = packages.package_CT;
   }
 
-  (*node).scan_frequence = 0;
+  (*node).scan_frequence  = 0;
 
   if ((package_CT & 0x01) == CT_Normal) {
     (*node).sync_flag = Node_NotSync;
+    memset((*node).debug_info, 0xff, sizeof((*node).debug_info));
+
+    if (!has_package_error) {
+      if (package_index < 10) {
+        (*node).debug_info[package_index] = (package_CT >> 1);
+        (*node).index = package_index;
+      } else {
+        (*node).index = 0xff;
+      }
+
+      if (package_Sample_Index == 0) {
+        package_index++;
+      }
+    } else {
+      (*node).index = 255;
+      package_index = 0;
+    }
   } else {
     (*node).sync_flag = Node_Sync;
-    (*node).scan_frequence  = scan_frequence;
+    (*node).index = 255;
+    package_index = 0;
+
+    if (CheckSumResult) {
+      has_package_error = false;
+      (*node).scan_frequence  = scan_frequence;
+    }
   }
 
   (*node).sync_quality = Node_Default_Quality;
@@ -977,6 +1006,9 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
                                                       *node).distance_q2 / 4.0))) * 180.0 / 3.1415) * 64.0);
         }
       }
+
+
+
     } else {
       AngleCorrectForDistance = 0;
     }
@@ -1051,14 +1083,22 @@ result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,
     if (node.sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
       size_t size = _serial->available();
       uint64_t delayTime = 0;
+      size_t PackageSize = (m_intensities ? INTENSITY_NORMAL_PACKAGE_SIZE :
+                            NORMAL_PACKAGE_SIZE);
 
-      if (size > 10) {
-        size_t packageNum = size / 90;
-        size_t Number = size % 90;
-        delayTime = packageNum * 40 * m_PointTime;
+      if (size > PackagePaidBytes && size < PackagePaidBytes * PackageSize) {
+        size_t packageNum = size / PackageSize;
+        size_t Number = size % PackageSize;
+        delayTime = packageNum * m_PointTime * PackageSize / 2;
 
-        if (Number > 10) {
-          delayTime += m_PointTime * ((Number - 10) / 2);
+        if (Number > PackagePaidBytes) {
+          delayTime += m_PointTime * ((Number - PackagePaidBytes) / 2);
+        }
+
+        size = Number;
+
+        if (packageNum > 0 && Number == 0) {
+          size = PackageSize;
         }
       }
 
@@ -1375,56 +1415,8 @@ void YDlidarDriver::checkTransDelay() {
         m_sampling_rate = _rate.rate;
       }
 
-      switch (m_sampling_rate) {
-        case YDLIDAR_RATE_4K:
-          sample_rate = 10000;
-
-          if (!isOctaveLidar(model)) {
-            sample_rate = 4000;
-          }
-
-          break;
-
-        case YDLIDAR_RATE_8K:
-          sample_rate = 16000;
-
-          if (!isOctaveLidar(model)) {
-            sample_rate = 8000;
-
-            if (model == YDLIDAR_F4PRO) {
-              sample_rate = 6000;
-            }
-          }
-
-          break;
-
-        case YDLIDAR_RATE_9K:
-          sample_rate = 18000;
-
-          if (!isOctaveLidar(model)) {
-            sample_rate = 9000;
-          }
-
-          break;
-
-        case YDLIDAR_RATE_10K:
-          sample_rate = 10000;
-
-          if (!isOctaveLidar(model)) {
-            sample_rate = 20000;
-          }
-
-          break;
-
-        default:
-          sample_rate = 18000;
-
-          if (!isOctaveLidar(model)) {
-            sample_rate = 9000;
-          }
-
-          break;
-      }
+      sample_rate = ConvertLidarToUserSmaple(model, m_sampling_rate);
+      sample_rate *= 1000;
 
       break;
 

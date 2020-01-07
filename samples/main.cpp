@@ -98,11 +98,9 @@ int main(int argc, char *argv[]) {
   int baudrate = 512000;
   std::map<int, int> baudrateList;
   baudrateList[0] = 115200;
-  baudrateList[1] = 128000;
-  baudrateList[2] = 153600;
-  baudrateList[3] = 230400;
-  baudrateList[4] = 512000;
-
+  baudrateList[1] = 512000;
+  printf("(TG15 TG30 TG50) is 512000\n");
+  printf("(TX8 TX20) is 115200\n\n");
   printf("Baudrate:\n");
 
   for (std::map<int, int>::iterator it = baudrateList.begin();
@@ -127,37 +125,14 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
-  bool isSingleChannel = false;
-  bool isTOFLidar = false;
-  std::string input_channel;
-  std::string input_tof;
-  printf("Whether the Lidar is one-way communication[yes/no]:");
-  std::cin >> input_channel;
-  std::transform(input_channel.begin(), input_channel.end(),
-                 input_channel.begin(),
-  [](unsigned char c) {
-    return std::tolower(c);  // correct
-  });
+  bool isSingleChannel = true;
 
-  if (input_channel.find("yes") != std::string::npos) {
-    isSingleChannel = true;
-
-    printf("Whether the Lidar is a TOF Lidar [yes/no]:");
-    std::cin >> input_tof;
-    std::transform(input_tof.begin(), input_tof.end(),
-                   input_tof.begin(),
-    [](unsigned char c) {
-      return std::tolower(c);  // correct
-    });
-
-    if (input_tof.find("yes") != std::string::npos) {
-      isTOFLidar = true;
-    }
+  if (baudrate == 512000) {
+    isSingleChannel = false;
   }
 
-
+  bool isTOFLidar = true;
   std::string input_frequency;
-
   float frequency = 8.0;
 
   while (ydlidar::ok() && !isSingleChannel) {
@@ -189,15 +164,15 @@ int main(int argc, char *argv[]) {
   //<! fixed angle resolution
   laser.setFixedResolution(false);
   //<! rotate 180
-  laser.setReversion(true); //rotate 180
+  laser.setReversion(false); //rotate 180
   //<! Counterclockwise
-  laser.setInverted(true);//ccw
+  laser.setInverted(false);//ccw
   laser.setAutoReconnect(true);//hot plug
   //<! one-way communication
   laser.setSingleChannel(isSingleChannel);
 
   //<! tof lidar
-  laser.setLidarType(isTOFLidar);
+  laser.setLidarType(!isTOFLidar);
   //unit: °
   laser.setMaxAngle(180);
   laser.setMinAngle(-180);
