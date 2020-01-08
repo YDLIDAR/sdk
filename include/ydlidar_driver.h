@@ -533,7 +533,7 @@ class YDlidarDriver {
     YDLIDAR_G2C     = 16,/**< G2C雷达型号代号. */
     YDLIDAR_G4B     = 17,/**< G4B雷达型号代号. */
     YDLIDAR_G4C     = 18,/**< G4C雷达型号代号. */
-    YDLIDAR_G1      = 19,/**< G1雷达型号代号. */
+    YDLIDAR_R1      = 19,/**< R1雷达型号代号. */
 
     YDLIDAR_TG15    = 100,/**< TG15雷达型号代号. */
     YDLIDAR_TG30    = 101,/**< T30雷达型号代号. */
@@ -701,8 +701,8 @@ inline std::string lidarModelToString(int model) {
       name = "G4C";
       break;
 
-    case YDlidarDriver::YDLIDAR_G1:
-      name = "G1(5K)";
+    case YDlidarDriver::YDLIDAR_R1:
+      name = "R1";
 
       break;
 
@@ -803,7 +803,7 @@ inline int lidarModelDefaultSampleRate(int model) {
     case YDlidarDriver::YDLIDAR_G4C:
       break;
 
-    case YDlidarDriver::YDLIDAR_G1:
+    case YDlidarDriver::YDLIDAR_R1:
       sample_rate = 5;
       break;
 
@@ -877,7 +877,7 @@ inline bool hasZeroAngle(int model) {
       model == YDlidarDriver::YDLIDAR_G2A ||
       model == YDlidarDriver::YDLIDAR_G2B ||
       model == YDlidarDriver::YDLIDAR_G2C ||
-      model == YDlidarDriver::YDLIDAR_G1) {
+      model == YDlidarDriver::YDLIDAR_R1) {
     ret = true;
   }
 
@@ -910,7 +910,7 @@ inline bool hasScanFrequencyCtrl(int model) {
 inline bool isSupportLidar(int model) {
   bool ret = true;
 
-  if (model < YDlidarDriver::YDLIDAR_F4 || (model > YDlidarDriver::YDLIDAR_G1 &&
+  if (model < YDlidarDriver::YDLIDAR_F4 || (model > YDlidarDriver::YDLIDAR_R1 &&
       model < YDlidarDriver::YDLIDAR_TG15) ||
       model > YDlidarDriver::YDLIDAR_TG50) {
     ret = false;

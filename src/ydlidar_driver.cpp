@@ -1429,7 +1429,7 @@ void YDlidarDriver::checkTransDelay() {
       sample_rate = 4000;
       break;
 
-    case YDLIDAR_G1:
+    case YDLIDAR_R1:
       sample_rate = 5000;
       break;
 

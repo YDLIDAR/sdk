@@ -71,7 +71,7 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_PointTime         = 1e9 / 5000;
   m_OffsetTime        = 0.0;
   m_AngleOffset       = 0.0;
-  lidar_model = YDlidarDriver::YDLIDAR_G1;
+  lidar_model = YDlidarDriver::YDLIDAR_R1;
   last_node_time = getTime();
   global_nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
 }
@@ -467,7 +467,7 @@ bool CYdLidar::getDeviceInfo() {
   }
 
   frequencyOffset     = 0.4;
-  std::string model = "G1(5K)";
+  std::string model = "R1";
   lidar_model = devinfo.model;
   model = lidarModelToString(devinfo.model);
   bool intensity = hasIntensity(devinfo.model);

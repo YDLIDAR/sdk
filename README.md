@@ -28,13 +28,13 @@ Release Notes
 
 
 
-Dataset 
+Dataset
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 | Model      |  Baudrate |  Sampling Frequency | Range(m)  | Scanning Frequency(HZ) | Working temperature(°C) | Laser power max(mW) | voltage(V) | Current(mA) | Intensity
 | :-------- | --------:|--------:|  --------:| --------:|--------:| --------:| --------:| --------:| :--: |
-| G2A    |  230400 |   5000  |  0.12-12   |5-12|0-50| ~5|4.8-5.2|400-480| false |
+| R1    |  230400 |   5000  |  0.12-12   |5-12|0-50| ~5|4.8-5.2|400-480| false |
 | G2      |  230400 |   5000  |  0.12-12   |5-12|0-50| ~5|4.8-5.2|400-480| true |
 | G2C   |  230400 |   4000  |  0.12-12   |5-12|0-50| ~5|4.8-5.2|400-480| false |
 
@@ -45,7 +45,7 @@ How to build YDLIDAR SDK samples
 
     $ cd sdk
 
-    $ git checkout master
+    $ git checkout R1
 
     $ cd ..
 
@@ -81,23 +81,23 @@ You should see YDLIDAR's scan result in the console:
 	[YDLIDAR] Connection established in [/dev/ttyUSB0][230400]:
 	Firmware version: 1.1
 	Hardware version: 1
-	Model: G2
+	Model: R1
 	Serial: 2019071800011111
 	[YDLIDAR INFO] Current Sampling Rate : 5K
 	[YDLIDAR INFO] Current Scan Frequency : 10.000000Hz
 	[YDLIDAR INFO] Now YDLIDAR is scanning ......
 	Scan received: 500 ranges
 	Scan received: 503 ranges
-	
-	
+
+
 
 
 
 Data structure
 -------------------------------------------------------------------------------------------------------------------------------------------------------
-	
+
 See [the protocol page](include/ydlidar_protocol.h) for more info.
-    
+
 
 Coordinate System
 -------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -141,7 +141,7 @@ Upgrade Log
    5.Remove other lidar model interfaces functions.
 
    6.fix turnOn function.
-   
+
 2018-12-07 version:1.3.9
 
    1.Remove other lidar model interfaces functions.
@@ -151,13 +151,13 @@ Upgrade Log
 2018-11-24 version:1.3.8
 
    1.Reduce abnormal situation recovery time.
-   
+
    2.fix timestamp from zero.
 
 2018-10-26 version:1.3.7
 
    1.add input angle calibration file.
-   
+
    2.remove network.
 
 2018-10-15 version:1.3.6
@@ -183,8 +183,8 @@ Upgrade Log
 2018-04-16 version:1.3.1
 
    1.Compensate for each laser point timestamp.
-   
-   
+
+
    Contact EAI
 ---------------
 
