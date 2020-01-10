@@ -398,7 +398,8 @@ inline bool hasIntensity(int model) {
 
   if (model == YDLIDAR_G2B ||
       model == YDLIDAR_G4B ||
-      model == YDLIDAR_S4B) {
+      model == YDLIDAR_S4B ||
+      model == YDLIDAR_S2) {
     ret = true;
   }
 

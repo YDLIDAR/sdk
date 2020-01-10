@@ -271,7 +271,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan,
         outscan.points.push_back(point);
       }
 
-      handleDeviceInfoPackage(count);
     }
 
     return true;
@@ -470,8 +469,6 @@ bool CYdLidar::checkLidarAbnormal() {
       buffer_count++;
 
       if (IS_OK(op_result)) {
-        handleDeviceInfoPackage(count);
-
         if (CalculateSampleRate(count, scan_time)) {
           if (!lidarPtr->getSingleChannel()) {
             return !IS_OK(op_result);
@@ -496,7 +493,6 @@ bool CYdLidar::checkLidarAbnormal() {
             data.erase(data.begin());
           }
 
-          handleDeviceInfoPackage(count);
           scan_time = 1.0 * static_cast<int32_t>(end_time - start_time) / 1e3;
           data.push_back(count);
 

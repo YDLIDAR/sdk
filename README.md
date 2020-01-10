@@ -50,7 +50,7 @@ How to build YDLIDAR SDK samples
 
     $ cd sdk
 
-    $ git checkout TOF
+    $ git checkout S2Q
 
     $ cd ..
 
