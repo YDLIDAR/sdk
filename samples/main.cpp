@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
   laser.setSerialBaudrate(baudrate);
   laser.setIntensities(intensities);//intensity
   laser.setAutoReconnect(true);//hot plug
-  laser.setEnableDebug(true);
+  laser.setEnableDebug(false);
   laser.setSingleChannel(true);//单通道雷达
   //unit: °C
   laser.setMaxAngle(180);

@@ -12,6 +12,17 @@
 
 #define DEG2RAD(x) ((x)*M_PI/180.)
 
+#define PropertyBuilderByName(type, name, access_permission)\
+    access_permission:\
+        type m_##name;\
+    public:\
+    inline void set##name(type v) {\
+        m_##name = v;\
+    }\
+    inline type get##name() {\
+        return m_##name;\
+}\
+
 
 #define LIDAR_CMD_STOP                      0x65
 #define LIDAR_CMD_SCAN                      0x60
@@ -76,6 +87,8 @@ typedef enum {
 #define Node_NotSync 2
 #define PackagePaidBytes 10
 #define PH 0x55AA
+#define NORMAL_PACKAGE_SIZE 90
+#define INTENSITY_NORMAL_PACKAGE_SIZE 130
 
 #if defined(_WIN32)
 #pragma pack(1)

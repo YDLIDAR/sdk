@@ -2,18 +2,6 @@
 #include "ydlidar_driver.h"
 #include <math.h>
 
-#define PropertyBuilderByName(type, name, access_permission)\
-    access_permission:\
-        type m_##name;\
-    public:\
-    inline void set##name(type v) {\
-        m_##name = v;\
-    }\
-    inline type get##name() {\
-        return m_##name;\
-}\
-
-
 using namespace ydlidar;
 
 class CYdLidar {
@@ -103,6 +91,7 @@ class CYdLidar {
  private:
   bool    isScanning;
   YDlidarDriver *lidarPtr;
+  uint64_t last_node_time;
 
 };	// End of class
 

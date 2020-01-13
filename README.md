@@ -32,6 +32,7 @@ Support LIDAR Model(Only S4Pro and S4B support intensity)
 | Model      |  Baudrate |  Sampling Frequency | Range(m)  | Scanning Frequency(HZ) | Working temperature(°C) | Laser power max(mW) | voltage(V) | Current(mA)
 | :-------- | --------:|--------:|  --------:| --------:|--------:| --------:| --------:|  :--: |
 | S4     |  115200|    4000 |  0.1-8        |6-12|0-40| ~5|4.8-5.2|330-380|
+| S2     |  115200|    3000 |  0.1-8        |6-12|0-40| ~5|4.8-5.2|330-380|
 | S4B |  153600|    4000 |  0.1-8        |6-12|0-40| ~5|4.8-5.2|330-380|
 
 How to build YDLIDAR SDK samples

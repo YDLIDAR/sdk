@@ -27,6 +27,8 @@ std::string format(const char *fmt, ...);
 
 class YDlidarDriver {
  public:
+  PropertyBuilderByName(uint32_t, pointTime,
+                        private) ///< 连个激光点之间采样时间间隔
   /**
   * A constructor.
   * A more elaborate description of the constructor.
@@ -149,6 +151,12 @@ class YDlidarDriver {
   * @note 只用开启一次成功即可
   */
   result_t startScan(bool force = false, uint32_t timeout = DEFAULT_TIMEOUT) ;
+
+  /**
+   * @brief stopScan
+   * @return
+   */
+  result_t stopScan();
 
   /**
   * @brief 关闭扫描 \n
@@ -396,9 +404,6 @@ class YDlidarDriver {
   bool m_IsSingleChannel;     ///<单通讯
   uint32_t m_baudrate;				///< 波特率
   bool isSupportMotorCtrl;			///< 是否支持电机控制
-  uint64_t m_node_time_ns;			///< 时间戳
-  uint64_t m_node_last_time_ns;       ///< 时间戳
-  uint32_t m_pointTime;				///< 激光点直接时间间隔
   uint32_t trans_delay;				///< 串口传输一个byte时间
 
   node_package package;
@@ -416,7 +421,6 @@ class YDlidarDriver {
   uint16_t SampleNumlAndCTCal;
   uint16_t LastSampleAngleCal;
   bool CheckSumResult;
-  bool Last_CheckSum_Result;
   uint16_t Valu8Tou16;
 
   uint8_t *recvBuffer;
@@ -425,6 +429,11 @@ class YDlidarDriver {
   FILE *fd;
 
 };
+
+inline bool isS2Lidar(int baudrate) {
+  return (baudrate == 115200);
+}
+
 }
 
 #endif // YDLIDAR_DRIVER_H
