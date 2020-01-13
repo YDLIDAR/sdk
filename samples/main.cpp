@@ -204,7 +204,7 @@ int main(int argc, char *argv[]) {
   laser.setSingleChannel(isSingleChannel);
 
   //<! tof lidar
-  laser.setLidarType(!isTOFLidar);
+  laser.setLidarType(isTOFLidar ? TYPE_TOF : TYPE_TRIANGLE);
   //unit: °
   laser.setMaxAngle(180);
   laser.setMinAngle(-180);

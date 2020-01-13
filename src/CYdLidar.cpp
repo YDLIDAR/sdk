@@ -461,7 +461,8 @@ bool CYdLidar::checkLidarAbnormal() {
     uint32_t end_time = 0;
     op_result = RESULT_OK;
 
-    while (buffer_count < 10 && scan_time < 0.05 && IS_OK(op_result)) {
+    while (buffer_count < 10 && (scan_time < 0.05 ||
+                                 !lidarPtr->getSingleChannel()) && IS_OK(op_result)) {
       start_time = getms();
       count = YDlidarDriver::MAX_SCAN_NODES;
       op_result =  lidarPtr->grabScanData(global_nodes, count);

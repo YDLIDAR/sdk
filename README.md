@@ -48,12 +48,6 @@ How to build YDLIDAR SDK samples
 
     $ git clone https://github.com/ydlidar/sdk
 
-    $ cd sdk
-
-    $ git checkout TOF
-
-    $ cd ..
-
     $ mkdir build
 
     $ cd build
