@@ -95,98 +95,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  int baudrate = 230400;
-  std::map<int, int> baudrateList;
-  baudrateList[0] = 115200;
-  baudrateList[1] = 128000;
-  baudrateList[2] = 153600;
-  baudrateList[3] = 230400;
-  baudrateList[4] = 512000;
-
-  printf("Baudrate:\n");
-
-  for (std::map<int, int>::iterator it = baudrateList.begin();
-       it != baudrateList.end(); it++) {
-    printf("%d. %d\n", it->first, it->second);
-  }
-
-  while (ydlidar::ok()) {
-    printf("Please select the lidar baudrate:");
-    std::string number;
-    std::cin >> number;
-
-    if ((size_t)atoi(number.c_str()) > baudrateList.size()) {
-      continue;
-    }
-
-    baudrate = baudrateList[atoi(number.c_str())];
-    break;
-  }
-
-  if (!ydlidar::ok()) {
-    return 0;
-  }
-
-  bool isSingleChannel = false;
-  bool isTOFLidar = false;
-  std::string input_channel;
-  std::string input_tof;
-  printf("Whether the Lidar is one-way communication[yes/no]:");
-  std::cin >> input_channel;
-  std::transform(input_channel.begin(), input_channel.end(),
-                 input_channel.begin(),
-  [](unsigned char c) {
-    return std::tolower(c);  // correct
-  });
-
-  if (input_channel.find("yes") != std::string::npos) {
-    isSingleChannel = true;
-  }
-
-  if (!ydlidar::ok()) {
-    return 0;
-  }
-
-  printf("Whether the Lidar is a TOF Lidar [yes/no]:");
-  std::cin >> input_tof;
-  std::transform(input_tof.begin(), input_tof.end(),
-                 input_tof.begin(),
-  [](unsigned char c) {
-    return std::tolower(c);  // correct
-  });
-
-  if (input_tof.find("yes") != std::string::npos) {
-    isTOFLidar = true;
-  }
-
-  if (!ydlidar::ok()) {
-    return 0;
-  }
-
-  std::string input_frequency;
-
-  float frequency = 8.0;
-
-  while (ydlidar::ok() && !isSingleChannel) {
-    printf("Please enter the lidar scan frequency[3-15.7]:");
-    std::cin >> input_frequency;
-    frequency = atof(input_frequency.c_str());
-
-    if (frequency <= 15.7 && frequency >= 3.0) {
-      break;
-    }
-
-    fprintf(stderr,
-            "Invalid scan frequency,The scanning frequency range is 5 to 12 HZ, Please re-enter.\n");
-  }
-
-  if (!ydlidar::ok()) {
-    return 0;
-  }
-
-
-
-
+  int baudrate = 115200;
   CYdLidar laser;
   //<! lidar port
   laser.setSerialPort(port);
@@ -201,20 +110,19 @@ int main(int argc, char *argv[]) {
   laser.setInverted(false);//ccw
   laser.setAutoReconnect(true);//hot plug
   //<! one-way communication
-  laser.setSingleChannel(isSingleChannel);
+  laser.setSingleChannel(true);
 
   //<! tof lidar
-  laser.setLidarType(isTOFLidar ? TYPE_TOF : TYPE_TRIANGLE);
+  laser.setLidarType(TYPE_TRIANGLE);
   //unit: °
   laser.setMaxAngle(180);
   laser.setMinAngle(-180);
 
   //unit: m
   laser.setMinRange(0.01);
-  laser.setMaxRange(64.0);
+  laser.setMaxRange(12.0);
 
   //unit: Hz
-  laser.setScanFrequency(frequency);
   std::vector<float> ignore_array;
   ignore_array.clear();
   laser.setIgnoreArray(ignore_array);

@@ -36,6 +36,7 @@ Dataset
 
 | Model      |  Baudrate |  Sampling Frequency | Range(m)  | Scanning Frequency(HZ) | Working temperature(°C) | Laser power max(mW) | voltage(V) | Current(mA) | Intensity
 | :-------- | --------:|--------:|  --------:| --------:|--------:| --------:| --------:| --------:| :--: |
+| S2N      |  115200 |   3000  |  0.12-12   |5-12|0-50| ~5|4.8-5.2|400-480| false |
 | TG15   |  512000 |   20000  |  0.1-15   |3-15.7|0-50| ~5|4.8-5.2|400-480| false |
 | TG30   |  512000 |   4000  |  0.1-30   |3-15.7|0-50| ~5|4.8-5.2|400-480| false |
 | TG50   |  512000 |   4000  |  0.1-50   |3-15.7|0-50| ~5|4.8-5.2|400-480| false |
@@ -47,6 +48,12 @@ How to build YDLIDAR SDK samples
 ---------------
 
     $ git clone https://github.com/ydlidar/sdk
+
+    $ cd sdk
+
+    $ git checkout S2N
+
+    $ cd ..
 
     $ mkdir build
 
@@ -77,16 +84,15 @@ You should see YDLIDAR's scan result in the console:
 
 	[YDLIDAR]:SDK Version: 1.4.5
 	[YDLIDAR]:Lidar running correctly ! The health status: good
-	[YDLIDAR] Connection established in [/dev/ttyUSB0][512000]:
+	[YDLIDAR] Connection established in [/dev/ttyUSB0][115200]:
 	Firmware version: 1.3
 	Hardware version: 1
-	Model: TG30
+	Model: S2
 	Serial: 2020010200010001
-	[YDLIDAR INFO] Current Sampling Rate : 20K
-	[YDLIDAR INFO] Current Scan Frequency : 15.000000Hz
+	[YDLIDAR INFO] Current Sampling Rate : 3K
 	[YDLIDAR INFO] Now YDLIDAR is scanning ......
-	Scan received: 1329 ranges
-	Scan received: 1329 ranges
+	Scan received: 628 ranges
+	Scan received: 627 ranges
 	
 	
 
