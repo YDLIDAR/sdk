@@ -60,6 +60,28 @@ int CYdLidar::getFixedSize() const {
   return m_FixedSize;
 }
 
+bool CYdLidar::isRangeValid(double reading) const {
+  if (reading >= m_MinRange && reading <= m_MaxRange) {
+    return true;
+  }
+
+  return false;
+}
+
+bool CYdLidar::isRangeIgnore(double angle) const {
+  bool ret = false;
+
+  for (uint16_t j = 0; j < m_IgnoreArray.size(); j = j + 2) {
+    if ((angles::from_degrees(m_IgnoreArray[j]) <= angle) &&
+        (angle <= angles::from_degrees(m_IgnoreArray[j + 1]))) {
+      ret = true;
+      break;
+    }
+  }
+
+  return ret;
+}
+
 /*-------------------------------------------------------------
 						doProcessSimple
 -------------------------------------------------------------*/
@@ -76,6 +98,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
   size_t   count = YDlidarDriver::MAX_SCAN_NODES;
   //  wait Scan data:
   uint64_t tim_scan_start = getTime();
+  uint64_t startTs = tim_scan_start;
   result_t op_result =  lidarPtr->grabScanData(nodes, count);
   uint64_t tim_scan_end = getTime();
 
@@ -95,12 +118,16 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     uint64_t scan_time = m_pointTime * (count - 1);
     tim_scan_end += m_OffsetTime * 1e9;
     tim_scan_end -= m_pointTime;
+    tim_scan_end -= nodes[0].stamp;
     tim_scan_start = tim_scan_end -  scan_time ;
 
-    int64_t timeDiff = tim_scan_start - last_node_time;
+    if (tim_scan_start < startTs) {
+      tim_scan_start = startTs;
+      tim_scan_end = tim_scan_start + scan_time;
+    }
 
-    if (timeDiff > -2e6 && timeDiff < 0) {
-      tim_scan_start = last_node_time;
+    if ((last_node_time + m_pointTime) >= tim_scan_start) {
+      tim_scan_start = last_node_time + m_pointTime;
       tim_scan_end = tim_scan_start + scan_time;
     }
 
@@ -113,7 +140,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     scan_msg.system_time_stamp = tim_scan_start;
     scan_msg.config.min_range = m_MinRange;
     scan_msg.config.max_range = m_MaxRange;
-    int min_index = count;
 
 
     for (int i = 0; i < count; i++) {
@@ -145,13 +171,14 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
         range     = 0.0;
       }
 
-      if (range > m_MaxRange || range < m_MinRange) {
+      //valid range
+      if (!isRangeValid(range)) {
         range = 0.0;
       }
 
       if (angle >= scan_msg.config.min_angle && angle <= scan_msg.config.max_angle) {
-        if (i < min_index) {
-          min_index = i;
+        if (scan_msg.data.empty()) {
+          scan_msg.system_time_stamp = tim_scan_start + i * m_pointTime;
         }
 
         point.angle = angle;
@@ -162,7 +189,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
 
     }
 
-    scan_msg.system_time_stamp = tim_scan_start + min_index * m_pointTime;
     return true;
 
   } else {
@@ -211,6 +237,7 @@ bool  CYdLidar::turnOn() {
   }
 
   isScanning = true;
+  lidarPtr->setIgnoreArray(m_IgnoreArray);
   m_pointTime = lidarPtr->getPointTime();
   lidarPtr->setAutoReconnect(m_AutoReconnect);
   printf("[YDLIDAR INFO] Now YDLIDAR is scanning ......\n");
@@ -255,6 +282,7 @@ bool CYdLidar::checkLidarAbnormal() {
       delay(check_abnormal_count * 1000);
     }
 
+    count = YDlidarDriver::MAX_SCAN_NODES;
     op_result =  lidarPtr->grabScanData(nodes, count);
 
     if (IS_OK(op_result)) {

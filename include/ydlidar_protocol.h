@@ -7,6 +7,19 @@
 
 #define SUNNOISEINTENSITY 0xff
 #define GLASSNOISEINTENSITY 0xfe
+#define NORMAL_PACKAGE_SIZE 90
+#define INTENSITY_NORMAL_PACKAGE_SIZE 130
+
+#define PropertyBuilderByName(type, name, access_permission)\
+    access_permission:\
+        type m_##name;\
+    public:\
+    inline void set##name(type v) {\
+        m_##name = v;\
+    }\
+    inline type get##name() {\
+        return m_##name;\
+}\
 
 #if defined(_WIN32)
 #pragma pack(1)

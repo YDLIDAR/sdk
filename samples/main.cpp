@@ -53,6 +53,16 @@ int main(int argc, char *argv[]) {
   laser.setAutoReconnect(true);
   laser.setGlassNoise(true);
   laser.setSunNoise(true);
+  //filter range angle,
+  //you can check the current lidar filter angle by client,
+  //then enter the vector.
+  //std::vector<float> ignore;
+  //ignore.push_back(startAngle);//unit: °
+  //ignore.push_back(endAngle);
+  //ignore.push_back(startAngle1);
+  //ignore.push_back(endAngle1);
+  //laser.setIgnoreArray();
+
   bool ret = laser.initialize();
 
   while (ret && ydlidar::ok()) {

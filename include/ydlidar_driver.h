@@ -21,6 +21,8 @@ namespace ydlidar {
 
 class YDlidarDriver {
  public:
+  PropertyBuilderByName(std::vector<float>, IgnoreArray,
+                        private) ///< 设置和获取激光剔除点
   /**
   * A constructor.
   * A more elaborate description of the constructor.
@@ -308,6 +310,18 @@ class YDlidarDriver {
   * @brief 清除串口DTR \n
     */
   void clearDTR();
+
+  /**
+   * @brief doRangeIgnore
+   */
+  bool doRangeIgnore();
+
+  /**
+   * @brief isRangeIgnore
+   * @param angle
+   * @return
+   */
+  bool isRangeIgnore(double angle) const;
 
 
  public:

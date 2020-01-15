@@ -9,6 +9,7 @@
 #include "ydlidar_driver.h"
 #include "common.h"
 #include <math.h>
+#include "angles.h"
 using namespace impl;
 
 namespace ydlidar {
@@ -485,6 +486,8 @@ int YDlidarDriver::cacheScanData() {
       if (local_buf[pos].sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
         if ((local_scan[0].sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT)) {
           _lock.lock();//timeout lock, wait resource copy
+          local_scan[0].stamp = local_buf[pos].stamp;
+          local_scan[0].scan_frequence = local_buf[pos].scan_frequence;
           memcpy(scan_node_buf, local_scan, scan_count * sizeof(node_info));
           scan_node_count = scan_count;
           _dataEvent.set();
@@ -666,6 +669,8 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   uint8_t package_type = 0;
   uint8_t scan_frequence = 0;
   async_size = 0;
+  (*node).scan_frequence = 0;
+  (*node).stamp = 0;
 
   if (package_Sample_Index == 0) {
     recvPos = 0;
@@ -889,6 +894,12 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
       (*node).sync_quality  = 0;
     }
 
+    if ((*node).distance_q2 != 0) {
+      if (doRangeIgnore()) {
+        (*node).distance_q2 = 0;
+      }
+    }
+
     if ((FirstSampleAngle + IntervalSampleAngle * package_Sample_Index +
          AngleCorrectForDistance) < 0) {
       (*node).angle_q6_checkbit = (((uint16_t)(FirstSampleAngle + IntervalSampleAngle
@@ -910,6 +921,8 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
                                     LIDAR_RESP_MEASUREMENT_CHECKBIT;
       }
     }
+
+
   } else {
     (*node).sync_flag           = Node_NotSync;
     (*node).sync_quality        = 0;
@@ -928,6 +941,33 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   return RESULT_OK;
 }
 
+bool YDlidarDriver::doRangeIgnore() {
+  if (!m_IgnoreArray.size()) {
+    return false;
+  }
+
+  double angle = (FirstSampleAngle + IntervalSampleAngle * package_Sample_Index) /
+                 64.0;
+  angle = angles::from_degrees(angle);
+  angle = angles::normalize_angle_positive(angle);
+  return isRangeIgnore(angles::to_degrees(angle));
+
+}
+
+bool YDlidarDriver::isRangeIgnore(double angle) const {
+  bool ret = false;
+
+  for (uint16_t j = 0; j < m_IgnoreArray.size(); j = j + 2) {
+    if ((m_IgnoreArray[j] <= angle) &&
+        (angle <= m_IgnoreArray[j + 1])) {
+      ret = true;
+      break;
+    }
+  }
+
+  return ret;
+}
+
 result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,
                                      uint32_t timeout) {
   if (!m_isConnected) {
@@ -944,12 +984,35 @@ result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,
     node_info node;
 
     if ((ans = this->waitPackage(&node, timeout - waitTime)) != RESULT_OK) {
+      count = recvNodeCount;
       return ans;
     }
 
     nodebuffer[recvNodeCount++] = node;
 
     if (node.sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
+      size_t size = _serial->available();
+      uint64_t delayTime = 0;
+      size_t PackageSize = NORMAL_PACKAGE_SIZE;
+
+      if (size > PackagePaidBytes && size < PackagePaidBytes * PackageSize) {
+        size_t packageNum = size / PackageSize;
+        size_t Number = size % PackageSize;
+        delayTime = packageNum * m_pointTime * PackageSize / 2;
+
+        if (Number > PackagePaidBytes) {
+          delayTime += m_pointTime * ((Number - PackagePaidBytes) / 2);
+        }
+
+        size = Number;
+
+        if (packageNum > 0 && Number == 0) {
+          size = PackageSize;
+        }
+      }
+
+      nodebuffer[recvNodeCount - 1].stamp = size * trans_delay + delayTime;
+      nodebuffer[recvNodeCount - 1].scan_frequence = node.scan_frequence;
       count = recvNodeCount;
       return RESULT_OK;
     }

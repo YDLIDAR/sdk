@@ -664,10 +664,10 @@ bool Serial::SerialImpl::open() {
   pid = -1;
   pid = getpid();
 
-  if (LOCK(port_.c_str(), pid)) {
-    fprintf(stderr, "Could not lock serial port for exclusive access\n");
-    return false;
-  }
+//  if (LOCK(port_.c_str(), pid)) {
+//    fprintf(stderr, "Could not lock serial port for exclusive access\n");
+//    return false;
+//  }
 
   fd_ = ::open(port_.c_str(),
                O_RDWR | O_NOCTTY | O_NONBLOCK | O_APPEND | O_NDELAY);
@@ -681,7 +681,7 @@ bool Serial::SerialImpl::open() {
       case ENFILE:
       case EMFILE:
       default:
-        UNLOCK(port_.c_str(), pid);
+//        UNLOCK(port_.c_str(), pid);
         pid = -1;
         return false;
     }
@@ -690,7 +690,7 @@ bool Serial::SerialImpl::open() {
   termios tio;
 
   if (!getTermios(&tio)) {
-    UNLOCK(port_.c_str(), pid);
+//    UNLOCK(port_.c_str(), pid);
     return false;
   }
 
@@ -701,12 +701,12 @@ bool Serial::SerialImpl::open() {
   set_flowcontrol(&tio, flowcontrol_);
 
   if (!setTermios(&tio)) {
-    UNLOCK(port_.c_str(), pid);
+//    UNLOCK(port_.c_str(), pid);
     return false;
   }
 
   if (!setBaudrate(baudrate_)) {
-    UNLOCK(port_.c_str(), pid);
+//    UNLOCK(port_.c_str(), pid);
     return false;
   }
 
@@ -731,7 +731,7 @@ void Serial::SerialImpl::close() {
       ::close(fd_);
     }
 
-    UNLOCK(port_.c_str(), pid);
+//    UNLOCK(port_.c_str(), pid);
     fd_ = -1;
     pid = -1;
     is_open_ = false;
