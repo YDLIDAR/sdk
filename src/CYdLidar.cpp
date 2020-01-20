@@ -17,6 +17,7 @@ CYdLidar::CYdLidar(): lidarPtr(0) {
   m_SerialBaudrate    = 115200;
   m_FixedResolution   = false;
   m_Reversion         = false;
+  m_Inverted          = false;
   m_AutoReconnect     = false;
   m_MaxAngle          = 180.f;
   m_MinAngle          = -180.f;
@@ -153,7 +154,9 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
         angle += M_PI;
       }
 
-      angle = 2 * M_PI - angle;
+      if (m_Inverted) {
+        angle = 2 * M_PI - angle;
+      }
 
       angle = angles::normalize_angle(angle);
 

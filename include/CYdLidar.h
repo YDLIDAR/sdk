@@ -21,6 +21,8 @@ class YDLIDAR_API CYdLidar {
                         private) ///< 设置和获取激光是否是固定角度分辨率
   PropertyBuilderByName(bool, Reversion,
                         private) ///< 设置和获取是否旋转激光180度
+  PropertyBuilderByName(bool, Inverted,
+                        private) ///< 设置逆时针
   PropertyBuilderByName(bool, AutoReconnect,
                         private) ///< 设置异常是否开启重新连接
   PropertyBuilderByName(bool, GlassNoise,

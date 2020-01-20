@@ -50,6 +50,7 @@ int main(int argc, char *argv[]) {
   laser.setSerialBaudrate(baud);
   laser.setFixedResolution(false);
   laser.setReversion(false);
+  laser.setInverted(false);//clocwise
   laser.setAutoReconnect(true);
   laser.setGlassNoise(true);
   laser.setSunNoise(true);
