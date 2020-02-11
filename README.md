@@ -11,6 +11,13 @@ YDLIDAR(https://www.ydlidar.com/) series is a set of high-performance and low-co
 
 If you are using ROS (Robot Operating System), please use our open-source [ROS Driver]( https://github.com/ydlidar/ydlidar_ros) .
 
+Prerequisites
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+* Linux
+* Windows 7/10, Visual Studio 2015/2017
+* C++11 compiler
+
+
 Licence
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -53,7 +60,7 @@ Dataset
 | G1        | 19		|  230400   |   9            |  0.28~16         | 5~12      	  | false          | false    	  | 4.8~5.2   |
 | TX8    　 | 100	   |  115200   |   4            |  0.1~8      	   | 4~8(PWM)       | false          | true      	  | 4.8~5.2   |
 | TX20    　| 100	   |  115200   |   4            |  0.1~20      	   | 4~8(PWM)       | false          | true     	  | 4.8~5.2   |
-| TG15    　| 100	   |  512000   |   20/18/10     |  0.05~30      	| 3~16      	  | false          | false    	  | 4.8~5.2   |
+| TG15    　| 100	   |  512000   |   20/18/10     |  0.05~15      	| 3~16      	  | false          | false    	  | 4.8~5.2   |
 | TG30    　| 101	   |  512000   |   20/18/10     |  0.05~30      	| 3~16      	  | false          | false    	  | 4.8~5.2   |
 | TG50    　| 102	   |  512000   |   20/18/10     |  0.05~50      	| 3~16      	  | false          | false    	  | 4.8~5.2   |
 
