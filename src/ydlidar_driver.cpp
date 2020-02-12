@@ -82,6 +82,14 @@ YDlidarDriver::YDlidarDriver():
   package_Sample_Index = 0;
   IntervalSampleAngle_LastPackage = 0.0;
   m_IgnoreArray.clear();
+  uint32_t size       = (m_intensities) ? sizeof(node_package) : sizeof(
+                          node_packages);
+  recvBuffer = new uint8_t[size];
+  m_SingleChannel = false;
+  package_index         = 0;
+  data_header_error     = false;
+  m_SupportMotorDtrCtrl = true;
+
 }
 
 YDlidarDriver::~YDlidarDriver() {
@@ -104,6 +112,11 @@ YDlidarDriver::~YDlidarDriver() {
   if (_serial) {
     delete _serial;
     _serial = NULL;
+  }
+
+  if (recvBuffer) {
+    delete[] recvBuffer;
+    recvBuffer = NULL;
   }
 }
 
@@ -142,7 +155,6 @@ void YDlidarDriver::setDTR() {
   }
 
   if (_serial) {
-    _serial->flush();
     _serial->setDTR(1);
   }
 
@@ -154,7 +166,6 @@ void YDlidarDriver::clearDTR() {
   }
 
   if (_serial) {
-    _serial->flush();
     _serial->setDTR(0);
   }
 }
@@ -423,7 +434,7 @@ int YDlidarDriver::cacheScanData() {
   node_info      *local_scan = new node_info[MAX_SCAN_NODES];
   size_t         scan_count = 0;
   result_t       ans = RESULT_FAIL;
-  memset(local_scan, 0, sizeof(local_scan));
+  memset(local_scan, 0, sizeof(node_info)*MAX_SCAN_NODES);
   m_node_time_ns  = getTime();
   m_node_last_time_ns = getTime();
   flushSerial();
@@ -431,6 +442,7 @@ int YDlidarDriver::cacheScanData() {
   int timeout_count   = 0;
 
   while (isScanning) {
+    count = 128;
     ans = waitScanData(local_buf, count);
 
     if (!IS_OK(ans)) {
@@ -496,8 +508,6 @@ int YDlidarDriver::cacheScanData() {
 result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   int recvPos         = 0;
   uint32_t startTs    = getms();
-  uint32_t size       = (m_intensities) ? sizeof(node_package) : sizeof(
-                          node_packages);
 
   uint32_t waitTime   = 0;
   uint8_t  *packageBuffer = (m_intensities) ? (uint8_t *)&package.package_Head :
@@ -506,10 +516,13 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   int32_t  AngleCorrectForDistance    = 0;
   int  package_recvPos    = 0;
   uint8_t package_type    = 0;
-  bool data_header_error = false;
+  (*node).index = 255;
+  (*node).scan_frequence  = 0;
+  (*node).error_package = 0;
+  (*node).debugInfo = 0xff;
+
 
   if (package_Sample_Index == 0) {
-    uint8_t *recvBuffer = new uint8_t[size];
     recvPos = 0;
 
     while ((waitTime = getms() - startTs) <= timeout) {
@@ -518,7 +531,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
       result_t ans = waitForData(remainSize, timeout - waitTime, &recvSize);
 
       if (!IS_OK(ans)) {
-        delete[] recvBuffer;
         return ans;
       }
 
@@ -654,11 +666,10 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
       while ((waitTime = getms() - startTs) <= timeout) {
         size_t remainSize = package_Sample_Num * PackageSampleBytes - recvPos;
-        size_t recvSize;
+        size_t recvSize = 0;
         result_t ans = waitForData(remainSize, timeout - waitTime, &recvSize);
 
         if (!IS_OK(ans)) {
-          delete[] recvBuffer;
           return ans;
         }
 
@@ -698,11 +709,9 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
       }
 
       if (package_Sample_Num * PackageSampleBytes != recvPos) {
-        delete[] recvBuffer;
         return RESULT_FAIL;
       }
     } else {
-      delete[] recvBuffer;
       return RESULT_FAIL;
     }
 
@@ -711,12 +720,11 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
     if (CheckSumCal != CheckSum) {
       CheckSumResult = false;
+      data_header_error = true;
+      (*node).error_package = 1;
     } else {
       CheckSumResult = true;
     }
-
-    delete[] recvBuffer;
-
   }
 
   uint8_t package_CT;
@@ -727,10 +735,31 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     package_CT = packages.package_CT;
   }
 
-  if (package_CT == CT_Normal) {
+  if ((package_CT & 0x01) == CT_Normal) {
     (*node).sync_flag = Node_NotSync;
+    (*node).debugInfo = 0xff;
+
+    if (!data_header_error) {
+      if (package_Sample_Index == 0) {
+        package_index++;
+        (*node).debugInfo = (package_CT >> 1);
+        (*node).index = package_index;
+      }
+    } else {
+      (*node).error_package = 1;
+      (*node).index = 255;
+      package_index = 0xff;
+    }
   } else {
     (*node).sync_flag = Node_Sync;
+    package_index = 0;
+
+    if (CheckSumResult) {
+      data_header_error = false;
+      (*node).index = package_index;
+      (*node).debugInfo = (package_CT >> 1);
+      (*node).scan_frequence  = scan_frequence;
+    }
   }
 
   (*node).sync_quality = Node_Default_Quality;
@@ -855,6 +884,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   if (package_Sample_Index >= nowPackageNum) {
     package_Sample_Index = 0;
     m_node_time_ns = (*node).stamp + m_pointTime;
+    CheckSumResult = false;
   }
 
   return RESULT_OK;
@@ -877,6 +907,7 @@ result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,
     ans = waitPackage(&node, timeout - waitTime);
 
     if (!IS_OK(ans)) {
+      count = recvNodeCount;
       return ans;
     }
 
@@ -1042,6 +1073,13 @@ result_t YDlidarDriver::getHealth(device_health &health, uint32_t timeout) {
 
   disableDataGrabbing();
   flushSerial();
+
+  if (m_SingleChannel) {
+    health.error_code = 0;
+    health.status = 0;
+    return RESULT_OK;
+  }
+
   {
     ScopedLocker l(_lock);
 
@@ -1069,6 +1107,7 @@ result_t YDlidarDriver::getHealth(device_health &health, uint32_t timeout) {
 
     getData(reinterpret_cast<uint8_t *>(&health), sizeof(health));
   }
+
   return RESULT_OK;
 }
 
@@ -1084,6 +1123,15 @@ result_t YDlidarDriver::getDeviceInfo(device_info &info, uint32_t timeout) {
 
   disableDataGrabbing();
   flushSerial();
+
+  if (m_SingleChannel) {
+    info.model = YDLIDAR_S4;
+    model = info.model;
+    info.firmware_version = 0;
+    info.hardware_version = 0;
+    return RESULT_OK;
+  }
+
   {
     ScopedLocker l(_lock);
 
@@ -1120,6 +1168,16 @@ result_t YDlidarDriver::getDeviceInfo(device_info &info, uint32_t timeout) {
 /* the set to signal quality                                            */
 /************************************************************************/
 void YDlidarDriver::setIntensities(const bool &isintensities) {
+  if (isintensities != m_intensities) {
+    if (recvBuffer) {
+      delete[] recvBuffer;
+    }
+
+    uint32_t size       = (isintensities) ? sizeof(node_package) : sizeof(
+                            node_packages);
+    recvBuffer = new uint8_t[size];
+  }
+
   m_intensities = isintensities;
 
   if (m_intensities) {
@@ -1156,6 +1214,7 @@ void YDlidarDriver::checkTransferDelay() {
 
   switch (model) {
     case YDLIDAR_G4://g4
+    case YDLIDAR_G4PRO://G4PRO
       if (m_sampling_rate == -1) {
         sampling_rate _rate;
         getSamplingRate(_rate);
@@ -1176,7 +1235,11 @@ void YDlidarDriver::checkTransferDelay() {
           break;
       }
 
-      trans_delay = _serial->getByteTime();
+      break;
+
+    case YDLIDAR_S2:
+    case YDLIDAR_S4://S2
+      m_pointTime = 1e9 / 3000;
       break;
 
     default:
@@ -1210,23 +1273,30 @@ result_t YDlidarDriver::startScan(bool force, uint32_t timeout) {
       return ans;
     }
 
-    lidar_ans_header response_header;
+    if (!m_SingleChannel) {
+      lidar_ans_header response_header;
 
-    if ((ans = waitResponseHeader(&response_header, timeout)) != RESULT_OK) {
-      return ans;
-    }
+      if ((ans = waitResponseHeader(&response_header, timeout)) != RESULT_OK) {
+        return ans;
+      }
 
-    if (response_header.type != LIDAR_ANS_TYPE_MEASUREMENT) {
-      return RESULT_FAIL;
-    }
+      if (response_header.type != LIDAR_ANS_TYPE_MEASUREMENT) {
+        return RESULT_FAIL;
+      }
 
-    if (response_header.size < 5) {
-      return RESULT_FAIL;
+      if (response_header.size < 5) {
+        return RESULT_FAIL;
+      }
     }
 
     ans = this->createThread();
     return ans;
   }
+
+  if (m_SingleChannel) {
+    startMotor();
+  }
+
   return RESULT_OK;
 }
 
@@ -1276,21 +1346,28 @@ result_t YDlidarDriver::startAutoScan(bool force, uint32_t timeout) {
       return ans;
     }
 
-    lidar_ans_header response_header;
+    if (!m_SingleChannel) {
+      lidar_ans_header response_header;
 
-    if ((ans = waitResponseHeader(&response_header, timeout)) != RESULT_OK) {
-      return ans;
-    }
+      if ((ans = waitResponseHeader(&response_header, timeout)) != RESULT_OK) {
+        return ans;
+      }
 
-    if (response_header.type != LIDAR_ANS_TYPE_MEASUREMENT) {
-      return RESULT_FAIL;
-    }
+      if (response_header.type != LIDAR_ANS_TYPE_MEASUREMENT) {
+        return RESULT_FAIL;
+      }
 
-    if (response_header.size < 5) {
-      return RESULT_FAIL;
+      if (response_header.size < 5) {
+        return RESULT_FAIL;
+      }
     }
 
   }
+
+  if (m_SingleChannel) {
+    startMotor();
+  }
+
   return RESULT_OK;
 }
 
@@ -1303,12 +1380,22 @@ result_t YDlidarDriver::stop() {
     isScanning = false;
     disableDataGrabbing();
     stopScan();
+
+    if (m_SingleChannel) {
+      stopMotor();
+    }
+
     return RESULT_OK;
 
   }
 
   disableDataGrabbing();
   stopScan();
+
+  if (m_SingleChannel) {
+    stopMotor();
+  }
+
   return RESULT_OK;
 }
 
@@ -1327,6 +1414,40 @@ result_t YDlidarDriver::reset(uint32_t timeout) {
 
   if ((ans = sendCommand(LIDAR_CMD_RESET)) != RESULT_OK) {
     return ans;
+  }
+
+  return RESULT_OK;
+}
+
+/************************************************************************/
+/*  startMotor                                                          */
+/************************************************************************/
+result_t YDlidarDriver::startMotor() {
+  ScopedLocker l(_lock);
+
+  if (m_SupportMotorDtrCtrl) {
+    setDTR();
+    delay(500);
+  } else {
+    clearDTR();
+    delay(500);
+  }
+
+  return RESULT_OK;
+}
+
+/************************************************************************/
+/*  stopMotor                                                           */
+/************************************************************************/
+result_t YDlidarDriver::stopMotor() {
+  ScopedLocker l(_lock);
+
+  if (m_SupportMotorDtrCtrl) {
+    clearDTR();
+    delay(500);
+  } else {
+    setDTR();
+    delay(500);
   }
 
   return RESULT_OK;

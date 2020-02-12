@@ -38,6 +38,8 @@ std::string format(const char *fmt, ...);
 
 
 class YDlidarDriver {
+  ///< single-channel
+  PropertyBuilderByName(bool, SingleChannel, private)
  public:
   /**
   * A constructor.
@@ -198,6 +200,23 @@ class YDlidarDriver {
   * @note Non-scan state, perform currect operation.
   */
   result_t reset(uint32_t timeout = DEFAULT_TIMEOUT);
+
+
+  /**
+   * @brief start motor \n
+   * @return return status
+   * @retval RESULT_OK       success
+   * @retval RESULT_FAILE    failed
+   */
+  result_t startMotor();
+
+  /**
+   * @brief stop motor \n
+   * @return return status
+   * @retval RESULT_OK       success
+   * @retval RESULT_FAILE    failed
+   */
+  result_t stopMotor();
 
   /**
   * @brief Get lidar scan frequency \n
@@ -480,7 +499,7 @@ class YDlidarDriver {
   Event          _dataEvent;			 ///< data event
   Locker         _lock;				///< thread lock
   Locker         _serial_lock;		///< serial lock
-  Thread 	       _thread;				///< thread id
+  Thread 	     _thread;				///< thread id
 
  private:
   int PackageSampleBytes;             ///<
@@ -512,10 +531,14 @@ class YDlidarDriver {
   bool CheckSumResult;
   bool LastCheckSumResult;
   uint16_t Valu8Tou16;
+  uint8_t *recvBuffer;
 
   std::string serial_port;///< lidar serial port
   std::vector<float> m_IgnoreArray;//
 
+  int package_index;
+  bool data_header_error;
+  bool m_SupportMotorDtrCtrl;
 };
 }
 
