@@ -15,9 +15,17 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.0.8 |   2019-05-20  |
+| SDK     |  2.0.9 |   2020-02-12  |
 
-- [new feature] increase the deviation between correcting the zero angle of the lidar and the zero angle of the robot.
+- [new feature] added checkLidarModel function to automatically determine whether the LiDAR is R2 or S2.
+
+- [feat] Globally allocate memory space for node.
+
+- [new feature] added handleVersionInfoByPackage function to parse S2 LiDAR Version and serial number
+
+- [feat ]Support S2 and R2 LiDAR, and can automatically identify the LiDAR model.
+
+- [fixed] Support anti-glare version R2 LiDAR.
 
 
 
@@ -31,12 +39,13 @@ Dataset
 | G2-SS-1 |  230400 |   5000  |  0.1-16   |5-12|0-50| ~5|4.8-5.2|400-480|
 | R2-SS-1 |  230400 |   5000  |  0.1-16   |5-12|0-50| ~5|4.8-5.2|400-480|
 | G4     |  230400 |   9000  |  0.26-16   |5-12|0-50| ~5|4.8-5.2|400-480|
+| S2     |  115200 |   3000  |  0.12-8.0  |4-8 |0-50| ~5|4.8-5.2|400-480|
 
 How to build YDLIDAR SDK samples
 ---------------
     $ git clone https://github.com/ydlidar/sdk
     $ cd sdk
-    $ git checkout SS-TS
+    $ git checkout SS_R2_S2
     $ cd ..
     $ mkdir build
     $ cd build
@@ -60,7 +69,7 @@ windows:
 
 You should see YDLIDAR's scan result in the console:
 
-	[YDLIDAR]:SDK Version: 2.0.8
+	[YDLIDAR]:SDK Version: 2.0.9
 	[YDLIDAR]:Lidar running correctly ! The health status: good
 	[YDLIDAR] Connection established in [/dev/ttyUSB0][230400]:
 	Firmware version: 1.2
@@ -89,7 +98,7 @@ data structure:
   		//range[m]
   		float distance;
  	 	float intensity;
-		//  uint64_t stamp;
+	        uint64_t stamp;
 	};
 
 	//! A struct for returning configuration from the YDLIDAR
@@ -126,7 +135,7 @@ example angle parsing:
       LaserPoint point = scan.data[i];
 
       // current time stamp
-      uint64_t time_stamp = scan.system_time_stamp + i * scan.config.time_increment*1e9;
+      uint64_t time_stamp = point.stamp;
 
       //current angle
       double distance = point.angle;//°
@@ -142,6 +151,17 @@ example angle parsing:
 
 Upgrade Log
 ---------------
+2020-02-12 version:2.0.9
+
+   1.added checkLidarModel function to automatically determine whether the LiDAR is R2 or S2.
+
+   2.Globally allocate memory space for node.
+
+   3.added handleVersionInfoByPackage function to parse S2 LiDAR Version and serial number
+
+   4.Support S2 and R2 LiDAR, and can automatically identify the LiDAR model.
+
+   5.Support anti-glare version R2 LiDAR.
 
 2019-05-20 version:2.0.8
 
