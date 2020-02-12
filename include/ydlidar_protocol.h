@@ -98,9 +98,12 @@ struct node_info {
   uint8_t    sync_flag;  //sync flag
   uint16_t   sync_quality;//!intensity
   uint16_t   angle_q6_checkbit; //!angle
-  uint16_t   distance_q2; //! distance
+  uint16_t   distance_q; //! distance
   uint64_t   stamp; //! timestamp
   uint8_t    scan_frequence;//! scan frequency
+  uint8_t    debugInfo;///< debug information
+  uint8_t    index;///< package index
+  uint8_t    error_package;///< error package state
 } __attribute__((packed)) ;
 
 struct PackageNode {
@@ -200,6 +203,13 @@ struct LaserPoint {
   float intensity;
 //  uint64_t stamp;
   uint64_t stamp;
+  LaserPoint &operator = (const LaserPoint &data) {
+    this->angle = data.angle;
+    this->distance = data.distance;
+    this->intensity = data.intensity;
+    this->stamp = data.stamp;
+    return *this;
+  }
 };
 
 //! A struct for returning configuration from the YDLIDAR
@@ -216,6 +226,15 @@ struct LaserConfig {
   float min_range;
   //! Maximum range [m]
   float max_range;
+  LaserConfig &operator = (const LaserConfig &data) {
+    this->min_angle = data.min_angle;
+    this->max_angle = data.max_angle;
+    this->time_increment = data.time_increment;
+    this->scan_time = data.scan_time;
+    this->min_range = data.min_range;
+    this->max_range = data.max_range;
+    return *this;
+  }
 };
 
 struct LaserScan {
@@ -225,4 +244,45 @@ struct LaserScan {
   uint64_t system_time_stamp;
   //! Configuration of scan
   LaserConfig config;
+  LaserScan &operator = (const LaserScan &data) {
+    this->data = data.data;
+    this->system_time_stamp = data.system_time_stamp;
+    this->config = data.config;
+    return *this;
+  }
 };
+
+struct LaserDebug {
+  uint8_t     W3F4CusMajor_W4F0CusMinor;
+  uint8_t     W4F3Model_W3F0DebugInfTranVer;
+  uint8_t     W3F4HardwareVer_W4F0FirewareMajor;
+  uint8_t     W7F0FirewareMinor;
+  uint8_t     W3F4BoradHardVer_W4F0Moth;
+  uint8_t     W2F5Output2K4K5K_W5F0Date;
+  uint8_t     W1F6GNoise_W1F5SNoise_W1F4MotorCtl_W4F0SnYear;
+  uint8_t     W7F0SnNumH;
+  uint8_t     W7F0SnNumL;
+  uint8_t     W7F0Health;
+  uint8_t     W3F4CusHardVer_W4F0CusSoftVer;
+  uint8_t     W7F0LaserCurrent;
+  uint8_t     MaxDebugIndex;
+  LaserDebug &operator = (const LaserDebug &other) {
+    this->W3F4CusMajor_W4F0CusMinor = other.W3F4CusMajor_W4F0CusMinor;
+    this->W4F3Model_W3F0DebugInfTranVer = other.W4F3Model_W3F0DebugInfTranVer;
+    this->W3F4HardwareVer_W4F0FirewareMajor =
+      other.W3F4HardwareVer_W4F0FirewareMajor;
+    this->W7F0FirewareMinor = other.W7F0FirewareMinor;
+    this->W3F4BoradHardVer_W4F0Moth = other.W3F4BoradHardVer_W4F0Moth;
+    this->W2F5Output2K4K5K_W5F0Date = other.W2F5Output2K4K5K_W5F0Date;
+    this->W1F6GNoise_W1F5SNoise_W1F4MotorCtl_W4F0SnYear =
+      other.W1F6GNoise_W1F5SNoise_W1F4MotorCtl_W4F0SnYear;
+    this->W7F0SnNumH = other.W7F0SnNumH;
+    this->W7F0SnNumL = other.W7F0SnNumL;
+    this->W7F0Health = other.W7F0Health;
+    this->W3F4CusHardVer_W4F0CusSoftVer = other.W3F4CusHardVer_W4F0CusSoftVer;
+    this->W7F0LaserCurrent = other.W7F0LaserCurrent;
+    this->MaxDebugIndex = other.MaxDebugIndex;
+    return *this;
+  }
+};
+
