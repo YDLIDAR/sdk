@@ -270,9 +270,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan,
         outscan.points.push_back(point);
       }
 
-      handleDeviceInfoPackage(count);
     }
-
+    handleDeviceInfoPackage(count);
     return true;
   } else {
     if (IS_FAIL(op_result)) {
@@ -393,7 +392,7 @@ bool  CYdLidar::turnOn() {
     }
   }
 
-  m_ParseSuccess = false;
+  m_ParseSuccess &= !m_SingleChannel;
   m_PointTime = lidarPtr->getPointTime();
 
   if (checkLidarAbnormal()) {
