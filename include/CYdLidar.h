@@ -97,6 +97,12 @@ class YDLIDAR_API CYdLidar {
     */
   bool  checkCOMMs();
 
+  /**
+   * @brief checkLidarModel
+   * @return
+   */
+  bool checkLidarModel();
+
   /** Returns true if health status and device information has been obtained with the device. If it's not,
     * \return false on error.
     */
@@ -124,6 +130,12 @@ class YDLIDAR_API CYdLidar {
   /** Returns true if the device information is correct, If it's not*/
   bool getDeviceInfo();
 
+  /** print Version information */
+  bool printfVersionInfo(const device_info &info);
+
+  /** parsing version by package*/
+  void handleVersionInfoByPackage(const LaserDebug &debug);
+
   /** Retruns true if the scan frequency is set to user's frequency is successful, If it's not*/
   bool checkScanFrequency();
 
@@ -150,6 +162,9 @@ class YDLIDAR_API CYdLidar {
   YDlidarDriver *lidarPtr;
   LineFeature line_feature_;
   std::string m_serial_number;
-
+  node_info *nodes;
+  bool m_ParseSuccess;
+  bool m_SingleChannel;
+  bool m_PrintError;
 };	// End of class
 
