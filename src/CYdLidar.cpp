@@ -61,6 +61,7 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_MinRange          = 0.01;
   m_SampleRate        = 5;
   defalutSampleRate   = 5;
+  m_UserSampleRate    = 5;
   m_ScanFrequency     = 10;
   isScanning          = false;
   m_FixedSize         = 720;
@@ -268,10 +269,21 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan,
           outscan.stamp = tim_scan_start + i * m_PointTime;
         }
 
-        outscan.points.push_back(point);
+        if (m_FixedResolution) {
+          int index = std::ceil((angle - outscan.config.min_angle) /
+                                outscan.config.angle_increment);
+          if (index >= 0 && index < all_node_count) {
+            outscan.points.push_back(point);
+          }
+        } else {
+          outscan.points.push_back(point);
+        }
       }
-
     }
+    if(m_FixedResolution) {
+      outscan.points.resize(all_node_count);
+    }
+
     handleDeviceInfoPackage(count);
 
     return true;
@@ -543,7 +555,6 @@ bool CYdLidar::getDeviceHealth() {
   lidarPtr->stop();
   result_t op_result;
   device_health healthinfo;
-  printf("[YDLIDAR]:SDK Version: %s\n", YDlidarDriver::getSDKVersion().c_str());
   op_result = lidarPtr->getHealth(healthinfo);
 
   if (IS_OK(op_result)) {
@@ -606,6 +617,8 @@ bool CYdLidar::getDeviceInfo() {
                        Minjor & 0xff);
     m_lidarHardVer = std::to_string(devinfo.hardware_version & 0xff);
   }
+
+  m_UserSampleRate = m_SampleRate;
 
   if (hasSampleRate(devinfo.model)) {
     checkSampleRate();
@@ -721,7 +734,8 @@ bool CYdLidar::CalculateSampleRate(int count, double scan_time) {
     cnt++;
     SampleRateMap[samplerate] =  cnt;
 
-    if (isValidSampleRate(SampleRateMap) || defalutSampleRate == samplerate) {
+    if (isValidSampleRate(SampleRateMap) || defalutSampleRate == samplerate ||
+        m_UserSampleRate == samplerate) {
       m_SampleRate = samplerate;
       m_PointTime = 1e9 / (m_SampleRate * 1000);
       lidarPtr->setPointTime(m_PointTime);
@@ -742,7 +756,7 @@ bool CYdLidar::CalculateSampleRate(int count, double scan_time) {
     if (scan_time > 0.04 && scan_time < 0.4) {
       int samplerate = static_cast<int>((count / scan_time + 500) / 1000);
 
-      if (defalutSampleRate == samplerate) {
+      if (defalutSampleRate == samplerate || m_UserSampleRate == samplerate) {
         m_SampleRate = samplerate;
         m_PointTime = 1e9 / (m_SampleRate * 1000);
         lidarPtr->setPointTime(m_PointTime);
@@ -862,6 +876,7 @@ void CYdLidar::checkCalibrationAngle(const std::string &serialNumber) {
 -------------------------------------------------------------*/
 bool  CYdLidar::checkCOMMs() {
   if (!lidarPtr) {
+    printf("YDLidar SDK initializing\n");
     // create the driver instance
     lidarPtr = new YDlidarDriver();
 
@@ -869,6 +884,9 @@ bool  CYdLidar::checkCOMMs() {
       fprintf(stderr, "Create Driver fail\n");
       return false;
     }
+    printf("YDLidar SDK has been initialized\n");
+    printf("[YDLIDAR]:SDK Version: %s\n", lidarPtr->getSDKVersion().c_str());
+    fflush(stdout);
   }
 
   if (lidarPtr->isconnected()) {
@@ -895,7 +913,7 @@ bool  CYdLidar::checkCOMMs() {
             m_SerialPort.c_str(), m_SerialBaudrate);
     return false;
   }
-
+  printf("LiDAR successfully connected\n");
   lidarPtr->setSingleChannel(m_SingleChannel);
   lidarPtr->setLidarType(m_LidarType);
 
@@ -966,6 +984,7 @@ bool CYdLidar::initialize() {
     fflush(stderr);
     return false;
   }
-
+  printf("LiDAR init success!\n");
+  fflush(stdout);
   return true;
 }
