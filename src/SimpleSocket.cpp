@@ -172,7 +172,7 @@ bool CSimpleSocket::open() {
     SetSendTimeout(DEFAULT_REV_TIMEOUT_SEC, DEFAULT_REV_TIMEOUT_USEC);
   }
 
-//  SetBlocking();
+  SetBlocking();
 
   if (!m_open) {
     Close();
@@ -734,21 +734,29 @@ bool CSimpleSocket::SetReceiveTimeout(int32_t nRecvTimeoutSec,
                                       int32_t nRecvTimeoutUsec) {
   bool bRetVal = true;
   memset(&m_stRecvTimeout, 0, sizeof(struct timeval));
-#if defined(_WIN32)
-  m_stRecvTimeout.tv_sec = nRecvTimeoutSec * 1000;
-#else
   m_stRecvTimeout.tv_sec = nRecvTimeoutSec;
-#endif
   m_stRecvTimeout.tv_usec = nRecvTimeoutUsec;
-
   //--------------------------------------------------------------------------
   // Sanity check to make sure the options are supported!
   //--------------------------------------------------------------------------
+#if defined(_WIN32)
+  int timeout = nRecvTimeoutSec * 1000 + nRecvTimeoutUsec / 1000;
+
+  if (SETSOCKOPT(m_socket, SOL_SOCKET, SO_RCVTIMEO, &timeout,
+                 sizeof(int)) == CSimpleSocket::SocketError) {
+    bRetVal = false;
+    TranslateSocketError();
+  }
+
+#else
+
   if (SETSOCKOPT(m_socket, SOL_SOCKET, SO_RCVTIMEO, &m_stRecvTimeout,
                  sizeof(struct timeval)) == CSimpleSocket::SocketError) {
     bRetVal = false;
     TranslateSocketError();
   }
+
+#endif
 
   return bRetVal;
 }
@@ -763,22 +771,29 @@ bool CSimpleSocket::SetSendTimeout(int32_t nSendTimeoutSec,
                                    int32_t nSendTimeoutUsec) {
   bool bRetVal = true;
   memset(&m_stSendTimeout, 0, sizeof(struct timeval));
-#if defined(_WIN32)
-  m_stSendTimeout.tv_sec = nSendTimeoutSec * 1000;
-#else
   m_stSendTimeout.tv_sec = nSendTimeoutSec;
-#endif
   m_stSendTimeout.tv_usec = nSendTimeoutUsec;
-
   //--------------------------------------------------------------------------
   // Sanity check to make sure the options are supported!
   //--------------------------------------------------------------------------
+#if defined(_WIN32)
+  int timeout = nSendTimeoutSec * 1000 + nSendTimeoutUsec / 1000;
+
+  if (SETSOCKOPT(m_socket, SOL_SOCKET, SO_SNDTIMEO, &timeout,
+                 sizeof(int)) == CSimpleSocket::SocketError) {
+    bRetVal = false;
+    TranslateSocketError();
+  }
+
+#else
+
   if (SETSOCKOPT(m_socket, SOL_SOCKET, SO_SNDTIMEO, &m_stSendTimeout,
                  sizeof(struct timeval)) == CSimpleSocket::SocketError) {
     bRetVal = false;
     TranslateSocketError();
   }
 
+#endif
   return bRetVal;
 }
 
