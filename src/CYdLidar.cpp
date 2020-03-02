@@ -285,8 +285,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan,
         outscan.points.push_back(point);
       }
 
-      handleDeviceInfoPackage(count);
-
       {
         touch_info point;
         point.laser_x = range * cos(angle) * 1000;//unit mm
@@ -309,6 +307,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan,
 
 
     }
+
+    handleDeviceInfoPackage(count);
 
     return true;
   } else {
@@ -430,7 +430,7 @@ bool  CYdLidar::turnOn() {
     }
   }
 
-  m_ParseSuccess = false;
+  m_ParseSuccess &= !m_SingleChannel;
   m_PointTime = lidarPtr->getPointTime();
 
   if (checkLidarAbnormal()) {
