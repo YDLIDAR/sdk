@@ -172,7 +172,7 @@ bool CSimpleSocket::open() {
     SetSendTimeout(DEFAULT_REV_TIMEOUT_SEC, DEFAULT_REV_TIMEOUT_USEC);
   }
 
-//  SetBlocking();
+  SetBlocking();
 
   if (!m_open) {
     Close();
