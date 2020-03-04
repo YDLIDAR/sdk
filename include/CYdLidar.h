@@ -334,7 +334,7 @@ using namespace ydlidar;
 ///
 
 class YDLIDAR_API CYdLidar {
-   /**
+  /**
    * @brief Set and Get LiDAR Maximum effective range.
    * @note The effective range beyond the maxmum is set to zero.\n
    * the MaxRange should be greater than the MinRange.
@@ -342,7 +342,7 @@ class YDLIDAR_API CYdLidar {
    * @see ::PropertyBuilderByName and [DataSet](\ref Dataset)
    * @see CYdLidar::setMaxRange and CYdLidar::getMaxRange
    */
-  PropertyBuilderByName(float, MaxRange,　private)；
+  PropertyBuilderByName(float, MaxRange, private);
   /**
    * @brief Set and Get LiDAR Minimum effective range.
    * @note The effective range less than the minmum is set to zero.\n
@@ -351,7 +351,7 @@ class YDLIDAR_API CYdLidar {
    * @see ::PropertyBuilderByName and Dataset
    * @see CYdLidar::setMinRange and CYdLidar::getMinRange
    */
-  PropertyBuilderByName(float, MinRange, private);
+  PropertyBuilderByName(float, MinRange,private);
   /**
    * @brief Set and Get LiDAR Maximum effective angle.
    * @note The effective angle beyond the maxmum will be ignored.\n
