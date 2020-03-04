@@ -32,19 +32,19 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-/** @mainpage
-
+/** @page YDlidarDriver
+ * YDlidarDriver API
     <table>
         <tr><th>Library     <td>YDlidarDriver
-        <tr><th>File        <td>YDlidarDriver.h
+        <tr><th>File        <td>ydlidar_driver.h
         <tr><th>Author      <td>Tony [code at ydlidar com]
-        <tr><th>Source      <td>https://github.com/ydlidar/sdk
-        <tr><th>Version     <td>1.4.5
-        <tr><th>Sample      <td>[samples](samples/main.cpp)
+        <tr><th>Source      <td>https://github.com/ydlidar/YDLidar-SDK
+        <tr><th>Version     <td>1.0.0
     </table>
+    This YDlidarDriver support [TYPE_TRIANGLE](\ref LidarTypeID::TYPE_TRIANGLE) and [TYPE_TOF](\ref LidarTypeID::TYPE_TOF) LiDAR
 
-    Jump to the @link ::ydlidar::YDlidarDriver @endlink and @link ::CYdLidar @endlink interface documentation.
-
+* @copyright    Copyright (c) 2018-2020  EAIBOT
+     Jump to the @link ::ydlidar::YDlidarDriver @endlink interface documentation.
 */
 #ifndef YDLIDAR_DRIVER_H
 #define YDLIDAR_DRIVER_H
@@ -74,12 +74,53 @@ namespace ydlidar {
 */
 class YDlidarDriver {
  public:
-  PropertyBuilderByName(bool, SingleChannel,
-                        private) ///< 是否是单通信雷达
-  PropertyBuilderByName(int, LidarType,
-                        private) ///< 雷达类型
-  PropertyBuilderByName(uint32_t, PointTime,
-                        private) ///< 连个激光点之间采样时间间隔
+  /**
+    * @brief Set and Get LiDAR single channel.
+    * Whether LiDAR communication channel is a single-channel
+    * @note For a single-channel LiDAR, if the settings are reversed.\n
+    * an error will occur in obtaining device information and the LiDAR will Faied to Start.\n
+    * For dual-channel LiDAR, if th setttings are reversed.\n
+    * the device information cannot be obtained.\n
+    * Set the single channel to match the LiDAR.
+    * @remarks
+    <table>
+         <tr><th>G1/G2/G2A/G2C                          <td>false
+         <tr><th>G4/G4B/G4PRO/G6/F4/F4PRO               <td>false
+         <tr><th>S4/S4B/X4/R2/G4C                       <td>false
+         <tr><th>S2/X2/X2L                              <td>true
+         <tr><th>TG15/TG30/TG50                         <td>false
+         <tr><th>TX8/TX20                               <td>true
+         <tr><th>T5/T15                                 <td>false
+         <tr><th>                                       <td>true
+     </table>
+    * @see DriverInterface::setSingleChannel and DriverInterface::getSingleChannel
+    */
+  PropertyBuilderByName(bool, SingleChannel, private);
+  /**
+  * @brief Set and Get LiDAR Type.
+  * @note Refer to the table below for the LiDAR Type.\n
+  * Set the LiDAR Type to match the LiDAR.
+  * @remarks
+  <table>
+       <tr><th>G1/G2A/G2/G2C                    <td>[TYPE_TRIANGLE](\ref LidarTypeID::TYPE_TRIANGLE)
+       <tr><th>G4/G4B/G4C/G4PRO                 <td>[TYPE_TRIANGLE](\ref LidarTypeID::TYPE_TRIANGLE)
+       <tr><th>G6/F4/F4PRO                      <td>[TYPE_TRIANGLE](\ref LidarTypeID::TYPE_TRIANGLE)
+       <tr><th>S4/S4B/X4/R2/S2/X2/X2L           <td>[TYPE_TRIANGLE](\ref LidarTypeID::TYPE_TRIANGLE)
+       <tr><th>TG15/TG30/TG50/TX8/TX20          <td>[TYPE_TOF](\ref LidarTypeID::TYPE_TOF)
+       <tr><th>T5/T15                           <td>[TYPE_TOF_NET](\ref LidarTypeID::TYPE_TOF_NET)
+   </table>
+  * @see [LidarTypeID](\ref LidarTypeID)
+  * @see DriverInterface::setLidarType and DriverInterface::getLidarType
+  */
+  PropertyBuilderByName(int, LidarType, private);
+  /**
+  * @brief Set and Get Sampling interval.
+  * @note Negative correlation between sampling interval and lidar sampling rate.\n
+  * sampling interval = 1e9 / sampling rate(/s)\n
+  * Set the LiDAR sampling interval to match the LiDAR.
+  * @see DriverInterface::setPointTime and DriverInterface::getPointTime
+  */
+  PropertyBuilderByName(uint32_t, PointTime,private);
   /*!
   * A constructor.
   * A more elaborate description of the constructor.

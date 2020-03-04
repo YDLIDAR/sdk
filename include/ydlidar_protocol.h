@@ -233,9 +233,9 @@ struct lidar_ans_header {
 #endif
 
 struct LaserPoint {
-  //! lidar angle
+  //! lidar angle　[rad]
   float angle;
-  //! lidar range
+  //! lidar range [m]
   float range;
   //! lidar intensity
   float intensity;
