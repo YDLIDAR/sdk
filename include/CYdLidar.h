@@ -23,8 +23,8 @@ class YDLIDAR_API CYdLidar {
   PropertyBuilderByName(float, ScanFrequency,
                         private) ///< scan frequency (5HZ~12HZ)(HZ)
 
-  PropertyBuilderByName(float, RobotLidarDifference,
-                        private) ///< lidar zero and robot zero difference(°)
+  PropertyBuilderByName(bool, RobotLidarOpposite,
+                        private) ///< lidar zero and robot zero is opposite directions(°)
 
   PropertyBuilderByName(bool, Intensities,
                         private) ///< intensity
@@ -154,6 +154,7 @@ class YDLIDAR_API CYdLidar {
   float   m_AngleOffset;
   bool    m_isAngleOffsetCorrected;
   float   m_LRRAngleOffset;
+  float   m_LastAngleOffset;
   bool    m_isLRRAngleOffsetCorrected;//lidar relative robot angle offset
   bool    m_startRobotAngleOffset;
   uint8_t Major;
