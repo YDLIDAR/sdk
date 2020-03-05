@@ -467,7 +467,7 @@ class YDlidarDriver {
     DEFAULT_TIMEOUT = 2000,    /**< default timeout. */
     DEFAULT_HEART_BEAT = 1000, /**< default heatbeat timeout. */
     MAX_SCAN_NODES = 2048,	   /**< . */
-    DEFAULT_TIMEOUT_COUNT = 1,
+    DEFAULT_TIMEOUT_COUNT = 15,
   };
   enum {
     YDLIDAR_F4 = 1,
