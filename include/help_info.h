@@ -345,7 +345,10 @@ inline bool hasZeroAngle(int model) {
       model == YDLIDAR_G2A ||
       model == YDLIDAR_G2B ||
       model == YDLIDAR_G2C ||
-      model == YDLIDAR_G1) {
+      model == YDLIDAR_G1 ||
+      model == YDLIDAR_TG15 ||
+      model == YDLIDAR_TG30 ||
+      model == YDLIDAR_TG50) {
     ret = true;
   }
 
@@ -441,6 +444,17 @@ inline bool isSupportScanFrequency(int model, double frequency) {
     if (5 <= frequency && frequency <= 15.7) {
       ret = true;
     }
+  }
+
+  return ret;
+}
+inline bool isTOFLidarByModel(int model) {
+  bool ret = false;
+
+  if (model == YDLIDAR_TG15 ||
+      model == YDLIDAR_TG30 ||
+      model == YDLIDAR_TG50) {
+    ret = true;
   }
 
   return ret;

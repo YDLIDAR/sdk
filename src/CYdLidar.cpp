@@ -272,6 +272,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan,
         if (m_FixedResolution) {
           int index = std::ceil((angle - outscan.config.min_angle) /
                                 outscan.config.angle_increment);
+
           if (index >= 0 && index < all_node_count) {
             outscan.points.push_back(point);
           }
@@ -280,7 +281,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan,
         }
       }
     }
-    if(m_FixedResolution) {
+
+    if (m_FixedResolution) {
       outscan.points.resize(all_node_count);
     }
 
@@ -602,6 +604,13 @@ bool CYdLidar::getDeviceInfo() {
   bool intensity = hasIntensity(devinfo.model);
   defalutSampleRate = lidarModelDefaultSampleRate(devinfo.model);
 
+  if (!isTOFLidar(m_LidarType)) {
+    if (isTOFLidarByModel(devinfo.model)) {
+      m_LidarType = TYPE_TOF;
+      lidarPtr->setLidarType(m_LidarType);
+    }
+  }
+
   std::string serial_number;
   lidarPtr->setIntensities(intensity);
   printfVersionInfo(devinfo);
@@ -845,12 +854,12 @@ void CYdLidar::checkCalibrationAngle(const std::string &serialNumber) {
     ans = lidarPtr->getZeroOffsetAngle(angle);
 
     if (IS_OK(ans)) {
-      if (angle.angle > 720 || angle.angle < -720) {
+      if (angle.angle > 1800 || angle.angle < -1800) {
         ans = lidarPtr->getZeroOffsetAngle(angle);
 
         if (!IS_OK(ans)) {
-          continue;
           retry++;
+          continue;
         }
       }
 
@@ -884,6 +893,7 @@ bool  CYdLidar::checkCOMMs() {
       fprintf(stderr, "Create Driver fail\n");
       return false;
     }
+
     printf("YDLidar SDK has been initialized\n");
     printf("[YDLIDAR]:SDK Version: %s\n", lidarPtr->getSDKVersion().c_str());
     fflush(stdout);
@@ -913,6 +923,7 @@ bool  CYdLidar::checkCOMMs() {
             m_SerialPort.c_str(), m_SerialBaudrate);
     return false;
   }
+
   printf("LiDAR successfully connected\n");
   lidarPtr->setSingleChannel(m_SingleChannel);
   lidarPtr->setLidarType(m_LidarType);
@@ -984,6 +995,7 @@ bool CYdLidar::initialize() {
     fflush(stderr);
     return false;
   }
+
   printf("LiDAR init success!\n");
   fflush(stdout);
   return true;
