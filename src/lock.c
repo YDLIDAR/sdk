@@ -239,7 +239,7 @@ int fhs_lock(const char *filename, int pid) {
   }
 
   sprintf(lockinfo, "%10d\n", (int) getpid());
-  printf("fhs_lock: creating lockfile: %s\n", lockinfo);
+  //printf("fhs_lock: creating lockfile: %s\n", lockinfo);
   write(fd, lockinfo, 11);
   close(fd);
   return 0;
@@ -391,7 +391,7 @@ void fhs_unlock(const char *filename, int openpid) {
 
   if (!check_lock_pid(file, openpid)) {
     unlink(file);
-    printf("fhs_unlock: Removing LockFile\n");
+    //printf("fhs_unlock: Removing LockFile\n");
   } else {
     printf("fhs_unlock: Unable to remove LockFile\n");
   }
