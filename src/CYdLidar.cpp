@@ -272,6 +272,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan,
       }
 
     }
+
     handleDeviceInfoPackage(count);
 
     return true;
@@ -589,6 +590,13 @@ bool CYdLidar::getDeviceInfo() {
   model = lidarModelToString(devinfo.model);
   bool intensity = hasIntensity(devinfo.model);
   defalutSampleRate = lidarModelDefaultSampleRate(devinfo.model);
+
+  if (!isTOFLidar(m_LidarType)) {
+    if (isTOFLidarByModel(devinfo.model)) {
+      m_LidarType = TYPE_TOF;
+      lidarPtr->setLidarType(m_LidarType);
+    }
+  }
 
   std::string serial_number;
   lidarPtr->setIntensities(intensity);
