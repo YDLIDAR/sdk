@@ -15,10 +15,11 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.1.0 |   2020-03-05  |
+| SDK     |  2.1.1 |   2020-03-06  |
 
 - [feat]  SDK exceptional case of false generation,  the specific holding time from “few” seconds to 30 seconds.
-- [fixed] Save final calibration angle at the PC's or Embedded's internal memory area.
+- [fixed] fixed local_scan size.
+- [feat] the timeout is greater than the default value before the exception message is printed.
 
 ## Zero Angle calibration
 ![](image/zero_angle.png)
