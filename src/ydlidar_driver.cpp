@@ -89,6 +89,7 @@ YDlidarDriver::YDlidarDriver():
   package_index         = 0;
   data_header_error     = false;
   m_SupportMotorDtrCtrl = true;
+  m_reconnectCount      = 0;
 
 }
 
@@ -378,7 +379,7 @@ result_t YDlidarDriver::waitForData(size_t data_count, uint32_t timeout,
   return (result_t)_serial->waitfordata(data_count, timeout, returned_size);
 }
 
-result_t YDlidarDriver::checkAutoConnecting() {
+result_t YDlidarDriver::checkAutoConnecting(bool error) {
   result_t ans = RESULT_FAIL;
   isAutoconnting = true;
 
@@ -386,7 +387,7 @@ result_t YDlidarDriver::checkAutoConnecting() {
     {
       ScopedLocker l(_serial_lock);
 
-      if (_serial) {
+      if (_serial && (m_reconnectCount > 6 || error)) {
         if (_serial->isOpen() || isConnected) {
           isConnected = false;
           _serial->closePort();
@@ -396,9 +397,22 @@ result_t YDlidarDriver::checkAutoConnecting() {
       }
     }
 
+    if (m_reconnectCount > 25) {
+      m_reconnectCount = 25;
+      delay(m_reconnectCount * 200);
+    }
+
+    int connectCount = 0;
+
     while (isAutoReconnect &&
            connect(serial_port.c_str(), m_baudrate) != RESULT_OK) {
-      delay(200);
+      connectCount++;
+
+      if (connectCount > 10) {
+        connectCount = 10;
+      }
+
+      delay(500 * connectCount);
     }
 
     if (!isAutoReconnect) {
@@ -440,6 +454,7 @@ int YDlidarDriver::cacheScanData() {
   flushSerial();
   waitScanData(local_buf, count);
   int timeout_count   = 0;
+  m_reconnectCount = 0;
 
   while (isScanning) {
     count = 128;
@@ -456,7 +471,11 @@ int YDlidarDriver::cacheScanData() {
           delete[] local_scan;
           return RESULT_FAIL;
         } else {
-          ans = checkAutoConnecting();
+          m_reconnectCount++;
+          fprintf(stderr, "timout count: %d, Reconnecting[%d].....\n", timeout_count,
+                  m_reconnectCount);
+          fflush(stderr);
+          ans = checkAutoConnecting(IS_FAIL(ans));
 
           if (IS_OK(ans)) {
             timeout_count = 0;
@@ -471,11 +490,10 @@ int YDlidarDriver::cacheScanData() {
       } else {
         timeout_count++;
         local_scan[0].sync_flag = Node_NotSync;
-        fprintf(stderr, "timout count: %d\n", timeout_count);
-        fflush(stderr);
       }
     } else {
       timeout_count = 0;
+      m_reconnectCount = 0;
     }
 
 
@@ -494,7 +512,7 @@ int YDlidarDriver::cacheScanData() {
 
       local_scan[scan_count++] = local_buf[pos];
 
-      if (scan_count == _countof(local_scan)) {
+      if (scan_count == MAX_SCAN_NODES) {
         scan_count -= 1;
       }
     }
