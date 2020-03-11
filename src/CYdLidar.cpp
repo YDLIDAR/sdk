@@ -991,7 +991,7 @@ bool CYdLidar::initialize() {
 
   if (!checkStatus()) {
     fprintf(stderr,
-            "[CYdLidar::initialize] Error initializing YDLIDAR check status.\n");
+            "[CYdLidar::initialize] Error initializing YDLIDAR check status in port[%s] and baudrate[%d]\n", m_SerialPort.c_str(), m_SerialBaudrate);
     fflush(stderr);
     return false;
   }
