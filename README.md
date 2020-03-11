@@ -32,6 +32,7 @@ the `setRobotLidarOpposite` in SDK is set to true.
   laser.setRobotLidarOpposite(true);
 ```
 otherwise, the difference is less than 90 degrees, the `setRobotLidarOpposite` in SDK is set to false.
+![](image/zero_angle_inv.png)
 ```
   CYdLidar laser;
   laser.setRobotLidarOpposite(false);
@@ -71,6 +72,39 @@ Note:
 ### Result as follows:
 ![](image/result.png)
 
+## How to Set Rid Distortion Value.
+SDK can filter custom angular area Lidar data,`setIgnoreArray` command use examples as follows:
+* 1.filter 10 to 20 degrees and 50 to 60 degrees
+```
+  CYdLidar laser;
+  std::vector<float> ignore_array;
+  // 10 to 20
+  ignore_array.push_back(10);
+  ignore_array.push_back(20);
+  //50 to 60
+  ignore_array.push_back(50);
+  ignore_array.push_back(60);
+  laser.setIgnoreArray(ignore_array);
+```
+* 2.filter 10 to 20 degrees, 180 to 200 degrees and 320 to 330 degrees.
+```
+  CYdLidar laser;
+  std::vector<float> ignore_array;
+  // 10 to 20
+  ignore_array.push_back(10);
+  ignore_array.push_back(20);
+  //180 to 200
+  ignore_array.push_back(180);
+  ignore_array.push_back(200);
+  //320 to 330
+  ignore_array.push_back(320);
+  ignore_array.push_back(330);
+  laser.setIgnoreArray(ignore_array);
+```
+Filtering angles need to be entered in pairs.
+
+Note:
+* The Input filter angles can be saved in the robot's internal memory, When starting sdk, the filter angles is read out from the file and input into the SDK. This applies to both the R2 and S2 Lidars.
 
 ## Support
 
