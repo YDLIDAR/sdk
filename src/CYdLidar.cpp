@@ -25,10 +25,7 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_ScanFrequency     = 7;
   m_AngleOffset       = 0.0;
   m_isAngleOffsetCorrected = false;
-  m_isLRRAngleOffsetCorrected = false;
-  m_LRRAngleOffset = 0.0;
-  m_LastAngleOffset = 0.0;
-  m_startRobotAngleOffset = false;
+  m_isRibOffsetCorrected = false;
   m_GlassNoise        = true;
   m_SunNoise          = true;
   isScanning          = false;
@@ -37,7 +34,6 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_AbnormalCheckCount  = 6;
   Major               = 0;
   Minjor              = 0;
-  m_RobotLidarOpposite = false;
   m_IgnoreArray.clear();
   ini.SetUnicode();
   m_serial_number.clear();
@@ -45,6 +41,7 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_ParseSuccess      = false;
   m_SingleChannel     = false;
   m_PrintError        = false;
+  m_Model             = YDlidarDriver::YDLIDAR_R2_SS_1;
 }
 
 /*-------------------------------------------------------------
@@ -83,19 +80,6 @@ bool CYdLidar::isAngleOffetCorrected() const {
   return m_isAngleOffsetCorrected;
 }
 
-float CYdLidar::getRobotAngleOffset() const {
-  return m_LRRAngleOffset;
-}
-
-void CYdLidar::setStartRobotAngleOffset() {
-  m_startRobotAngleOffset = true;
-  m_LRRAngleOffset = 0;
-  m_LastAngleOffset = 0;
-}
-
-bool CYdLidar::isRobotAngleOffsetCorrected() const {
-  return m_isLRRAngleOffsetCorrected && !m_startRobotAngleOffset;
-}
 /*-------------------------------------------------------------
 						doProcessSimple
 -------------------------------------------------------------*/
@@ -110,13 +94,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
   }
 
   size_t   count = YDlidarDriver::MAX_SCAN_NODES;
-
-  //line feature
-  std::vector<double> bearings;
-  std::vector<unsigned int> indices;
-  indices.clear();
-  bearings.clear();
-  RangeData range_data;
 
   //wait Scan data:
   result_t op_result =  lidarPtr->grabScanData(nodes, count);
@@ -143,17 +120,9 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
       angle = (float)((nodes[i].angle_q6_checkbit >>
                        LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f) + m_AngleOffset;
 
-      if (!m_startRobotAngleOffset) {
-        angle += m_LRRAngleOffset;
-      }
-
       range = (float)nodes[i].distance_q / 1000.f;
 
-      if (angle > 360) {
-        angle -= 360;
-      } else if (angle < 0) {
-        angle += 360;
-      }
+      angle = normalize_angle_positive_from_degree(angle);
 
       uint8_t intensities = (uint8_t)(nodes[i].sync_quality >>
                                       LIDAR_RESP_MEASUREMENT_QUALITY_SHIFT);
@@ -180,15 +149,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
         scan_msg.data.push_back(point);
       }
 
-      if (range >= m_MinRange) {
-        double feature_angle = angles::from_degrees(angle);
-        bearings.push_back(feature_angle);
-        indices.push_back(indices.size());
-        range_data.ranges.push_back(range);
-        range_data.xs.push_back(cos(feature_angle)*range);
-        range_data.ys.push_back(sin(feature_angle)*range);
-      }
-
       if (nodes[i].stamp < tim_scan_start) {
         tim_scan_start = nodes[i].stamp;
       }
@@ -202,68 +162,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
       if (nodes[i].error_package) {
         debug.MaxDebugIndex = 255;
       }
-    }
-
-    if (m_startRobotAngleOffset) {
-      line_feature_.setCachedRangeData(bearings, indices, range_data);
-      std::vector<gline> glines;
-      line_feature_.extractLines(glines);
-      bool find_line_angle = false;
-      gline max;
-      max.distance = 0.0;
-      double line_angle = 0.0;
-
-      if (glines.size()) {
-        max = glines[0];
-      }
-
-      bool isAngleGood = false;
-      double max_line_distance = 0.0;
-
-      for (std::vector<gline>::const_iterator it = glines.begin();
-           it != glines.end(); ++it) {
-        line_angle = -M_PI_2 + it->angle;
-        line_angle = angles::normalize_angle(line_angle);
-
-        if (m_RobotLidarOpposite) {
-          line_angle += M_PI;
-        }
-
-        if (fabs(line_angle) < M_PI / 3) {
-          isAngleGood = true;
-
-          if (it->distance > max_line_distance) {
-            max_line_distance = it->distance;
-          }
-
-          if (it->distance > 0.5 && it->distance >= max.distance) {
-            max = (*it);
-            find_line_angle = true;
-            m_LRRAngleOffset = -angles::to_degrees(line_angle);
-          }
-        }
-      }
-
-      if (find_line_angle) {
-        if (fabs(m_LRRAngleOffset - m_LastAngleOffset) < 0.5) {
-          saveRobotOffsetAngle();
-        } else {
-          fprintf(stderr, "The robot is shaking(%f) and waiting for stability...\n",
-                  m_LRRAngleOffset - m_LastAngleOffset);
-        }
-
-        m_LastAngleOffset = m_LRRAngleOffset;
-      } else {
-        if (isAngleGood) {
-          fprintf(stderr, "The wall is too short(%f)\n", max_line_distance);
-        } else {
-          fprintf(stderr, "The Lidar is not placed in the tooling or "
-                  "setRobotLidarOpposite command setting is reversed.");
-        }
-
-
-      }
-
     }
 
     double scan_time = (tim_scan_end - tim_scan_start) / 1e9;
@@ -281,8 +179,12 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     scan_msg.config.min_range = m_MinRange;
     scan_msg.config.max_range = m_MaxRange;
     outscan = scan_msg;
+
     //parsing version
-    handleVersionInfoByPackage(debug);
+    if (m_SingleChannel) {
+      handleVersionInfoByPackage(debug);
+    }
+
     return true;
 
   } else {
@@ -479,6 +381,7 @@ bool CYdLidar::getDeviceInfo() {
     return false;
   }
 
+  m_Model = devinfo.model;
   std::string model = "R2-SS-1";
   int m_samp_rate = 5;
 
@@ -516,8 +419,10 @@ bool CYdLidar::getDeviceInfo() {
 
     if (devinfo.model == YDlidarDriver::YDLIDAR_R2_SS_1) {
       checkCalibrationAngle(m_serial_number);
+//      checkRibOffsetAngle();
     } else {
       m_isAngleOffsetCorrected = true;
+      m_isRibOffsetCorrected = true;
 
       if (devinfo.model != YDlidarDriver::YDLIDAR_S4 &&
           devinfo.model != YDlidarDriver::YDLIDAR_S2) {
@@ -525,23 +430,14 @@ bool CYdLidar::getDeviceInfo() {
       }
     }
 
-    checkRobotOffsetAngleCorrected(m_serial_number);
-
-    if (m_SingleChannel && !m_isLRRAngleOffsetCorrected) {
-      checkRobotOffsetAngleCorrected("default");
-    }
-
     if (devinfo.model != YDlidarDriver::YDLIDAR_S4 &&
         devinfo.model != YDlidarDriver::YDLIDAR_S2) {
       checkScanFrequency();
     }
-  } else {
-    if (m_SingleChannel) {
-      checkRobotOffsetAngleCorrected("default");
-    }
   }
 
   printf("[YDLIDAR INFO] Current Sampling Rate : %dK\n", m_SampleRate);
+  fflush(stdout);
   return true;
 }
 
@@ -732,7 +628,7 @@ void CYdLidar::checkCalibrationAngle(const std::string &serialNumber) {
     ans = lidarPtr->getZeroOffsetAngle(angle);
 
     if (IS_OK(ans)) {
-      if (angle.angle > 1440 || angle.angle < -1440) {
+      if (angle.angle > 36000 || angle.angle < -36000) {
         ans = lidarPtr->getZeroOffsetAngle(angle);
 
         if (!IS_OK(ans)) {
@@ -741,8 +637,14 @@ void CYdLidar::checkCalibrationAngle(const std::string &serialNumber) {
         }
       }
 
-      m_isAngleOffsetCorrected = (angle.angle != 720);
-      m_AngleOffset = angle.angle / 4.0;
+      if (isNoRibOffsetAngleLidar(m_Model, Major, Minjor)) {
+        m_isAngleOffsetCorrected = (angle.angle != 720);
+        m_AngleOffset = angle.angle / 4.0;
+      } else {
+        m_isAngleOffsetCorrected = (angle.angle != 18000);
+        m_AngleOffset = angle.angle / 100.0;
+      }
+
       printf("[YDLIDAR INFO] Successfully obtained the %s offset angle[%f] from the lidar[%s]\n"
              , m_isAngleOffsetCorrected ? "corrected" : "uncorrrected", m_AngleOffset,
              serialNumber.c_str());
@@ -783,76 +685,17 @@ void CYdLidar::checkCalibrationAngle(const std::string &serialNumber) {
          m_isAngleOffsetCorrected ? "corrected" : "uncorrrected", m_AngleOffset);
 }
 
-/*-------------------------------------------------------------
-                        checkRobotOffsetAngleCorrected
--------------------------------------------------------------*/
-void CYdLidar::checkRobotOffsetAngleCorrected(const string &serialNumber) {
-  m_LRRAngleOffset = 0.0;
-  m_isLRRAngleOffsetCorrected = false;
+void CYdLidar::checkRibOffsetAngle() {
+  m_isRibOffsetCorrected = false;
 
-  if (ydlidar::fileExists(m_CalibrationFileName)) {
-    SI_Error rc = ini.LoadFile(m_CalibrationFileName.c_str());
+  if (!isNoRibOffsetAngleLidar(m_Model, Major, Minjor)) {
+    std::vector<offset_angle> rib_offset;
+    result_t ans = lidarPtr->getRibOffsetAngle(rib_offset);
 
-    if (rc >= 0) {
-      m_isLRRAngleOffsetCorrected = true;
-      double default_value = 90.6;
-      m_LRRAngleOffset = ini.GetDoubleValue("ROBOT",
-                                            serialNumber.c_str(),
-                                            default_value);
-
-      if (fabs(m_LRRAngleOffset - default_value) < 0.001) {
-        m_LRRAngleOffset = 0.0;
-        m_isLRRAngleOffsetCorrected = false;
-      }
-
-      printf("[YDLIDAR INFO] Successfully obtained the %s robot offset angle[%f] from the calibration file[%s]\n"
-             , m_isLRRAngleOffsetCorrected ? "corrected" : "uncorrrected",
-             m_LRRAngleOffset,
-             m_CalibrationFileName.c_str());
-
-    } else {
-      printf("[YDLIDAR INFO] Failed to open calibration file[%s]\n",
-             m_CalibrationFileName.c_str());
-    }
-  } else {
-    printf("[YDLIDAR INFO] Calibration file[%s] does not exist\n",
-           m_CalibrationFileName.c_str());
-  }
-
-  m_LastAngleOffset = m_LRRAngleOffset;
-  printf("[YDLIDAR INFO] Current %s RobotAngleOffset : %f°\n",
-         m_isLRRAngleOffsetCorrected ? "corrected" : "uncorrrected",
-         m_LRRAngleOffset);
-
-}
-
-/*-------------------------------------------------------------
-                        saveRobotOffsetAngle
--------------------------------------------------------------*/
-void CYdLidar::saveRobotOffsetAngle() {
-  if (m_startRobotAngleOffset) {
-    if (m_serial_number.empty()) {
-      m_serial_number = "default";
-    }
-
-    ini.SetDoubleValue("ROBOT", m_serial_number.c_str(), m_LRRAngleOffset);
-    SI_Error rc = ini.SaveFile(m_CalibrationFileName.c_str());
-
-    if (rc >= 0) {
-      m_startRobotAngleOffset = false;
-      m_isLRRAngleOffsetCorrected = true;
-      printf("[YDLIDAR INFO] Current robot offset correction value[%f] is saved\n",
-             m_LRRAngleOffset);
-      printf("-----------------calibration completed----------------------\n");
-    } else {
-      fprintf(stderr, "Saving correction value[%f] failed\n",
-              m_LRRAngleOffset);
-      m_isLRRAngleOffsetCorrected = false;
-      printf("-----------------calibration Failed----------------------\n");
+    if (IS_OK(ans)) {
+      m_isRibOffsetCorrected = true;
     }
   }
-
-
 }
 
 /*-------------------------------------------------------------

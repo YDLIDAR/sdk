@@ -1,6 +1,5 @@
 ﻿
 #pragma once
-#include "line_feature.h"
 #include "utils.h"
 #include "ydlidar_driver.h"
 #include <math.h>
@@ -8,7 +7,6 @@
 #include "angles.h"
 
 using namespace ydlidar;
-using namespace line_feature;
 using namespace angles;
 
 class YDLIDAR_API CYdLidar {
@@ -22,9 +20,6 @@ class YDLIDAR_API CYdLidar {
                         private) ///< constrained minimum angle, minmum 0 Deg(Deg)
   PropertyBuilderByName(float, ScanFrequency,
                         private) ///< scan frequency (5HZ~12HZ)(HZ)
-
-  PropertyBuilderByName(bool, RobotLidarOpposite,
-                        private) ///< lidar zero and robot zero is opposite directions(°)
 
   PropertyBuilderByName(bool, Intensities,
                         private) ///< intensity
@@ -79,17 +74,6 @@ class YDLIDAR_API CYdLidar {
   //Whether the zero offset angle is corrected?
   bool isAngleOffetCorrected() const;
 
-  // get lidar relative robot offset angle
-  float getRobotAngleOffset() const;
-
-  // start lidar is corrected relative to the robot.
-  void setStartRobotAngleOffset();
-
-  //Whether the lidar relative robot offset angle is corrected?
-  //After the corrrection is started,
-  //the currect interface can be used to datermine when the correction is completed.
-  bool isRobotAngleOffsetCorrected() const;
-
  protected:
   /** Returns true if communication has been established with the device. If it's not,
     *  try to create a comms channel.
@@ -119,10 +103,9 @@ class YDLIDAR_API CYdLidar {
   void checkCalibrationAngle(const std::string &serialNumber);
 
   /**
-   * @brief checkRobotOffsetAngleCorrected
-   * @param serialNumber
+   * @brief checkRibOffsetAngle
    */
-  void checkRobotOffsetAngleCorrected(const std::string &serialNumber);
+  void checkRibOffsetAngle();
 
   /** Returns true if the device is in good health, If it's not*/
   bool getDeviceHealth();
@@ -142,26 +125,17 @@ class YDLIDAR_API CYdLidar {
   /** returns true if the lidar data is normal, If it's not*/
   bool checkLidarAbnormal();
 
-  /**
-   * @brief saveRobotOffsetAngle
-   * @return
-   */
-  void saveRobotOffsetAngle();
-
  private:
   bool    isScanning;
   float   frequencyOffset;
   float   m_AngleOffset;
   bool    m_isAngleOffsetCorrected;
-  float   m_LRRAngleOffset;
-  float   m_LastAngleOffset;
-  bool    m_isLRRAngleOffsetCorrected;//lidar relative robot angle offset
-  bool    m_startRobotAngleOffset;
+  bool    m_isRibOffsetCorrected;
   uint8_t Major;
   uint8_t Minjor;
+  uint8_t m_Model;
   CSimpleIniA ini;
   YDlidarDriver *lidarPtr;
-  LineFeature line_feature_;
   std::string m_serial_number;
   node_info *nodes;
   bool m_ParseSuccess;
