@@ -125,12 +125,6 @@ int main(int argc, char *argv[]) {
 
   laser.setCalibrationFileName(calibration_filename);//Zero angle offset filename
 
-  //start correction zero angle and robot zero angle.
-  laser.setStartRobotAngleOffset();
-
-  // Whether lidar zero angle and robot zero angle differ by more than 90 degrees.
-  laser.setRobotLidarOpposite(false);
-
   //set the range of angles that need to be removed.
   //usage: [0, 10, 15,25, 80, 90]
   std::vector<float> ignore_array;
@@ -158,13 +152,6 @@ int main(int argc, char *argv[]) {
         uint64_t time_stamp = scan.system_time_stamp + i * scan.config.time_increment *
                               1e9;
         LaserPoint point = scan.data[i];
-      }
-
-      if (laser.isRobotAngleOffsetCorrected()) {
-        if (!isCompleted) {
-          printf("-----------------Lidar calibration completed----------------------\n");
-          isCompleted = true;
-        }
       }
 
       fflush(stdout);

@@ -15,96 +15,75 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.1.1 |   2020-03-06  |
+| SDK     |  2.1.2 |   2020-03-20  |
 
-- [feat]  SDK exceptional case of false generation,  the specific holding time from “few” seconds to 30 seconds.
-- [fixed] fixed local_scan size.
-- [feat] the timeout is greater than the default value before the exception message is printed.
+- [feature] add `getRibOffsetAngle`, `saveRobotOffsetAngle` and `saveRibOffsetAngle` three interface functions.
+- [feat] remove old robot offset angle scheme.
+- [feat] update `getZeroOffsetAngle` function to get final corrected angle.
 
-## Zero Angle calibration
-![](image/zero_angle.png)
-
-The Robot is put into the calibration tool required in the above figure to ensure that the zero angle direction of the robot is perpendicular to the wall.
-If the difference between the Lidar zero angle direction and the robot zero angle direction is greater than 90 degrees, the same as the figure above.
-the `setRobotLidarOpposite` in SDK is set to true.
+## How to Get Rid Distortion Value.
 ```
   CYdLidar laser;
-  laser.setRobotLidarOpposite(true);
-```
-otherwise, the difference is less than 90 degrees, the `setRobotLidarOpposite` in SDK is set to false.
-![](image/zero_angle_inv.png)
-```
-  CYdLidar laser;
-  laser.setRobotLidarOpposite(false);
-```
-#### How to start zero angle correction
-SDK turns off correction model by default. If you want to start by execution the `setStartRobotAngleOffset` command once, SDK will start the correction of zero angle.
-```
-  CYdLidar laser;
-  laser.setStartRobotAngleOffset();
-```
-`isRobotAngleOffsetCorrected` command will return true if the correction is complete.
-```
-  CYdLidar laser;
-  if(laser.isRobotAngleOffsetCorrected()) {
-	printf("Calibraion successful...\n");
+  if(laser.initialize()) {
+    std::vector<offset_angle> rib_array;
+    result_t ans = laser.getYdlidarDriver()->getRibOffsetAngle(rib_array);
+    if(IS_OK(ans)) {
+      printf("get rib values is success...\n");
+    }
   }
 ```
-The calibration value will be saved in the file set by `setCalibrationFileName` command, you must set this value, 
-Example:
-```
-  std::string calibration_filename = "Your's path/LidarAngleCalibration.ini";
-  CYdLidar laser;
-  laser.setCalibrationFileName(calibration_filename);//Zero angle offset filename
-```
-Note: The file format is an ini file,Requires .ini as extension.
-
-After the calibration is successful, the next time the SDK starts, it will read the calibration value in the file, add this offset value to the Lidar data, and the output lidar data is already calibrated.
-
-Note:
-* 1. Zero Angle direction of the robot needs to be vertical to the wall.
-* 2. `setCalibrationFileName` command file path and file name need to be set correctly.
-* 3. `setRobotLidarOpposite` command parameters need to be set correctly.
-* 4. calibration values are stored on the robot's internal memory area.
-* 4. After the calibration is completed, the calibration model will be automatically closed, if you neeed to calibrate again, you can start the recalibration by `setStartRobotAngleOffset` command.
-
-
-### Result as follows:
-![](image/result.png)
 
 ## How to Set Rid Distortion Value.
-SDK can filter custom angular area Lidar data,`setIgnoreArray` command use examples as follows:
+SDK can filter custom angular area Lidar data,`saveRibOffsetAngle` command use examples as follows:
 * 1.filter 10 to 20 degrees and 50 to 60 degrees
 ```
   CYdLidar laser;
-  std::vector<float> ignore_array;
-  // 10 to 20
-  ignore_array.push_back(10);
-  ignore_array.push_back(20);
-  //50 to 60
-  ignore_array.push_back(50);
-  ignore_array.push_back(60);
-  laser.setIgnoreArray(ignore_array);
+  if(laser.initialize()) {
+    std::vector<offset_angle> rib_array;
+    // 10 to 20
+    offset_angle angle;
+    angle.angle = 10*100;
+    rib_array.push_back(angle);
+    angle.angle = 20*100;
+    rib_array.push_back(angle);
+    //50 to 60
+    angle.angle = 50*100;
+    rib_array.push_back(angle);
+    angle.angle = 60*100;
+    rib_array.push_back(angle);
+    laser.getYdlidarDriver()->saveRibOffsetAngle(rib_array);
+  }
 ```
-* 2.filter 10 to 20 degrees, 180 to 200 degrees and 320 to 330 degrees.
+* 2.filter 10 to 20 degrees, 50 to 60 degrees and 320 to 330 degrees.
 ```
-  CYdLidar laser;
-  std::vector<float> ignore_array;
-  // 10 to 20
-  ignore_array.push_back(10);
-  ignore_array.push_back(20);
-  //180 to 200
-  ignore_array.push_back(180);
-  ignore_array.push_back(200);
-  //320 to 330
-  ignore_array.push_back(320);
-  ignore_array.push_back(330);
-  laser.setIgnoreArray(ignore_array);
+ CYdLidar laser;
+  if(laser.initialize()) {
+    std::vector<offset_angle> rib_array;
+    // 10 to 20
+    offset_angle angle;
+    angle.angle = 10*100;
+    rib_array.push_back(angle);
+    angle.angle = 20*100;
+    rib_array.push_back(angle);
+    //50 to 60
+    angle.angle = 50*100;
+    rib_array.push_back(angle);
+    angle.angle = 60*100;
+    rib_array.push_back(angle);
+
+    //50 to 60
+    angle.angle = 320*100;
+    rib_array.push_back(angle);
+    angle.angle = 330*100;
+    rib_array.push_back(angle);
+    laser.getYdlidarDriver()->saveRibOffsetAngle(rib_array);
+  }
+
 ```
 Filtering angles need to be entered in pairs.
 
 Note:
-* The Input filter angles can be saved in the robot's internal memory, When starting sdk, the filter angles is read out from the file and input into the SDK. This applies to both the R2 and S2 Lidars.
+* When obtaining or saving the offset angle, you need to call the `initialize` function to initialize the lidar successfully.
 
 ## Support
 
