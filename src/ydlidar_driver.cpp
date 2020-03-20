@@ -9,6 +9,7 @@
 #include "ydlidar_driver.h"
 #include "common.h"
 #include <math.h>
+#include "angles.h"
 using namespace impl;
 
 namespace ydlidar {
@@ -65,6 +66,8 @@ YDlidarDriver::YDlidarDriver():
   scan_frequence      = 0;
   m_sampling_rate     = -1;
   model               = -1;
+  m_Maxjor            = 0;
+  m_Minjor            = 0;
 
   //parse config
   PackageSampleBytes  = 2;
@@ -812,14 +815,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     if (m_IgnoreArray.size() != 0) {//eliminate the specified range angle.
       double angle = (FirstSampleAngle + IntervalSampleAngle * package_Sample_Index) /
                      64.0;
-
-      if (angle < 0) {
-        angle += 360;
-      }
-
-      if (angle >= 360) {
-        angle = angle - 360;
-      }
+      angle = angles::normalize_angle_positive_from_degree(angle);
 
       for (uint16_t j = 0; j < m_IgnoreArray.size(); j = j + 2) {
         if ((m_IgnoreArray[j] <= angle) && (angle <= m_IgnoreArray[j + 1])) {
@@ -1167,7 +1163,7 @@ result_t YDlidarDriver::getDeviceInfo(device_info &info, uint32_t timeout) {
       return RESULT_FAIL;
     }
 
-    if (response_header.size < sizeof(lidar_ans_header)) {
+    if (response_header.size < sizeof(device_info)) {
       return RESULT_FAIL;
     }
 
@@ -1177,6 +1173,8 @@ result_t YDlidarDriver::getDeviceInfo(device_info &info, uint32_t timeout) {
 
     getData(reinterpret_cast<uint8_t *>(&info), sizeof(info));
     model = info.model;
+    m_Maxjor = info.firmware_version >> 8;
+    m_Minjor = (info.firmware_version & 0xff);
   }
 
   return RESULT_OK;
@@ -1779,7 +1777,94 @@ result_t YDlidarDriver::getZeroOffsetAngle(offset_angle &angle,
   result_t  ans;
 
   if (!isConnected) {
-    return RESULT_FAIL;
+    return RESULT_TIMEOUT;
+  }
+
+  int timeoutCount = 0;
+  int maxTimeout = timeout / DEFAULT_TIMEOUT;
+
+  if (maxTimeout < 1) {
+    maxTimeout = 1;
+  }
+
+  while (timeoutCount < maxTimeout) {
+    ans = getZeroOffsetZone(angle);
+
+    if (IS_OK(ans)) {
+      break;
+    }
+
+    timeoutCount++;
+  }
+
+  if (!isNoRibOffsetAngleLidar(model, m_Maxjor, m_Minjor) && IS_OK(ans)) {
+    if (timeoutCount >= maxTimeout) {
+      timeoutCount = maxTimeout - 1;
+    }
+
+    offset_angle robot_angle;
+
+    while (timeoutCount < maxTimeout) {
+      ans = getRobotOffsetZone(robot_angle);
+
+      if (IS_OK(ans)) {
+        angle.angle += robot_angle.angle;
+
+        if (angle.angle >= 36000) {
+          angle.angle -= 36000;
+        }
+
+        if (angle.angle < 0) {
+          angle.angle += 36000;
+        }
+
+        break;
+      }
+
+      timeoutCount++;
+    }
+  }
+
+  return ans;
+}
+
+result_t YDlidarDriver::saveRobotOffsetAngle(offset_angle &angle,
+    uint32_t timeout) {
+  result_t  ans;
+
+  if (!isConnected) {
+    return RESULT_TIMEOUT;
+  }
+
+  int timeoutCount = 0;
+  int maxTimeout = timeout / DEFAULT_TIMEOUT;
+
+  if (maxTimeout < 1) {
+    maxTimeout = 1;
+  }
+
+  while (timeoutCount < maxTimeout) {
+    ans = saveRobotOffsetZone(angle);
+
+    if (IS_OK(ans)) {
+      break;
+    }
+
+    timeoutCount++;
+  }
+
+  return ans;
+}
+
+/************************************************************************/
+/*  the get to zero offset angle                                        */
+/************************************************************************/
+result_t YDlidarDriver::getZeroOffsetZone(offset_angle &angle,
+    uint32_t timeout) {
+  result_t  ans;
+
+  if (!isConnected) {
+    return RESULT_TIMEOUT;
   }
 
   disableDataGrabbing();
@@ -1788,7 +1873,296 @@ result_t YDlidarDriver::getZeroOffsetAngle(offset_angle &angle,
     ScopedLocker l(_lock);
 
     if ((ans = sendCommand(LIDAR_CMD_GET_OFFSET_ANGLE)) != RESULT_OK) {
+      return RESULT_TIMEOUT;
+    }
+
+    lidar_ans_header response_header;
+
+    if ((ans = waitResponseHeader(&response_header, timeout)) != RESULT_OK) {
+      return RESULT_TIMEOUT;
+    }
+
+    if (response_header.type != LIDAR_ANS_TYPE_DEVINFO) {
+      return RESULT_TIMEOUT;
+    }
+
+    if (response_header.size < sizeof(offset_angle)) {
+      return RESULT_TIMEOUT;
+    }
+
+    if (waitForData(response_header.size, timeout) != RESULT_OK) {
+      return RESULT_TIMEOUT;
+    }
+
+    getData(reinterpret_cast<uint8_t *>(&angle), sizeof(angle));
+  }
+
+  return RESULT_OK;
+}
+
+result_t YDlidarDriver::saveZeroOffsetZone(offset_angle &angle,
+    uint32_t timeout) {
+  result_t  ans = RESULT_TIMEOUT;
+
+  if (!isConnected) {
+    return RESULT_TIMEOUT;
+  }
+
+  disableDataGrabbing();
+  flushSerial();
+
+  if (!isNoRibOffsetAngleLidar(model, m_Maxjor, m_Minjor)) {
+    std::string buf;
+    size_t size;
+    bool ret = false;
+    ans = setScanSwitchModel(buf, size, 30);
+
+    if (!IS_OK(ans)) {
+      ans = setScanSwitchModel(buf, size, 30);
+    }
+
+    if (IS_OK(ans)) {
+      std::string send = format("E %d\r\n", angle.angle);
+      buf.clear();
+      ans = setScanSendText(send, buf, size, 40);
+
+      if (!IS_OK(ans)) {
+        ans = setScanSendText(send, buf, size, 40);
+      }
+
+      ret = IS_OK(ans);
+    }
+
+    buf.clear();
+    ans = setScanExitModel(buf, size, 25);
+    ans = setLidarReboot();
+
+    if (!ret) {
+      ans = RESULT_FAIL;
+    }
+  }
+
+  return ans;
+}
+
+/************************************************************************/
+/*  the get to rib offset angle                                        */
+/************************************************************************/
+result_t YDlidarDriver::getRibOffsetAngle(std::vector<offset_angle> &angle,
+    uint32_t timeout) {
+  result_t  ans;
+
+  if (!isConnected) {
+    return RESULT_TIMEOUT;
+  }
+
+  int timeoutCount = 0;
+  rib_offset_angle rib_angle;
+  memset(&rib_angle, 0, sizeof(rib_offset_angle));
+  int maxTimeout = timeout / DEFAULT_TIMEOUT;
+
+  if (maxTimeout < 1) {
+    maxTimeout = 1;
+  }
+
+  while (timeoutCount < maxTimeout) {
+    ans = getRibOffsetZone(rib_angle);
+
+    if (IS_OK(ans)) {
+      uint8_t size = uint8_t(rib_angle.angle[0].angle & 0xff);
+
+      if (rib_angle.angle[0].angle < 1 || size >= 15) {
+        return RESULT_FAIL;
+      }
+
+      for (int i = 1; i <= size; i++) {
+        angle.push_back(rib_angle.angle[i]);
+      }
+
       return ans;
+    }
+
+    timeoutCount++;
+  }
+
+  return ans;
+}
+
+result_t YDlidarDriver::saveRibOffsetAngle(std::vector<offset_angle> &angle,
+    uint32_t timeout) {
+  result_t  ans;
+
+  if (!isConnected) {
+    return RESULT_TIMEOUT;
+  }
+
+  if (angle.size() < 1 ||  angle.size() > 15) {
+    return RESULT_FAIL;
+  }
+
+  int maxTimeout = timeout / DEFAULT_TIMEOUT;
+  rib_offset_angle rib_angle;
+  memset(&rib_angle, 0, sizeof(rib_offset_angle));
+
+  if (maxTimeout < 1) {
+    maxTimeout = 1;
+  }
+
+  rib_angle.angle[0].angle = angle.size();
+
+  for (int i = 1; i <= angle.size() && i < 15; i++) {
+    rib_angle.angle[i] = angle[i - 1];
+  }
+
+  int timeoutCount = 0;
+
+  while (timeoutCount < maxTimeout) {
+    ans = saveRibOffsetZone(rib_angle);
+
+    if (IS_OK(ans)) {
+      return ans;
+    }
+
+    timeoutCount++;
+  }
+
+  return ans;
+
+}
+
+result_t YDlidarDriver::saveRibOffsetZone(rib_offset_angle &angle,
+    uint32_t timeout) {
+  result_t  ans = RESULT_TIMEOUT;
+
+  if (!isConnected) {
+    return RESULT_TIMEOUT;
+  }
+
+  disableDataGrabbing();
+  flushSerial();
+
+  if (!isNoRibOffsetAngleLidar(model, m_Maxjor, m_Minjor)) {
+    std::string buf;
+    size_t size;
+    bool ret = false;
+    ans = setScanSwitchModel(buf, size, 30);
+
+    if (!IS_OK(ans)) {
+      ans = setScanSwitchModel(buf, size, 30);
+    }
+
+    if (IS_OK(ans)) {
+      ret = true;
+      uint8_t len = uint8_t(angle.angle[0].angle & 0xff);
+
+      for (int i = 0; i <= len; i++) {
+        std::string send = format("T %d %d\r\n", i, angle.angle[i].angle);
+        buf.clear();
+        ans = setScanSendText(send, buf, size, 15);
+
+        if (!IS_OK(ans)) {
+          ans = setScanSendText(send, buf, size, 15);
+        }
+
+        ret &= IS_OK(ans);
+      }
+
+      if (IS_OK(ans) && ret) {
+        std::string save = format("T 30\r\n");
+        ans = setScanSendText(save, buf, size, 20);
+
+        if (!IS_OK(ans)) {
+          ans = setScanSendText(save, buf, size, 20);
+        }
+      }
+    }
+
+    buf.clear();
+    ans = setScanExitModel(buf, size, 25);
+    ans = setLidarReboot();
+
+    if (!ret) {
+      ans = RESULT_FAIL;
+    }
+  }
+
+  return ans;
+}
+
+result_t YDlidarDriver::saveRobotOffsetZone(offset_angle &angle,
+    uint32_t timeout) {
+  result_t  ans = RESULT_TIMEOUT;
+
+  if (!isConnected) {
+    return RESULT_TIMEOUT;
+  }
+
+  disableDataGrabbing();
+  flushSerial();
+
+  if (!isNoRibOffsetAngleLidar(model, m_Maxjor, m_Minjor)) {
+    std::string buf;
+    size_t size;
+    bool ret = false;
+    ans = setScanSwitchModel(buf, size, 30);
+
+    if (!IS_OK(ans)) {
+      ans = setScanSwitchModel(buf, size, 30);
+    }
+
+    if (IS_OK(ans)) {
+      ret = true;
+      std::string send = format("T 15 %d\r\n", angle.angle);
+      buf.clear();
+      ans = setScanSendText(send, buf, size, 15);
+
+      if (!IS_OK(ans)) {
+        ans = setScanSendText(send, buf, size, 15);
+      }
+
+      if (IS_OK(ans)) {
+        std::string save = format("T 30\r\n");
+        ans = setScanSendText(save, buf, size, 20);
+
+        if (!IS_OK(ans)) {
+          ans = setScanSendText(save, buf, size, 20);
+        }
+      }
+
+      ret = IS_OK(ans);
+
+    }
+
+    buf.clear();
+    ans = setScanExitModel(buf, size, 25);
+    ans = setLidarReboot();
+
+    if (!ret) {
+      ans = RESULT_FAIL;
+    }
+  }
+
+  return ans;
+}
+/************************************************************************/
+/*  the get to rib offset zone                                        */
+/************************************************************************/
+result_t YDlidarDriver::getRibOffsetZone(rib_offset_angle &angle,
+    uint32_t timeout) {
+  result_t  ans;
+
+  if (!isConnected) {
+    return RESULT_TIMEOUT;
+  }
+
+  disableDataGrabbing();
+  flushSerial();
+  memset(&angle, 0, sizeof(rib_offset_angle));
+  {
+    ScopedLocker l(_lock);
+
+    if ((ans = sendCommand(LIDAR_CMD_GET_RIB_OFFSET_ANGLE)) != RESULT_OK) {
+      return RESULT_TIMEOUT;
     }
 
     lidar_ans_header response_header;
@@ -1798,23 +2172,167 @@ result_t YDlidarDriver::getZeroOffsetAngle(offset_angle &angle,
     }
 
     if (response_header.type != LIDAR_ANS_TYPE_DEVINFO) {
-      return RESULT_FAIL;
+      return RESULT_TIMEOUT;
     }
 
-    if (response_header.size < sizeof(offset_angle)) {
-      return RESULT_FAIL;
+    if (response_header.size < sizeof(rib_offset_angle)) {
+      return RESULT_TIMEOUT;
     }
 
     if (waitForData(response_header.size, timeout) != RESULT_OK) {
-      return RESULT_FAIL;
+      return RESULT_TIMEOUT;
     }
 
     getData(reinterpret_cast<uint8_t *>(&angle), sizeof(angle));
+
   }
   return RESULT_OK;
 }
 
+/************************************************************************/
+/*  the get to rib offset zone                                        */
+/************************************************************************/
+result_t YDlidarDriver::getRobotOffsetZone(offset_angle &angle,
+    uint32_t timeout) {
+  result_t  ans;
 
+  if (!isConnected) {
+    return RESULT_TIMEOUT;
+  }
+
+  rib_offset_angle rov_angle;
+  memset(&angle, 0, sizeof(offset_angle));
+  ans = getRibOffsetZone(rov_angle, timeout);
+
+  if (IS_OK(ans)) {
+    angle.angle = rov_angle.angle[15].angle;
+  }
+
+  return ans;
+}
+
+result_t YDlidarDriver::setLidarReboot(uint32_t timeout) {
+  result_t  ans;
+
+  if (!isConnected) {
+    return RESULT_FAIL;
+  }
+
+  flushSerial();
+  delay(20);
+  disableDataGrabbing();
+  {
+    ScopedLocker l(_lock);
+
+    if (!IS_OK(ans = sendCommand(LIDAR_CMD_EXIT))) {
+      return ans;
+
+    }
+
+    waitForData(1, timeout);
+    flushSerial();
+  }
+  return RESULT_OK;
+}
+
+result_t YDlidarDriver::setScanSwitchModel(string &buffer, size_t &size,
+    uint32_t count, uint32_t timeout) {
+  result_t  ans;
+
+  if (!isConnected) {
+    return RESULT_FAIL;
+  }
+
+  flushSerial();
+  delay(50);
+  disableDataGrabbing();
+  size = 0;
+  {
+    ScopedLocker l(_lock);
+
+    if (!IS_OK(ans = sendCommand(LIDAR_CMD_ENTER_TEXT))) {
+      return ans;
+
+    }
+
+    delay(20);
+    {
+      if (!IS_OK(ans = waitForData(count, timeout, &size))) {
+      }
+    }
+    delay(1);
+    {
+      if (_serial->available() > size) {
+        size = _serial->available();
+      }
+
+      if (size > 0) {
+        uint8_t *buf = static_cast<uint8_t *>(alloca(size * sizeof(uint8_t)));
+        getData(buf, size);
+        buffer.append(reinterpret_cast<const char *>(buf), size);
+      }
+
+    }
+
+  }
+  return ans;
+}
+
+result_t YDlidarDriver::setScanExitModel(string &buffer, size_t &size,
+    uint32_t count, uint32_t timeout) {
+  result_t  ans;
+
+  if (!isConnected) {
+    return RESULT_FAIL;
+  }
+
+  string sendBuf = "G\r\n";
+  ans = setScanSendText(sendBuf, buffer, size, count, timeout);
+  return ans;
+}
+
+result_t YDlidarDriver::setScanSendText(const string &data, string &buffer,
+                                        size_t &size, uint32_t count, uint32_t timeout) {
+  result_t  ans;
+
+  if (!isConnected) {
+    return RESULT_FAIL;
+  }
+
+  flushSerial();
+  delay(20);
+  disableDataGrabbing();
+  size = 0;
+  {
+    ScopedLocker l(_lock);
+
+    if (_serial) {
+      _serial->write(reinterpret_cast<const uint8_t *>(data.c_str()),
+                     data.length());
+    }
+
+    delay(20);
+    {
+      if (!IS_OK(ans = waitForData(count, timeout, &size))) {
+      }
+    }
+    delay(1);
+    {
+      if (_serial->available() > size) {
+        size = _serial->available();
+      }
+
+      if (size > 0) {
+        uint8_t *buf = static_cast<uint8_t *>(alloca(size * sizeof(uint8_t)));
+        getData(buf, size);
+        buffer.append(reinterpret_cast<const char *>(buf), size);
+      }
+    }
+
+  }
+  return ans;
+
+}
 
 std::string YDlidarDriver::getSDKVersion() {
   return SDKVerision;

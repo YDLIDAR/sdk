@@ -303,17 +303,54 @@ class YDlidarDriver {
                            uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
-  * @brief get lidar zero offset angle \n
+  * @brief get lidar zero offset angle or final corrected angle \n
   * @param[in] angle　　　   zero offset angle
   * @param[in] timeout      timeout
   * @return return status
   * @retval RESULT_OK       success
-  * @retval RESULT_FAILE    failed
+  * @retval RESULT_TIMEOUT  Failed
+  * @retval RESULT_FAILE    Angle is not calibrated
   * @note Non-scan state, perform currect operation.
   */
   result_t getZeroOffsetAngle(offset_angle &angle,
-                              uint32_t timeout = DEFAULT_TIMEOUT);
+                              uint32_t timeout = 5 * DEFAULT_TIMEOUT);
 
+  /**
+  * @brief save robot zero offset angle \n
+  * @param[in] angle　　　   robot offset angle
+  * @param[in] timeout      timeout
+  * @return return status
+  * @retval RESULT_OK       success
+  * @retval RESULT_TIMEOUT  Failed
+  * @retval RESULT_FAILE    Angle is not Saved
+  * @note Non-scan state, perform currect operation.
+  */
+  result_t saveRobotOffsetAngle(offset_angle &angle,
+                                uint32_t timeout = 5 * DEFAULT_TIMEOUT);
+
+  /**
+   * @brief getRibOffsetAngle
+   * @param angle
+   * @return return status
+   * @retval RESULT_OK       success
+   * @retval RESULT_TIMEOUT  Failed
+   * @retval RESULT_FAILE    Rib is not calibrated
+   * @return
+   */
+  result_t getRibOffsetAngle(std::vector<offset_angle> &angle,
+                             uint32_t timeout = 5 * DEFAULT_TIMEOUT);
+
+  /**
+   * @brief saveRibOffsetAngle
+   * @param angle
+   * @return return status
+   * @retval RESULT_OK       success
+   * @retval RESULT_TIMEOUT  Failed
+   * @retval RESULT_FAILE    Rib is not Saved
+   * @return
+   */
+  result_t saveRibOffsetAngle(std::vector<offset_angle> &angle,
+                              uint32_t timeout = 5 * DEFAULT_TIMEOUT);
  protected:
 
   /**
@@ -456,6 +493,130 @@ class YDlidarDriver {
    */
   result_t checkAutoConnecting(bool error = false);
 
+  /**
+  * @brief get lidar zero offset angle \n
+  * @param[in] angle　　　   zero offset angle
+  * @param[in] timeout      timeout
+  * @return return status
+  * @retval RESULT_OK       success
+  * @retval RESULT_TIMEOUT  Failed
+  * @retval RESULT_FAILE    Angle is not calibrated
+  * @note Non-scan state, perform currect operation.
+  */
+  result_t getZeroOffsetZone(offset_angle &angle,
+                             uint32_t timeout = DEFAULT_TIMEOUT);
+
+  /**
+  * @brief save lidar zero offset angle to lidar memory\n
+  * @param[in] angle　　　   zero offset angle
+  * @param[in] timeout      timeout
+  * @return return status
+  * @retval RESULT_OK       success
+  * @retval RESULT_TIMEOUT  Failed
+  * @retval RESULT_FAILE    Angle is not calibrated
+  * @note Non-scan state, perform currect operation.
+  */
+  result_t saveZeroOffsetZone(offset_angle &angle,
+                              uint32_t timeout = DEFAULT_TIMEOUT);
+
+  /**
+  * @brief get lidar rib zone \n
+  * @param[in] angle　　　   rib offset angle
+  * @param[in] timeout      timeout
+  * @return return status
+  * @retval RESULT_OK       success
+  * @retval RESULT_TIMEOUT  Failed
+  * @retval RESULT_FAILE    Angle is not calibrated
+  * @note Non-scan state, perform currect operation.
+  */
+  result_t getRibOffsetZone(rib_offset_angle &angle,
+                            uint32_t timeout = DEFAULT_TIMEOUT);
+
+  /**
+  * @brief save lidar rib zone to lidar memory\n
+  * @param[in] angle　　　   rib offset angle
+  * @param[in] timeout      timeout
+  * @return return status
+  * @retval RESULT_OK       success
+  * @retval RESULT_TIMEOUT  Failed
+  * @retval RESULT_FAILE    Angle is not calibrated
+  * @note Non-scan state, perform currect operation.
+  */
+  result_t saveRibOffsetZone(rib_offset_angle &angle,
+                             uint32_t timeout = DEFAULT_TIMEOUT);
+
+
+  /**
+  * @brief save robot offset zone to lidar memory\n
+  * @param[in] angle　　　   robot offset angle
+  * @param[in] timeout      timeout
+  * @return return status
+  * @retval RESULT_OK       success
+  * @retval RESULT_TIMEOUT  Failed
+  * @retval RESULT_FAILE    Angle is not calibrated
+  * @note Non-scan state, perform currect operation.
+  */
+  result_t saveRobotOffsetZone(offset_angle &angle,
+                               uint32_t timeout = DEFAULT_TIMEOUT);
+
+  /**
+  * @brief get robot offset zone \n
+  * @param[in] angle　　　   robot offset angle
+  * @param[in] timeout      timeout
+  * @return return status
+  * @retval RESULT_OK       success
+  * @retval RESULT_TIMEOUT  Failed
+  * @retval RESULT_FAILE    Angle is not calibrated
+  * @note Non-scan state, perform currect operation.
+  */
+  result_t getRobotOffsetZone(offset_angle &angle,
+                              uint32_t timeout = DEFAULT_TIMEOUT);
+
+ private:
+  /**
+   * @brief setLidarReboot
+   * @param timeout
+   * @return
+   */
+  result_t setLidarReboot(uint32_t timeout = DEFAULT_TIMEOUT);
+
+  /**
+   * @brief setScanSwitchModel
+   * @param buffer
+   * @param size
+   * @param count
+   * @param timeout
+   * @return
+   */
+  result_t setScanSwitchModel(std::string &buffer, size_t &size,
+                              uint32_t count = DEFAULT_WAIT_COUNT,
+                              uint32_t timeout = DEFAULT_TIMEOUT);
+
+  /**
+   * @brief setScanExitModel
+   * @param buffer
+   * @param size
+   * @param count
+   * @param timeout
+   * @return
+   */
+  result_t setScanExitModel(std::string &buffer, size_t &size,
+                            uint32_t count = DEFAULT_WAIT_COUNT,
+                            uint32_t timeout = DEFAULT_TIMEOUT);
+  /**
+   * @brief setScanSendText
+   * @param data
+   * @param buffer
+   * @param size
+   * @param count
+   * @param timeout
+   * @return
+   */
+  result_t setScanSendText(const std::string &data,  std::string &buffer,
+                           size_t &size,
+                           uint32_t count = DEFAULT_WAIT_COUNT,
+                           uint32_t timeout = DEFAULT_TIMEOUT);
+
  public:
   std::atomic<bool>     isConnected;  ///<
   std::atomic<bool>     isScanning;   ///<
@@ -468,6 +629,7 @@ class YDlidarDriver {
     DEFAULT_HEART_BEAT = 1000, /**< default heatbeat timeout. */
     MAX_SCAN_NODES = 2048,	   /**< . */
     DEFAULT_TIMEOUT_COUNT = 1,
+    DEFAULT_WAIT_COUNT = 10,
   };
   enum {
     YDLIDAR_F4 = 1,
@@ -513,6 +675,7 @@ class YDlidarDriver {
   uint32_t trans_delay;				///< serial transfer on byte time
   int m_sampling_rate;					///< sample rate
   int model; ///< lidar model
+  uint8_t m_Maxjor, m_Minjor;
 
   node_package package;
   node_packages packages;
@@ -541,6 +704,21 @@ class YDlidarDriver {
   bool m_SupportMotorDtrCtrl;
   int m_reconnectCount;
 };
+
+inline bool isNoRibOffsetAngleLidar(int model, uint8_t Maxjor, uint8_t Minjor) {
+  bool ret = true;
+
+  if (model == YDlidarDriver::YDLIDAR_R2_SS_1) {
+    ret = false;
+
+    if (Maxjor < 1 || (Maxjor == 1 && Minjor <= 7)) {
+      ret = true;
+    }
+  }
+
+  return ret;
+}
+
 }
 
 #endif // YDLIDAR_DRIVER_H
