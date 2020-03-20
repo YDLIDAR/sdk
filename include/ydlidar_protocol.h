@@ -68,8 +68,8 @@
 #define LIDAR_CMD_ENABLE_CONST_FREQ        0x0E
 #define LIDAR_CMD_DISABLE_CONST_FREQ       0x0F
 
-#define LIDAR_CMD_GET_OFFSET_ANGLE        0x93
-#define LIDAR_CMD_SAVE_SET_EXPOSURE         0x94
+#define LIDAR_CMD_GET_OFFSET_ANGLE          0x93
+#define LIDAR_CMD_GET_RIB_OFFSET_ANGLE      0x94
 #define LIDAR_CMD_SET_LOW_EXPOSURE          0x95
 #define LIDAR_CMD_ADD_EXPOSURE       	    0x96
 #define LIDAR_CMD_DIS_EXPOSURE       	    0x97
@@ -77,6 +77,9 @@
 
 #define LIDAR_CMD_SET_HEART_BEAT        0xD9
 #define LIDAR_CMD_SET_SETPOINTSFORONERINGFLAG  0xae
+
+#define LIDAR_CMD_ENTER_TEXT 0xfa
+#define LIDAR_CMD_EXIT 0x40
 
 #define PackageSampleMaxLngth 0x100
 typedef enum {
@@ -174,6 +177,10 @@ struct function_state {
 
 struct offset_angle {
   int32_t angle;
+} __attribute__((packed))  ;
+
+struct rib_offset_angle {
+  offset_angle angle[16];
 } __attribute__((packed))  ;
 
 struct cmd_packet {
