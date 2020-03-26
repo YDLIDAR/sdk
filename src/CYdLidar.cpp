@@ -625,11 +625,11 @@ void CYdLidar::checkCalibrationAngle(const std::string &serialNumber) {
   m_isAngleOffsetCorrected = false;
 
   while (retry < 2 && (Major > 1 || (Major >= 1 && Minjor > 1))) {
-    ans = lidarPtr->getZeroOffsetAngle(angle);
+    ans = lidarPtr->getLidarZeroOffsetAngle(angle);
 
     if (IS_OK(ans)) {
       if (angle.angle > 36000 || angle.angle < -36000) {
-        ans = lidarPtr->getZeroOffsetAngle(angle);
+        ans = lidarPtr->getLidarZeroOffsetAngle(angle);
 
         if (!IS_OK(ans)) {
           retry++;
