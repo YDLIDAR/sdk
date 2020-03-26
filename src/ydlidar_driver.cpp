@@ -436,6 +436,11 @@ result_t YDlidarDriver::checkAutoConnecting(bool error) {
 
       if (IS_OK(ans)) {
         isAutoconnting = false;
+
+        if (!isAutoReconnect && !m_SingleChannel) {
+          stopScan();
+        }
+
         return ans;
       }
     }
@@ -1770,7 +1775,7 @@ result_t YDlidarDriver::setSamplingRate(sampling_rate &rate, uint32_t timeout) {
 }
 
 /************************************************************************/
-/*  the get to zero offset angle                                        */
+/*  the get to installtion offset angle                                        */
 /************************************************************************/
 result_t YDlidarDriver::getZeroOffsetAngle(offset_angle &angle,
     uint32_t timeout) {
@@ -1787,37 +1792,15 @@ result_t YDlidarDriver::getZeroOffsetAngle(offset_angle &angle,
     maxTimeout = 1;
   }
 
-  while (timeoutCount < maxTimeout) {
-    ans = getZeroOffsetZone(angle);
-
-    if (IS_OK(ans)) {
-      break;
-    }
-
-    timeoutCount++;
-  }
-
   if (!isNoRibOffsetAngleLidar(model, m_Maxjor, m_Minjor) && IS_OK(ans)) {
     if (timeoutCount >= maxTimeout) {
       timeoutCount = maxTimeout - 1;
     }
 
-    offset_angle robot_angle;
-
     while (timeoutCount < maxTimeout) {
-      ans = getRobotOffsetZone(robot_angle);
+      ans = getRobotOffsetZone(angle);
 
       if (IS_OK(ans)) {
-        angle.angle += robot_angle.angle;
-
-        if (angle.angle >= 36000) {
-          angle.angle -= 36000;
-        }
-
-        if (angle.angle < 0) {
-          angle.angle += 36000;
-        }
-
         break;
       }
 
@@ -1825,6 +1808,21 @@ result_t YDlidarDriver::getZeroOffsetAngle(offset_angle &angle,
     }
   }
 
+  return ans;
+}
+
+/************************************************************************/
+/*  the get to lidar zero offset angle                                        */
+/************************************************************************/
+result_t YDlidarDriver::getLidarZeroOffsetAngle(offset_angle &angle,
+    uint32_t timeout) {
+  result_t  ans;
+
+  if (!isConnected) {
+    return RESULT_TIMEOUT;
+  }
+
+  ans = getZeroOffsetZone(angle, timeout);
   return ans;
 }
 

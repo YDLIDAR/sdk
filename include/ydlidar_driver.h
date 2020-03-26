@@ -303,7 +303,7 @@ class YDlidarDriver {
                            uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
-  * @brief get lidar zero offset angle or final corrected angle \n
+  * @brief fetches zero angle tolerance values(±1.5°↓) from lidar’s internal memory while lidar assembly \n
   * @param[in] angle　　　   zero offset angle
   * @param[in] timeout      timeout
   * @return return status
@@ -314,6 +314,19 @@ class YDlidarDriver {
   */
   result_t getZeroOffsetAngle(offset_angle &angle,
                               uint32_t timeout = 5 * DEFAULT_TIMEOUT);
+
+  /**
+  * @brief get lidar zero offset angle \n
+  * @param[in] angle　　　   zero offset angle
+  * @param[in] timeout      timeout
+  * @return return status
+  * @retval RESULT_OK       success
+  * @retval RESULT_TIMEOUT  Failed
+  * @retval RESULT_FAILE    Angle is not calibrated
+  * @note Non-scan state, perform currect operation.
+  */
+  result_t getLidarZeroOffsetAngle(offset_angle &angle,
+                                   uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
   * @brief save robot zero offset angle \n
