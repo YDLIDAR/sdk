@@ -15,11 +15,22 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.1.2 |   2020-03-20  |
+| SDK     |  2.1.3 |   2020-03-26  |
 
-- [feature] add `getRibOffsetAngle`, `saveRobotOffsetAngle` and `saveRibOffsetAngle` three interface functions.
-- [feat] remove old robot offset angle scheme.
-- [feat] update `getZeroOffsetAngle` function to get final corrected angle.
+- [feature] add `getLidarZeroOffsetAngle()` functions only fetch lidar zero angle offset.
+- [feat] update `getZeroOffsetAngle()` API only fetch zero angle tolerance values from lidar’s internal memory while lidar assembly.
+
+## How to Fetch zero angle tolerance values from lidar’s internal memory while lidar assembly.
+```
+  CYdLidar laser;
+  if(laser.initialize()) {
+    offset_angle robot_angle_tolerance;
+    result_t ans = laser.getYdlidarDriver()->getZeroOffsetAngle(robot_angle_tolerance);
+    if(IS_OK(ans)) {
+      printf("Fetch installation angle tolerance while lidar is assembled at the robot cleaner successfully\n");
+    }
+  }
+```
 
 ## How to Get Rid Distortion Value.
 ```
