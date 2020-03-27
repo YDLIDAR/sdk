@@ -80,6 +80,57 @@ bool CYdLidar::isAngleOffetCorrected() const {
   return m_isAngleOffsetCorrected;
 }
 
+result_t CYdLidar::getZeroOffsetAngle(offset_angle &angle, uint32_t timeout) {
+  if (!lidarPtr) {
+    return RESULT_FAIL;
+  }
+
+  if (isScanning && lidarPtr->isscanning()) {
+    return RESULT_FAIL;
+  }
+
+  return lidarPtr->getZeroOffsetAngle(angle, timeout);
+}
+
+result_t CYdLidar::saveRobotOffsetAngle(offset_angle &angle, uint32_t timeout) {
+  if (!lidarPtr) {
+    return RESULT_FAIL;
+  }
+
+  if (isScanning && lidarPtr->isscanning()) {
+    return RESULT_FAIL;
+  }
+
+  return lidarPtr->saveRobotOffsetAngle(angle, timeout);
+}
+
+result_t CYdLidar::getRibOffsetAngle(std::vector<offset_angle> &angle,
+                                     uint32_t timeout) {
+  if (!lidarPtr) {
+    return RESULT_FAIL;
+  }
+
+  if (isScanning && lidarPtr->isscanning()) {
+    return RESULT_FAIL;
+  }
+
+  return lidarPtr->getRibOffsetAngle(angle, timeout);
+
+}
+
+result_t CYdLidar::saveRibOffsetAngle(std::vector<offset_angle> &angle,
+                                      uint32_t timeout) {
+  if (!lidarPtr) {
+    return RESULT_FAIL;
+  }
+
+  if (isScanning && lidarPtr->isscanning()) {
+    return RESULT_FAIL;
+  }
+
+  return lidarPtr->saveRibOffsetAngle(angle, timeout);
+}
+
 /*-------------------------------------------------------------
 						doProcessSimple
 -------------------------------------------------------------*/

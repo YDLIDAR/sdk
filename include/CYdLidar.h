@@ -74,6 +74,57 @@ class YDLIDAR_API CYdLidar {
   //Whether the zero offset angle is corrected?
   bool isAngleOffetCorrected() const;
 
+
+  /**
+  * @brief fetches zero angle tolerance values(±1.5°↓) from lidar’s internal memory while lidar assembly \n
+  * @param[in] angle　　　   zero offset angle
+  * @param[in] timeout      timeout
+  * @return return status
+  * @retval RESULT_OK       success
+  * @retval RESULT_TIMEOUT  Failed
+  * @retval RESULT_FAILE    Angle is not calibrated
+  * @note Non-scan state, perform currect operation.
+  */
+  result_t getZeroOffsetAngle(offset_angle &angle,
+                              uint32_t timeout = 5 * YDlidarDriver::DEFAULT_TIMEOUT);
+
+  /**
+  * @brief save robot zero offset angle \n
+  * @param[in] angle　　　   robot offset angle
+  * @param[in] timeout      timeout
+  * @return return status
+  * @retval RESULT_OK       success
+  * @retval RESULT_TIMEOUT  Failed
+  * @retval RESULT_FAILE    Angle is not Saved
+  * @note Non-scan state, perform currect operation.
+  */
+  result_t saveRobotOffsetAngle(offset_angle &angle,
+                                uint32_t timeout = 5 * YDlidarDriver::DEFAULT_TIMEOUT);
+
+  /**
+   * @brief getRibOffsetAngle
+   * @param angle
+   * @return return status
+   * @retval RESULT_OK       success
+   * @retval RESULT_TIMEOUT  Failed
+   * @retval RESULT_FAILE    Rib is not calibrated
+   * @return
+   */
+  result_t getRibOffsetAngle(std::vector<offset_angle> &angle,
+                             uint32_t timeout = 5 * YDlidarDriver::DEFAULT_TIMEOUT);
+
+  /**
+   * @brief saveRibOffsetAngle
+   * @param angle
+   * @return return status
+   * @retval RESULT_OK       success
+   * @retval RESULT_TIMEOUT  Failed
+   * @retval RESULT_FAILE    Rib is not Saved
+   * @return
+   */
+  result_t saveRibOffsetAngle(std::vector<offset_angle> &angle,
+                              uint32_t timeout = 5 * YDlidarDriver::DEFAULT_TIMEOUT);
+
  protected:
   /** Returns true if communication has been established with the device. If it's not,
     *  try to create a comms channel.

@@ -15,17 +15,16 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.1.3 |   2020-03-26  |
+| SDK     |  2.1.4 |   2020-03-27  |
 
-- [feature] add `getLidarZeroOffsetAngle()` functions only fetch lidar zero angle offset.
-- [feat] update `getZeroOffsetAngle()` API only fetch zero angle tolerance values from lidar’s internal memory while lidar assembly.
+- [feature] add `getZeroOffsetAngle()` and `getRibOffsetAngle()` functions  in CYdLidar calss
 
 ## How to Fetch zero angle tolerance values from lidar’s internal memory while lidar assembly.
 ```
   CYdLidar laser;
   if(laser.initialize()) {
     offset_angle robot_angle_tolerance;
-    result_t ans = laser.getYdlidarDriver()->getZeroOffsetAngle(robot_angle_tolerance);
+    result_t ans = laser.getZeroOffsetAngle(robot_angle_tolerance);
     if(IS_OK(ans)) {
       printf("Fetch installation angle tolerance while lidar is assembled at the robot cleaner successfully\n");
     }
@@ -37,7 +36,7 @@ Release Notes
   CYdLidar laser;
   if(laser.initialize()) {
     std::vector<offset_angle> rib_array;
-    result_t ans = laser.getYdlidarDriver()->getRibOffsetAngle(rib_array);
+    result_t ans = laser.getRibOffsetAngle(rib_array);
     if(IS_OK(ans)) {
       printf("get rib values is success...\n");
     }
@@ -62,7 +61,7 @@ SDK can filter custom angular area Lidar data,`saveRibOffsetAngle` command use e
     rib_array.push_back(angle);
     angle.angle = 60*100;
     rib_array.push_back(angle);
-    laser.getYdlidarDriver()->saveRibOffsetAngle(rib_array);
+    laser.saveRibOffsetAngle(rib_array);
   }
 ```
 * 2.filter 10 to 20 degrees, 50 to 60 degrees and 320 to 330 degrees.
@@ -87,7 +86,7 @@ SDK can filter custom angular area Lidar data,`saveRibOffsetAngle` command use e
     rib_array.push_back(angle);
     angle.angle = 330*100;
     rib_array.push_back(angle);
-    laser.getYdlidarDriver()->saveRibOffsetAngle(rib_array);
+    laser.saveRibOffsetAngle(rib_array);
   }
 
 ```
