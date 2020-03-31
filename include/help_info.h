@@ -58,6 +58,9 @@ enum YDLIDAR_MODLES {
   YDLIDAR_G4B     = 17,/**< G4B雷达型号代号. */
   YDLIDAR_G4C     = 18,/**< G4C雷达型号代号. */
   YDLIDAR_G1      = 19,/**< G1雷达型号代号. */
+  YDLIDAR_G5      = 20,/**< G5雷达型号代号. */
+  YDLIDAR_G7      = 21,/**< G7雷达型号代号. */
+
 
   YDLIDAR_TG15    = 100,/**< TG15雷达型号代号. */
   YDLIDAR_TG30    = 101,/**< T30雷达型号代号. */
@@ -174,6 +177,14 @@ inline std::string lidarModelToString(int model) {
 
       break;
 
+    case YDLIDAR_G5:
+      name = "G5";
+      break;
+
+    case YDLIDAR_G7:
+      name = "G7";
+      break;
+
     case YDLIDAR_TG15:
       name = "TG15";
 
@@ -275,6 +286,14 @@ inline int lidarModelDefaultSampleRate(int model) {
       sample_rate = 9;
       break;
 
+    case YDLIDAR_G5:
+      sample_rate = 9;
+      break;
+
+    case YDLIDAR_G7:
+      sample_rate = 18;
+      break;
+
     case YDLIDAR_TG15:
       sample_rate = 20;
       break;
@@ -303,6 +322,7 @@ inline bool isOctaveLidar(int model) {
   bool ret = false;
 
   if (model == YDLIDAR_G6 ||
+      model == YDLIDAR_G7 ||
       model == YDLIDAR_TG15 ||
       model == YDLIDAR_TG30 ||
       model == YDLIDAR_TG50) {
@@ -321,9 +341,11 @@ inline bool hasSampleRate(int model) {
   bool ret = false;
 
   if (model == YDLIDAR_G4 ||
+      model == YDLIDAR_G5 ||
       model == YDLIDAR_G4PRO ||
       model == YDLIDAR_F4PRO ||
       model == YDLIDAR_G6 ||
+      model == YDLIDAR_G7 ||
       model == YDLIDAR_TG15 ||
       model == YDLIDAR_TG50 ||
       model == YDLIDAR_TG30) {
@@ -381,7 +403,7 @@ inline bool hasScanFrequencyCtrl(int model) {
 inline bool isSupportLidar(int model) {
   bool ret = true;
 
-  if (model < YDLIDAR_F4 || (model > YDLIDAR_G1 &&
+  if (model < YDLIDAR_F4 || (model > YDLIDAR_G7 &&
                              model < YDLIDAR_TG15) ||
       model > YDLIDAR_TG50) {
     ret = false;

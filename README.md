@@ -18,9 +18,9 @@ If you are using ROS (Robot Operating System), please use our open-source [ROS D
 ## 1.2 Release Notes
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  1.4.6 |   2020-02-15  |
+| SDK     |  1.4.7 |   2020-03-31  |
 
-- [feat] the output points are fixed, when FixedResolution is set to true.
+- [feature] support new Lidar G5 and G7.
 
 # 2 YDLidar SDK Communication Protocol
 YDLidar SDK communication protocol opens to all users. It is the communication protocol between user programs and YDLIDAR products. The protocol consists of control commands and data format. Please refer to the [YDLidar SDK Communication Protocol](include/ydlidar_protocol.h) for detailed information.
@@ -51,8 +51,8 @@ sudo apt install cmake pkg-config
 #### Compile YDLidar SDK
 In the YDLidar SDK directory, run the following commands to compile the project:
 ```
-git clone https://github.com/YDLIDAR/YDLidar-SDK.git
-cd YDLidar-SDK/build
+git clone https://github.com/YDLIDAR/sdk.git
+cd sdk/build
 cmake ..
 make
 sudo make install
@@ -171,6 +171,8 @@ Please enter the lidar scan frequency[5-12]:10
 | G4B       | 17		|  512000   |   10           |  0.12~16         | 5~12        	  | true(10)       | false    	  | 4.8~5.2   |
 | G4C       | 18		|  115200   |   4            |  0.1~12		      | 5~12           | false          | false    	  | 4.8~5.2   |
 | G1        | 19		|  230400   |   9            |  0.28~16         | 5~12      	  | false          | false    	  | 4.8~5.2   |
+| G5        | 20	   |  230400   |   9/8/4        |  0.28/0.26/0.1~16| 5~12        	  | false          | false    	  | 4.8~5.2   |
+| G7        | 21     |  512000   |   18/16/8      |  0.28/0.26/0.1~25| 5~12        	  | false          | false    	  | 4.8~5.2   |
 | TX8    　 | 100	   |  115200   |   4            |  0.1~8      	   | 4~8(PWM)       | false          | true      	  | 4.8~5.2   |
 | TX20    　| 100	   |  115200   |   4            |  0.1~20      	   | 4~8(PWM)       | false          | true     	  | 4.8~5.2   |
 | TG15    　| 100	   |  512000   |   20/18/10     |  0.05~15      	| 3~16      	  | false          | false    	  | 4.8~5.2   |
