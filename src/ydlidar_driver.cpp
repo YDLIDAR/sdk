@@ -1779,7 +1779,7 @@ result_t YDlidarDriver::setSamplingRate(sampling_rate &rate, uint32_t timeout) {
 /************************************************************************/
 result_t YDlidarDriver::getZeroOffsetAngle(offset_angle &angle,
     uint32_t timeout) {
-  result_t  ans;
+  result_t  ans = RESULT_FAIL;
 
   if (!isConnected) {
     return RESULT_TIMEOUT;
@@ -1792,11 +1792,7 @@ result_t YDlidarDriver::getZeroOffsetAngle(offset_angle &angle,
     maxTimeout = 1;
   }
 
-  if (!isNoRibOffsetAngleLidar(model, m_Maxjor, m_Minjor) && IS_OK(ans)) {
-    if (timeoutCount >= maxTimeout) {
-      timeoutCount = maxTimeout - 1;
-    }
-
+  if (!isNoRibOffsetAngleLidar(model, m_Maxjor, m_Minjor)) {
     while (timeoutCount < maxTimeout) {
       ans = getRobotOffsetZone(angle);
 
