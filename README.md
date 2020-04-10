@@ -15,9 +15,9 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.1.4 |   2020-03-27  |
+| SDK     |  2.1.5 |   2020-04-09  |
 
-- [feature] add `getZeroOffsetAngle()` and `getRibOffsetAngle()` functions  in CYdLidar calss
+- [fix] fixed ans uninitialized and logic error for `getZeroOffsetAngle()`. 
 
 ## How to Fetch zero angle tolerance values from lidar’s internal memory while lidar assembly.
 ```
