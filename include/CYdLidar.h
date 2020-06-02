@@ -187,6 +187,7 @@ class YDLIDAR_API CYdLidar {
   uint8_t m_Model;
   CSimpleIniA ini;
   YDlidarDriver *lidarPtr;
+  Locker         lidar_lock;
   std::string m_serial_number;
   node_info *nodes;
   bool m_ParseSuccess;

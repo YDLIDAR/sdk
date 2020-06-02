@@ -1,5 +1,4 @@
-﻿
-#include "CYdLidar.h"
+﻿#include "CYdLidar.h"
 #include <iostream>
 #include <string>
 using namespace std;
@@ -137,7 +136,6 @@ int main(int argc, char *argv[]) {
     ret = laser.turnOn();
   }
 
-  bool isCompleted = false;
 
   while (ret && ydlidar::ok()) {
     bool hardError;
@@ -163,6 +161,5 @@ int main(int argc, char *argv[]) {
 
   laser.turnOff();
   laser.disconnecting();
-
   return 0;
 }

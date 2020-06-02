@@ -97,14 +97,13 @@ YDlidarDriver::YDlidarDriver():
 }
 
 YDlidarDriver::~YDlidarDriver() {
+  ScopedLocker lock(_serial_lock);
   {
     isScanning = false;
   }
 
   isAutoReconnect = false;
   _thread.join();
-
-  ScopedLocker lock(_serial_lock);
 
   if (_serial) {
     if (_serial->isOpen()) {
@@ -197,18 +196,18 @@ void YDlidarDriver::disconnect() {
     return ;
   }
 
+  ScopedLocker l(_serial_lock);
   stop();
   delay(20);
-  ScopedLocker l(_serial_lock);
+  {
+    isConnected = false;
 
-  if (_serial) {
-    if (_serial->isOpen()) {
-      _serial->closePort();
+    if (_serial) {
+      if (_serial->isOpen()) {
+        _serial->closePort();
+      }
     }
   }
-
-  isConnected = false;
-
 }
 
 

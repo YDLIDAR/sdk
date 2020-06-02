@@ -57,6 +57,8 @@ CYdLidar::~CYdLidar() {
 }
 
 void CYdLidar::disconnecting() {
+  ScopedLocker l(lidar_lock);
+
   if (lidarPtr) {
     lidarPtr->disconnect();
     delete lidarPtr;
@@ -268,6 +270,8 @@ void CYdLidar::handleVersionInfoByPackage(const LaserDebug &debug) {
             turnOn
 -------------------------------------------------------------*/
 bool  CYdLidar::turnOn() {
+  ScopedLocker l(lidar_lock);
+
   if (!lidarPtr) {
     return false;
   }
@@ -309,6 +313,8 @@ bool  CYdLidar::turnOn() {
             turnOff
 -------------------------------------------------------------*/
 bool  CYdLidar::turnOff() {
+  ScopedLocker l(lidar_lock);
+
   if (lidarPtr) {
     lidarPtr->stop();
   } else {
@@ -753,6 +759,8 @@ void CYdLidar::checkRibOffsetAngle() {
             checkCOMMs
 -------------------------------------------------------------*/
 bool  CYdLidar::checkCOMMs() {
+  ScopedLocker l(lidar_lock);
+
   if (!lidarPtr) {
     // create the driver instance
     lidarPtr = new YDlidarDriver();
@@ -828,6 +836,8 @@ bool CYdLidar::checkStatus() {
                         checkHardware
 -------------------------------------------------------------*/
 bool CYdLidar::checkHardware() {
+  ScopedLocker l(lidar_lock);
+
   if (!lidarPtr) {
     return false;
   }
