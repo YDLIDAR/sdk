@@ -15,9 +15,9 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.1.5 |   2020-04-09  |
+| SDK     |  2.1.6 |   2020-06-03  |
 
-- [fix] fixed ans uninitialized and logic error for `getZeroOffsetAngle()`. 
+- [fix] fixed intermittent seg fault case as below while disconnect(). 
 
 ## How to Fetch zero angle tolerance values from lidar’s internal memory while lidar assembly.
 ```
