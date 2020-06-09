@@ -15,9 +15,9 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.1.6 |   2020-06-03  |
+| SDK     |  2.1.7 |   2020-06-09  |
 
-- [fix] fixed intermittent seg fault case as below while disconnect(). 
+- [fix] fixed intermittent seg fault case as below while Serial::waitfordata(). 
 
 ## How to Fetch zero angle tolerance values from lidar’s internal memory while lidar assembly.
 ```
