@@ -638,9 +638,10 @@ Serial::SerialImpl::SerialImpl(const string &port, unsigned long baudrate,
                                bytesize_t bytesize,
                                parity_t parity, stopbits_t stopbits,
                                flowcontrol_t flowcontrol)
-  : port_(port), fd_(-1), is_open_(false), xonxoff_(false), rtscts_(false),
-    baudrate_(baudrate), parity_(parity),
-    bytesize_(bytesize), stopbits_(stopbits), flowcontrol_(flowcontrol) {
+  : port_(port), fd_(-1), pid(-1), is_open_(false), xonxoff_(false),
+    rtscts_(false), timeout_(Timeout()), baudrate_(baudrate), byte_time_ns_(0),
+    parity_(parity), bytesize_(bytesize), stopbits_(stopbits),
+    flowcontrol_(flowcontrol) {
   pthread_mutex_init(&this->read_mutex, NULL);
   pthread_mutex_init(&this->write_mutex, NULL);
 
@@ -657,7 +658,7 @@ bool Serial::SerialImpl::open() {
     return false;
   }
 
-  if (is_open_ == true) {
+  if (isOpen()) {
     return true;
   }
 
@@ -690,7 +691,7 @@ bool Serial::SerialImpl::open() {
   termios tio;
 
   if (!getTermios(&tio)) {
-    UNLOCK(port_.c_str(), pid);
+    close();
     return false;
   }
 
@@ -701,12 +702,12 @@ bool Serial::SerialImpl::open() {
   set_flowcontrol(&tio, flowcontrol_);
 
   if (!setTermios(&tio)) {
-    UNLOCK(port_.c_str(), pid);
+    close();
     return false;
   }
 
   if (!setBaudrate(baudrate_)) {
-    UNLOCK(port_.c_str(), pid);
+    close();
     return false;
   }
 
@@ -726,16 +727,20 @@ bool Serial::SerialImpl::open() {
 
 
 void Serial::SerialImpl::close() {
-  if (is_open_ == true) {
-    if (fd_ != -1) {
-      ::close(fd_);
-    }
+  is_open_ = false;
 
-    UNLOCK(port_.c_str(), pid);
+  if (fd_ != -1) {
+    ::close(fd_);
     fd_ = -1;
-    pid = -1;
-    is_open_ = false;
   }
+
+  if (pid != -1 && !port_.empty()) {
+    UNLOCK(port_.c_str(), pid);
+  }
+
+  fd_ = -1;
+  pid = -1;
+
 }
 
 bool Serial::SerialImpl::isOpen() const {
@@ -743,7 +748,7 @@ bool Serial::SerialImpl::isOpen() const {
 }
 
 size_t Serial::SerialImpl::available() {
-  if (!is_open_) {
+  if (!isOpen()) {
     return 0;
   }
 
@@ -757,6 +762,10 @@ size_t Serial::SerialImpl::available() {
 }
 
 bool Serial::SerialImpl::waitReadable(uint32_t timeout) {
+  if (!isOpen()) {
+    return false;
+  }
+
   // Setup a select call to block for serial data or a timeout
   fd_set readfds;
   FD_ZERO(&readfds);
@@ -791,6 +800,10 @@ bool Serial::SerialImpl::waitReadable(uint32_t timeout) {
 
 int Serial::SerialImpl::waitfordata(size_t data_count, uint32_t timeout,
                                     size_t *returned_size) {
+  if (!isOpen()) {
+    return -2;
+  }
+
   size_t length = 0;
 
   if (returned_size == NULL) {
@@ -799,13 +812,7 @@ int Serial::SerialImpl::waitfordata(size_t data_count, uint32_t timeout,
 
   *returned_size = 0;
 
-  fd_set readfds;
-
-  /* Initialize the input set */
-  FD_ZERO(&readfds);
-  FD_SET(fd_, &readfds);
-
-  if (is_open_) {
+  if (isOpen()) {
     if (ioctl(fd_, FIONREAD, returned_size) == -1) {
       return -2;
     }
@@ -815,9 +822,14 @@ int Serial::SerialImpl::waitfordata(size_t data_count, uint32_t timeout,
     }
   }
 
+  fd_set readfds;
+  /* Initialize the input set */
+  FD_ZERO(&readfds);
+  FD_SET(fd_, &readfds);
+
   MillisecondTimer total_timeout(timeout);
 
-  while (is_open_) {
+  while (isOpen()) {
     int64_t timeout_remaining_ms = total_timeout.remaining();
 
     if ((timeout_remaining_ms <= 0)) {
@@ -860,7 +872,7 @@ int Serial::SerialImpl::waitfordata(size_t data_count, uint32_t timeout,
           }
         }
       } else {
-        usleep(10);
+        usleep(30);
       }
     }
   }
@@ -876,7 +888,7 @@ void Serial::SerialImpl::waitByteTimes(size_t count) {
 
 size_t Serial::SerialImpl::read(uint8_t *buf, size_t size) {
   // If the port is not open, throw
-  if (!is_open_) {
+  if (!isOpen()) {
     return 0;
   }
 
@@ -959,7 +971,7 @@ size_t Serial::SerialImpl::read(uint8_t *buf, size_t size) {
 }
 
 size_t Serial::SerialImpl::write(const uint8_t *data, size_t length) {
-  if (is_open_ == false) {
+  if (!isOpen()) {
     return 0;
   }
 
@@ -1321,7 +1333,7 @@ bool Serial::SerialImpl::getTermios(termios *tio) {
 }
 
 void Serial::SerialImpl::flush() {
-  if (is_open_ == false) {
+  if (!isOpen()) {
     return;
   }
 
@@ -1331,7 +1343,7 @@ void Serial::SerialImpl::flush() {
 }
 
 void Serial::SerialImpl::flushInput() {
-  if (is_open_ == false) {
+  if (!isOpen()) {
     return;
   }
 
@@ -1339,7 +1351,7 @@ void Serial::SerialImpl::flushInput() {
 }
 
 void Serial::SerialImpl::flushOutput() {
-  if (is_open_ == false) {
+  if (!isOpen()) {
     return;
   }
 
@@ -1347,7 +1359,7 @@ void Serial::SerialImpl::flushOutput() {
 }
 
 void Serial::SerialImpl::sendBreak(int duration) {
-  if (is_open_ == false) {
+  if (!isOpen()) {
     return;
   }
 
@@ -1355,7 +1367,7 @@ void Serial::SerialImpl::sendBreak(int duration) {
 }
 
 bool Serial::SerialImpl::setBreak(bool level) {
-  if (is_open_ == false) {
+  if (!isOpen()) {
     return false;
   }
 
@@ -1373,7 +1385,7 @@ bool Serial::SerialImpl::setBreak(bool level) {
 }
 
 bool Serial::SerialImpl::setRTS(bool level) {
-  if (is_open_ == false) {
+  if (!isOpen()) {
     return false;
   }
 
@@ -1393,7 +1405,7 @@ bool Serial::SerialImpl::setRTS(bool level) {
 }
 
 bool Serial::SerialImpl::setDTR(bool level) {
-  if (is_open_ == false) {
+  if (!isOpen()) {
     return false;
   }
 
@@ -1415,7 +1427,7 @@ bool Serial::SerialImpl::setDTR(bool level) {
 bool Serial::SerialImpl::waitForChange() {
 #ifndef TIOCMIWAIT
 
-  while (is_open_ == true) {
+  while (isOpen()) {
 
     int status;
 
@@ -1446,7 +1458,7 @@ bool Serial::SerialImpl::waitForChange() {
 }
 
 bool Serial::SerialImpl::getCTS() {
-  if (is_open_ == false) {
+  if (!isOpen()) {
     return false;
   }
 
@@ -1460,7 +1472,7 @@ bool Serial::SerialImpl::getCTS() {
 }
 
 bool Serial::SerialImpl::getDSR() {
-  if (is_open_ == false) {
+  if (!isOpen()) {
     return false;
   }
 
@@ -1474,7 +1486,7 @@ bool Serial::SerialImpl::getDSR() {
 }
 
 bool Serial::SerialImpl::getRI() {
-  if (is_open_ == false) {
+  if (!isOpen()) {
     return false;
   }
 
@@ -1488,7 +1500,7 @@ bool Serial::SerialImpl::getRI() {
 }
 
 bool Serial::SerialImpl::getCD() {
-  if (is_open_ == false) {
+  if (!isOpen()) {
     return false;
   }
 
