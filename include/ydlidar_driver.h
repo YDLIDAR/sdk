@@ -635,6 +635,7 @@ class YDlidarDriver {
   std::atomic<bool>     isScanning;   ///<
   std::atomic<bool>     isAutoReconnect;  ///<
   std::atomic<bool>     isAutoconnting;  ///<
+  std::atomic<bool>     isThreadFinished;
 
 
   enum {
