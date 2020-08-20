@@ -42,6 +42,7 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_SingleChannel     = false;
   m_PrintError        = false;
   m_Model             = YDlidarDriver::YDLIDAR_R2_SS_1;
+  errTime             = getms();
 }
 
 /*-------------------------------------------------------------
@@ -140,9 +141,14 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
   hardwareError			= false;
 
   // Bound?
-  if (!checkHardware()) {
-    hardwareError = true;
-    delay(1000 / m_ScanFrequency);
+  int ret = checkHardware();
+
+  if (ret != 1) {
+    if (ret > 2) {
+      hardwareError = true;
+    }
+
+    outscan.data.clear();
     return false;
   }
 
@@ -276,6 +282,8 @@ bool  CYdLidar::turnOn() {
     return false;
   }
 
+  uint32_t start_ts = getms();
+
   if (isScanning && lidarPtr->isscanning()) {
     return true;
   }
@@ -297,7 +305,8 @@ bool  CYdLidar::turnOn() {
   if (checkLidarAbnormal()) {
     lidarPtr->stop();
     fprintf(stderr,
-            "[CYdLidar] Failed to turn on the Lidar, because the lidar is blocked or the lidar hardware is faulty.\n");
+            "[CYdLidar][%fs] Failed to turn on the Lidar, because the lidar is blocked or the lidar hardware is faulty.\n",
+            (getms() - start_ts) / 1000.0);
     isScanning = false;
     return false;
   }
@@ -342,7 +351,7 @@ bool CYdLidar::checkLidarAbnormal() {
   while (check_abnormal_count < m_AbnormalCheckCount) {
     //Ensure that the voltage is insufficient or the motor resistance is high, causing an abnormality.
     if (check_abnormal_count > 0 && !IS_OK(op_result)) {
-      delay(check_abnormal_count * 1000);
+      delay(check_abnormal_count * 1190);
     }
 
     size_t   count = YDlidarDriver::MAX_SCAN_NODES;
@@ -835,18 +844,33 @@ bool CYdLidar::checkStatus() {
 /*-------------------------------------------------------------
                         checkHardware
 -------------------------------------------------------------*/
-bool CYdLidar::checkHardware() {
+int CYdLidar::checkHardware() {
   ScopedLocker l(lidar_lock);
+  int ret = 0;
 
   if (!lidarPtr) {
-    return false;
+    return ret;
   }
 
   if (isScanning && lidarPtr->isscanning()) {
-    return true;
+    YDlidarDriver::DriverError err = lidarPtr->getSystemError();
+
+    if (err == YDlidarDriver::NoError) {
+      return 1;
+    } else  if (err == YDlidarDriver::TimeoutError) {
+      ret = 2;
+    } else {
+      ret = 3;
+    }
+
+    if ((getms() - errTime) > YDlidarDriver::DEFAULT_TIMEOUT / 20) {
+      fprintf(stderr, "%s\n", YDlidarDriver::DescribeError(err));
+      fflush(stderr);
+      errTime = getms();
+    }
   }
 
-  return false;
+  return ret;
 }
 
 bool CYdLidar::checkLidarModel() {

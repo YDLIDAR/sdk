@@ -1,6 +1,7 @@
 ﻿#include "CYdLidar.h"
 #include <iostream>
 #include <string>
+#include <timer.h>
 using namespace std;
 using namespace ydlidar;
 
@@ -154,6 +155,7 @@ int main(int argc, char *argv[]) {
 
       fflush(stdout);
     } else {
+      delay(50);
       fprintf(stderr, "Failed to get Lidar Data\n");
       fflush(stderr);
     }

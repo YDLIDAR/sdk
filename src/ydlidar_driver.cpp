@@ -450,6 +450,7 @@ result_t YDlidarDriver::waitForData(size_t data_count, uint32_t timeout,
 result_t YDlidarDriver::checkAutoConnecting(bool error) {
   result_t ans = RESULT_FAIL;
   isAutoconnting = true;
+  UpdateDriverError(TimeoutError);
   int buf_size = 0;
 
   while (isAutoReconnect && isAutoconnting) {

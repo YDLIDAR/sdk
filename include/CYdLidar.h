@@ -51,7 +51,7 @@ class YDLIDAR_API CYdLidar {
   /** Returns true if the normal scan runs with the device. If it's not,
     * \return false on error.
     */
-  bool checkHardware();
+  int checkHardware();
 
   // Return true if laser data acquistion succeeds, If it's not
   bool doProcessSimple(LaserScan &outscan, bool &hardwareError);
@@ -193,5 +193,6 @@ class YDLIDAR_API CYdLidar {
   bool m_ParseSuccess;
   bool m_SingleChannel;
   bool m_PrintError;
+  uint32_t errTime;
 };	// End of class
 
