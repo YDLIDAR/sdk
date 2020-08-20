@@ -47,6 +47,57 @@ std::string format(const char *fmt, ...) {
   return buffer;
 }
 
+
+const char *YDlidarDriver::DescribeError(DriverError err) {
+  char const *errorString = "Unknown error";
+
+  switch (err) {
+    case YDlidarDriver::NoError:
+      errorString = ("No error");
+      break;
+
+    case YDlidarDriver::DeviceNotFoundError:
+      errorString = ("Device is not found");
+      break;
+
+    case YDlidarDriver::PermissionError:
+      errorString = ("Device is not permission");
+      break;
+
+
+    case YDlidarDriver::UnsupportedOperationError:
+      errorString = ("unsupported operation");
+      break;
+
+    case YDlidarDriver::NotOpenError:
+      errorString = ("Device is not open");
+      break;
+
+    case YDlidarDriver::TimeoutError:
+      errorString = ("Operation timed out");
+      break;
+
+    case YDlidarDriver::BlockError:
+      errorString = ("Device Block");
+      break;
+
+    case YDlidarDriver::NotBufferError:
+      errorString = ("Device Failed");
+      break;
+
+    case YDlidarDriver::TrembleError:
+      errorString = ("Device Tremble");
+      break;
+
+    default:
+      // an empty string will be interpreted as "Unknown error"
+      break;
+  }
+
+  return errorString;
+}
+
+
 YDlidarDriver::YDlidarDriver():
   _serial(NULL) {
   isConnected         = false;
@@ -94,6 +145,8 @@ YDlidarDriver::YDlidarDriver():
   m_SupportMotorDtrCtrl = true;
   m_reconnectCount      = 0;
   isThreadFinished      = true;
+  buffer_size           = 0;
+  m_driverErrno         = NoError;
 
 }
 
@@ -397,13 +450,34 @@ result_t YDlidarDriver::waitForData(size_t data_count, uint32_t timeout,
 result_t YDlidarDriver::checkAutoConnecting(bool error) {
   result_t ans = RESULT_FAIL;
   isAutoconnting = true;
+  int buf_size = 0;
 
   while (isAutoReconnect && isAutoconnting) {
     {
       ScopedLocker l(_serial_lock);
 
-      if (_serial && (m_reconnectCount > 6 || error)) {
+      if (_serial && _serial->isOpen()) {
+        buf_size = _serial->available();
+      }
+
+      if (_serial && ((m_reconnectCount >= 4) || error)) {
         if (_serial->isOpen() || isConnected) {
+          if (buf_size > 0) {
+            fprintf(stderr, "serial buf size: %d, \n", buf_size);
+            fflush(stderr);
+          }
+
+          if (buffer_size && buffer_size % 90 == 0) {
+            UpdateDriverError(BlockError);
+          } else {
+            if (buf_size > 0 || buffer_size > 0) {
+              UpdateDriverError(TrembleError);
+              buffer_size += buf_size;
+            } else {
+              UpdateDriverError(NotBufferError);
+            }
+          }
+
           isConnected = false;
           _serial->closePort();
           delete _serial;
@@ -414,12 +488,13 @@ result_t YDlidarDriver::checkAutoConnecting(bool error) {
 
     if (m_reconnectCount > 25) {
       m_reconnectCount = 25;
+
     }
 
     int reconnect_count = 0;
 
     while (isAutoReconnect && reconnect_count < m_reconnectCount) {
-      delay(200);
+      delay(250);
       reconnect_count++;
     }
 
@@ -432,6 +507,8 @@ result_t YDlidarDriver::checkAutoConnecting(bool error) {
         if (IS_OK(ans)) {
           break;
         }
+
+        UpdateDriverError(NotOpenError);
       }
 
       connectCount++;
@@ -472,11 +549,17 @@ result_t YDlidarDriver::checkAutoConnecting(bool error) {
       if (IS_OK(ans)) {
         isAutoconnting = false;
 
+        if (getSystemError() == DeviceNotFoundError) {
+          UpdateDriverError(NoError);
+        }
+
         if (!isAutoReconnect && !m_SingleChannel) {
           stopScan();
         }
 
         return ans;
+      } else {
+        UpdateDriverError(DeviceNotFoundError);
       }
     }
   }
@@ -498,7 +581,9 @@ int YDlidarDriver::cacheScanData() {
   waitScanData(local_buf, count);
   int timeout_count   = 0;
   m_reconnectCount = 0;
+  buffer_size      = 0;
   isThreadFinished = false;
+  bool lastGood = false;
 
   while (isScanning) {
     count = 128;
@@ -516,9 +601,15 @@ int YDlidarDriver::cacheScanData() {
           isThreadFinished = true;
           return RESULT_FAIL;
         } else {
+          if (lastGood) {
+            buffer_size = 0;
+            lastGood = false;
+          }
+
           m_reconnectCount++;
-          fprintf(stderr, "timout count: %d, Reconnecting[%d][%d].....\n", timeout_count,
-                  m_reconnectCount, ans);
+          fprintf(stderr, "timout count: %d, Reconnecting[%d][%d][%d].....\n",
+                  timeout_count,
+                  m_reconnectCount, ans, buffer_size);
           fflush(stderr);
           ans = checkAutoConnecting(IS_FAIL(ans));
 
@@ -539,6 +630,14 @@ int YDlidarDriver::cacheScanData() {
       }
     } else {
       timeout_count = 0;
+      buffer_size = 0;
+
+      if (m_reconnectCount != 0) {
+        UpdateDriverError(NoError);
+      }
+
+      lastGood = true;
+      buffer_size = 0;
       m_reconnectCount = 0;
     }
 
@@ -603,6 +702,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
         recvSize = remainSize;
       }
 
+      buffer_size += recvSize;
       getData(recvBuffer, recvSize);
 
       for (size_t pos = 0; pos < recvSize; ++pos) {
@@ -742,6 +842,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
           recvSize = remainSize;
         }
 
+        buffer_size += recvSize;
         getData(recvBuffer, recvSize);
 
         for (size_t pos = 0; pos < recvSize; ++pos) {
@@ -2365,6 +2466,16 @@ result_t YDlidarDriver::setScanSendText(const string &data, string &buffer,
   }
   return ans;
 
+}
+void YDlidarDriver::UpdateDriverError(const YDlidarDriver::DriverError
+                                      &error) {
+  ScopedLocker l(_error_lock);
+  m_driverErrno = error;
+}
+
+YDlidarDriver::DriverError YDlidarDriver::getSystemError() {
+  ScopedLocker l(_error_lock);
+  return m_driverErrno;
 }
 
 std::string YDlidarDriver::getSDKVersion() {

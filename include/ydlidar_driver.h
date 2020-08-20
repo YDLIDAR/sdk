@@ -40,6 +40,23 @@ std::string format(const char *fmt, ...);
 class YDlidarDriver {
   ///< single-channel
   PropertyBuilderByName(bool, SingleChannel, private)
+
+ public:
+  enum DriverError {
+    NoError = 0,
+    DeviceNotFoundError,
+    PermissionError,
+    UnsupportedOperationError,
+    UnknownError,
+    TimeoutError,
+    NotOpenError,
+    BlockError,
+    NotBufferError,
+    TrembleError,
+  };
+
+  static const char *DescribeError(DriverError err);
+
  public:
   /**
   * A constructor.
@@ -364,6 +381,14 @@ class YDlidarDriver {
    */
   result_t saveRibOffsetAngle(std::vector<offset_angle> &angle,
                               uint32_t timeout = 5 * DEFAULT_TIMEOUT);
+
+  /**
+   * @brief getSystemError
+   * @param systemErrorCode
+   * @return
+   */
+  YDlidarDriver::DriverError getSystemError();
+
  protected:
 
   /**
@@ -500,6 +525,8 @@ class YDlidarDriver {
    * @brief flushSerial
    */
   void flushSerial();
+
+  void UpdateDriverError(const YDlidarDriver::DriverError &error);
 
   /**
    * @brief checkAutoConnecting
@@ -669,13 +696,13 @@ class YDlidarDriver {
     YDLIDAR_RATE_10K = 3,
   };
 
-
   node_info      scan_node_buf[2048];  ///<
   size_t         scan_node_count;      ///<
   Event          _dataEvent;			 ///< data event
   Locker         _lock;				///< thread lock
   Locker         _serial_lock;		///< serial lock
   Thread 	     _thread;				///< thread id
+  Locker         _error_lock;		///< error lock
 
  private:
   int PackageSampleBytes;             ///<
@@ -717,6 +744,9 @@ class YDlidarDriver {
   bool data_header_error;
   bool m_SupportMotorDtrCtrl;
   int m_reconnectCount;
+  size_t buffer_size;
+
+  DriverError m_driverErrno;       /// number of last error
 };
 
 inline bool isNoRibOffsetAngleLidar(int model, uint8_t Maxjor, uint8_t Minjor) {
