@@ -15,9 +15,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.1.8 |   2020-06-12  |
+| SDK     |  2.1.9 |   2020-06-20  |
 
-- [fix] fixed intermittent seg fault case as below while checkAutoConnecting. 
+- [feat] lidar data of &outscan prints out empty immediately if timeout or err.
+- [feat] hardwareError flag attempts restart while 30 seconds, if lidar is still locked, print out true.
 
 ## How to Fetch zero angle tolerance values from lidar’s internal memory while lidar assembly.
 ```
