@@ -89,6 +89,10 @@ const char *YDlidarDriver::DescribeError(DriverError err) {
       errorString = ("Device Tremble");
       break;
 
+    case YDlidarDriver::LaserFailureError:
+      errorString = ("Laser Failure");
+      break;
+
     default:
       // an empty string will be interpreted as "Unknown error"
       break;
@@ -147,6 +151,7 @@ YDlidarDriver::YDlidarDriver():
   isThreadFinished      = true;
   buffer_size           = 0;
   m_driverErrno         = NoError;
+  m_NoZeroNodeCount     = 0;
 
 }
 
@@ -450,6 +455,7 @@ result_t YDlidarDriver::waitForData(size_t data_count, uint32_t timeout,
 result_t YDlidarDriver::checkAutoConnecting(bool error) {
   result_t ans = RESULT_FAIL;
   isAutoconnting = true;
+  m_NoZeroNodeCount = 0;
   UpdateDriverError(TimeoutError);
   int buf_size = 0;
 
@@ -569,6 +575,20 @@ result_t YDlidarDriver::checkAutoConnecting(bool error) {
 
 }
 
+void YDlidarDriver::checkLaserFailure() {
+  if (m_NoZeroNodeCount < 2) {
+    if (m_driverErrno == NoError) {
+      UpdateDriverError(LaserFailureError);
+    }
+  } else {
+    if (m_driverErrno == LaserFailureError) {
+      UpdateDriverError(NoError);
+    }
+  }
+
+  m_NoZeroNodeCount = 0;
+}
+
 int YDlidarDriver::cacheScanData() {
   node_info      local_buf[128];
   size_t         count = 128;
@@ -584,6 +604,7 @@ int YDlidarDriver::cacheScanData() {
   m_reconnectCount = 0;
   buffer_size      = 0;
   isThreadFinished = false;
+  m_NoZeroNodeCount = 0;
   bool lastGood = false;
 
   while (isScanning) {
@@ -958,6 +979,10 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
       (*node).sync_quality = 0;
     }
 
+    if ((*node).distance_q > 10) {
+      m_NoZeroNodeCount++;
+    }
+
     if (m_IgnoreArray.size() != 0) {//eliminate the specified range angle.
       double angle = (FirstSampleAngle + IntervalSampleAngle * package_Sample_Index) /
                      64.0;
@@ -1002,6 +1027,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   }
 
 
+
   uint8_t nowPackageNum;
 
   if (m_intensities) {
@@ -1034,7 +1060,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     }
 
     LastCheckSumResult = CheckSumResult;
-
+    checkLaserFailure();
   }
 
   (*node).scan_frequence  = scan_frequence;

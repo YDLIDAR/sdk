@@ -53,6 +53,7 @@ class YDlidarDriver {
     BlockError,
     NotBufferError,
     TrembleError,
+    LaserFailureError,
   };
 
   static const char *DescribeError(DriverError err);
@@ -533,6 +534,8 @@ class YDlidarDriver {
    */
   result_t checkAutoConnecting(bool error = false);
 
+  void checkLaserFailure();
+
   /**
   * @brief get lidar zero offset angle \n
   * @param[in] angle　　　   zero offset angle
@@ -745,6 +748,7 @@ class YDlidarDriver {
   bool m_SupportMotorDtrCtrl;
   int m_reconnectCount;
   size_t buffer_size;
+  size_t m_NoZeroNodeCount;
 
   DriverError m_driverErrno;       /// number of last error
 };

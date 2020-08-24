@@ -15,10 +15,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.1.9 |   2020-08-20  |
+| SDK     |  2.2.0 |   2020-08-24  |
 
-- [feat] lidar data of &outscan prints out empty immediately if timeout or err.
-- [feat] hardwareError flag attempts restart while 30 seconds, if lidar is still locked, print out true.
+- [feat] lidar data of &outscan prints out empty immediately if laser failure case.
+- [feat] hardwareError flag attempts restart while 30 seconds, if lidar is laser failure case, print out true.
 
 ## How to Fetch zero angle tolerance values from lidar’s internal memory while lidar assembly.
 ```

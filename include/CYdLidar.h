@@ -194,5 +194,7 @@ class YDLIDAR_API CYdLidar {
   bool m_SingleChannel;
   bool m_PrintError;
   uint32_t errTime;
+  uint32_t laserFailureTime;
+  uint32_t hasLaserFailure;
 };	// End of class
 
