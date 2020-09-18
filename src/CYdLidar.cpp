@@ -318,7 +318,8 @@ bool  CYdLidar::turnOn() {
   laserFailureTime = getms();
   isScanning = true;
   lidarPtr->setAutoReconnect(m_AutoReconnect);
-  printf("[YDLIDAR INFO] Now YDLIDAR is scanning ......\n");
+  printf("[YDLIDAR INFO][%fs] Now YDLIDAR is scanning ......\n",
+         (getms() - start_ts) / 1000.0);
   fflush(stdout);
   return true;
 }
@@ -355,6 +356,7 @@ bool CYdLidar::checkLidarAbnormal() {
   int parse_version = 0;
   YDlidarDriver::DriverError err = YDlidarDriver::NoError;
   laserFailureTime = getms();
+  int m_generatedData = 0;
 
   while (check_abnormal_count < m_AbnormalCheckCount) {
     //Ensure that the voltage is insufficient or the motor resistance is high, causing an abnormality.
@@ -389,8 +391,15 @@ bool CYdLidar::checkLidarAbnormal() {
       }
 
       if (err != YDlidarDriver::LaserFailureError) {
-        return false;
+        m_generatedData++;
+
+        if (m_generatedData > 1) {
+          return false;
+        }
+
+        continue;
       } else {
+        m_generatedData = 0;
         fprintf(stderr, "[CYdLidar][ERROR]: %s\n", YDlidarDriver::DescribeError(err));
         fflush(stderr);
 
@@ -403,6 +412,7 @@ bool CYdLidar::checkLidarAbnormal() {
       }
     }
 
+    m_generatedData = 0;
     check_abnormal_count++;
   }
 
@@ -547,11 +557,6 @@ bool CYdLidar::printfVersionInfo(const device_info &info) {
 
     case YDlidarDriver::YDLIDAR_R2_SS_1:
       model = "R2-SS-1";
-      break;
-
-    case YDlidarDriver::YDLIDAR_S4:
-    case YDlidarDriver::YDLIDAR_S2:
-      model = "S2";
       break;
 
     default:
@@ -903,7 +908,8 @@ int CYdLidar::checkHardware() {
     }
 
     if ((getms() - errTime) > YDlidarDriver::DEFAULT_TIMEOUT / 20) {
-      fprintf(stderr, "%s\n", YDlidarDriver::DescribeError(err));
+      fprintf(stderr, "[YDLIDAR][ERROR][%fs]: %s\n", (getms() - errTime) / 1000.0,
+              YDlidarDriver::DescribeError(err));
       fflush(stderr);
       errTime = getms();
     }
@@ -944,12 +950,6 @@ bool CYdLidar::checkLidarModel() {
             initialize
 -------------------------------------------------------------*/
 bool CYdLidar::initialize() {
-  if (!checkLidarModel()) {
-    fprintf(stderr,
-            "[CYdLidar::initialize] Error initializing YDLIDAR check Lidar Model.\n");
-    fflush(stderr);
-    return false;
-  }
 
   if (!checkCOMMs()) {
     fprintf(stderr,

@@ -152,6 +152,7 @@ YDlidarDriver::YDlidarDriver():
   buffer_size           = 0;
   m_driverErrno         = NoError;
   m_NoZeroNodeCount     = 0;
+  m_autoTime            = getms();
 
 }
 
@@ -456,7 +457,11 @@ result_t YDlidarDriver::checkAutoConnecting(bool error) {
   result_t ans = RESULT_FAIL;
   isAutoconnting = true;
   m_NoZeroNodeCount = 0;
-  UpdateDriverError(TimeoutError);
+
+  if (m_driverErrno != BlockError) {
+    UpdateDriverError(TimeoutError);
+  }
+
   int buf_size = 0;
 
   while (isAutoReconnect && isAutoconnting) {
@@ -467,14 +472,15 @@ result_t YDlidarDriver::checkAutoConnecting(bool error) {
         buf_size = _serial->available();
       }
 
-      if (_serial && ((m_reconnectCount >= 4) || error)) {
+      if (_serial && ((m_reconnectCount >= 7) || error)) {
         if (_serial->isOpen() || isConnected) {
           if (buf_size > 0) {
-            fprintf(stderr, "serial buf size: %d, \n", buf_size);
+            fprintf(stderr, "[YDLIDAR][%fs]: available buffer size: %d\n",
+                    (getms() - m_autoTime) / 1000.0, buf_size);
             fflush(stderr);
           }
 
-          if (buffer_size && buffer_size % 90 == 0) {
+          if (buffer_size && (buffer_size % 7) == 0) {
             UpdateDriverError(BlockError);
           } else {
             if (buf_size > 0 || buffer_size > 0) {
@@ -495,7 +501,6 @@ result_t YDlidarDriver::checkAutoConnecting(bool error) {
 
     if (m_reconnectCount > 25) {
       m_reconnectCount = 25;
-
     }
 
     int reconnect_count = 0;
@@ -543,7 +548,7 @@ result_t YDlidarDriver::checkAutoConnecting(bool error) {
     }
 
     if (isconnected()) {
-      delay(100);
+      delay(10);
       {
         ScopedLocker l(_serial_lock);
         ans = startAutoScan();
@@ -605,16 +610,17 @@ int YDlidarDriver::cacheScanData() {
   buffer_size      = 0;
   isThreadFinished = false;
   m_NoZeroNodeCount = 0;
+  m_autoTime = getms();
   bool lastGood = false;
 
   while (isScanning) {
     count = 128;
-    ans = waitScanData(local_buf, count);
+    ans = waitScanData(local_buf, count, DEFAULT_TIMEOUT / 2);
 
     if (!IS_OK(ans)) {
       if (IS_FAIL(ans) || timeout_count > DEFAULT_TIMEOUT_COUNT) {
         if (!isAutoReconnect) {
-          fprintf(stderr, "exit scanning thread!!\n");
+          fprintf(stderr, "[YDLIDAR][ERROR]: exit scanning thread!!\n");
           fflush(stderr);
           {
             isScanning = false;
@@ -626,11 +632,13 @@ int YDlidarDriver::cacheScanData() {
           if (lastGood) {
             buffer_size = 0;
             lastGood = false;
+            m_autoTime = getms();
           }
 
           m_reconnectCount++;
-          fprintf(stderr, "timout count: %d, Reconnecting[%d][%d][%d].....\n",
-                  timeout_count,
+          fprintf(stderr,
+                  "[YDLIDAR][ERROR][%fs]: timout count: %d, Reconnecting[%d][%d][%d].....\n",
+                  (getms() - m_autoTime) / 1000.0, timeout_count,
                   m_reconnectCount, ans, buffer_size);
           fflush(stderr);
           ans = checkAutoConnecting(IS_FAIL(ans));
@@ -706,6 +714,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   (*node).scan_frequence  = 0;
   (*node).error_package = 0;
   (*node).debugInfo = 0xff;
+  int blockRecvPos  = 0;
 
 
   if (package_Sample_Index == 0) {
@@ -735,6 +744,26 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
             if (currentByte == (PH & 0xFF)) {
 
             } else {
+              switch (blockRecvPos) {
+                case 0:
+                  if (currentByte == LIDAR_ANS_SYNC_BYTE1) {
+                    blockRecvPos++;
+                  }
+
+                  break;
+
+                case 1:
+                  if (currentByte == LIDAR_ANS_SYNC_BYTE2) {
+                    UpdateDriverError(BlockError);
+                    blockRecvPos = 0;
+                  }
+
+                  break;
+
+                default:
+                  break;
+              }
+
               data_header_error = true;
               continue;
             }
@@ -745,7 +774,9 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
             CheckSumCal = PH;
 
             if (currentByte == (PH >> 8)) {
-
+              if (m_driverErrno == BlockError) {
+                UpdateDriverError(NoError);
+              }
             } else {
               data_header_error = true;
               recvPos = 0;

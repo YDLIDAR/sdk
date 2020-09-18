@@ -534,6 +534,9 @@ class YDlidarDriver {
    */
   result_t checkAutoConnecting(bool error = false);
 
+  /**
+   * @brief checkLaserFailure
+   */
   void checkLaserFailure();
 
   /**
@@ -751,6 +754,7 @@ class YDlidarDriver {
   size_t m_NoZeroNodeCount;
 
   DriverError m_driverErrno;       /// number of last error
+  uint32_t m_autoTime;
 };
 
 inline bool isNoRibOffsetAngleLidar(int model, uint8_t Maxjor, uint8_t Minjor) {
