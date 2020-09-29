@@ -55,7 +55,6 @@ You should see YDLIDAR's scan result in the console:
     Model: S2Pro[4]
     Serial: 2020080400011111
     [YDLIDAR INFO][0.003000s] Current Scan Frequency: 6.000000Hz
-    [YDLIDAR INFO][0.002000s] Obtained Zero Offset Angle[33554432.000000°] 
     [YDLIDAR INFO] Current Sampling Rate : 3K
     [YDLIDAR INFO][0.010000s] single channel:  0
     LiDAR init success!
