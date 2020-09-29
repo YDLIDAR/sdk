@@ -37,9 +37,7 @@
 #endif
 
 #include "unix_serial.h"
-#ifdef USE_LOCK_FILE
 #include <lock.h>
-#endif
 
 
 #ifndef TIOCINQ
@@ -664,8 +662,8 @@ bool Serial::SerialImpl::open() {
   }
 
   pid = -1;
+#ifdef USE_FS_LOCK
   pid = getpid();
-#ifdef USE_LOCK_FILE
 
   if (LOCK(port_.c_str(), pid)) {
     fprintf(stderr, "Could not lock serial port for exclusive access\n");
@@ -673,7 +671,6 @@ bool Serial::SerialImpl::open() {
   }
 
 #endif
-
   fd_ = ::open(port_.c_str(),
                O_RDWR | O_NOCTTY | O_NONBLOCK | O_APPEND | O_NDELAY);
 
@@ -686,20 +683,19 @@ bool Serial::SerialImpl::open() {
       case ENFILE:
       case EMFILE:
       default:
-#ifdef USE_LOCK_FILE
+#ifdef USE_FS_LOCK
         UNLOCK(port_.c_str(), pid);
-#endif
         pid = -1;
+#endif
         return false;
     }
   }
 
+  is_open_ = true;
   termios tio;
 
   if (!getTermios(&tio)) {
-#ifdef USE_LOCK_FILE
-    UNLOCK(port_.c_str(), pid);
-#endif
+    close();
     return false;
   }
 
@@ -710,16 +706,12 @@ bool Serial::SerialImpl::open() {
   set_flowcontrol(&tio, flowcontrol_);
 
   if (!setTermios(&tio)) {
-#ifdef USE_LOCK_FILE
-    UNLOCK(port_.c_str(), pid);
-#endif
+    close();
     return false;
   }
 
   if (!setBaudrate(baudrate_)) {
-#ifdef USE_LOCK_FILE
-    UNLOCK(port_.c_str(), pid);
-#endif
+    close();
     return false;
   }
 
@@ -733,21 +725,20 @@ bool Serial::SerialImpl::open() {
     byte_time_ns_ += ((1.5 - stopbits_one_point_five) * bit_time_ns);
   }
 
-  is_open_ = true;
   return true;
 }
 
 
 void Serial::SerialImpl::close() {
-  if (is_open_ == true) {
-    if (fd_ != -1) {
-      ::close(fd_);
-    }
+  if (fd_ != -1) {
+    ::close(fd_);
+    fd_ = -1;
+  }
 
-#ifdef USE_LOCK_FILE
+  if (is_open_) {
+#ifdef USE_FS_LOCK
     UNLOCK(port_.c_str(), pid);
 #endif
-    fd_ = -1;
     pid = -1;
     is_open_ = false;
   }
