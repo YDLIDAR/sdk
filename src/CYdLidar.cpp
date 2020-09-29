@@ -364,7 +364,7 @@ bool CYdLidar::getDeviceInfo(uint32_t timeout) {
 
   printf("\n");
   checkScanFrequency();
-  checkZeroOffsetAngle();
+  //checkZeroOffsetAngle();
   printf("[YDLIDAR INFO] Current Sampling Rate : %dK\n", sample_rate);
   return true;
 }
