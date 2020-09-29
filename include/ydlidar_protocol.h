@@ -1,164 +1,114 @@
-﻿
-#pragma once
+//
+// The MIT License (MIT)
+//
+// Copyright (c) 2020 EAIBOT. All rights reserved.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+//
 
-#include <v8stdint.h>
-#include <vector>
-#include <ydlidar_cmd.h>
+#ifndef YDLDAR_PROTOCOL_H_
+#define YDLDAR_PROTOCOL_H_
 
-#define SUNNOISEINTENSITY 0xff
-#define GLASSNOISEINTENSITY 0xfe
+#include <stdint.h>
+#include "ydlidar_def.h"
+#include "ydlidar_cmd.h"
+#include "serial.h"
 
-#if defined(_WIN32)
-#pragma pack(1)
-#endif
+namespace ydlidar {
+namespace protocol {
 
-struct node_info {
-  uint8_t    sync_flag;  //sync flag
-  uint16_t   sync_quality;//!信号质量
-  uint16_t   angle_q6_checkbit; //!测距点角度
-  uint16_t   distance_q2; //! 当前测距点距离
-  uint64_t   dstamp; //! 延时间戳
-  uint8_t    scan_frequence;//! 特定版本此值才有效,无效值是0
-} __attribute__((packed)) ;
+using namespace serial;
 
-struct PackageNode {
-  uint8_t PakageSampleQuality;
-  uint16_t PakageSampleDistance;
-} __attribute__((packed));
+const char *DescribeError(const lidar_error_t &error);
 
-struct node_package {
-  uint16_t  package_Head;
-  uint8_t   package_CT;
-  uint8_t   nowPackageNum;
-  uint16_t  packageFirstSampleAngle;
-  uint16_t  packageLastSampleAngle;
-  uint16_t  checkSum;
-  PackageNode  packageSample[PackageSampleMaxLngth];
-} __attribute__((packed)) ;
+void reset_ct_packet_t(ct_packet_t &ct);
 
-struct node_packages {
-  uint16_t  package_Head;
-  uint8_t   package_CT;
-  uint8_t   nowPackageNum;
-  uint16_t  packageFirstSampleAngle;
-  uint16_t  packageLastSampleAngle;
-  uint16_t  checkSum;
-  uint16_t  packageSampleDistance[PackageSampleMaxLngth];
-} __attribute__((packed)) ;
+lidar_error_t convert_ct_packet_to_error(const ct_packet_t &ct) ;
 
+result_t check_ct_packet_t(const ct_packet_t &ct);
 
-struct device_info {
-  uint8_t   model; ///< 雷达型号
-  uint16_t  firmware_version; ///< 固件版本号
-  uint8_t   hardware_version; ///< 硬件版本号
-  uint8_t   serialnum[16];    ///< 系列号
-} __attribute__((packed)) ;
+void write_command(Serial *serial, uint8_t cmd);
 
-struct device_health {
-  uint8_t   status; ///< 健康状体
-  uint16_t  error_code; ///< 错误代码
-} __attribute__((packed))  ;
+result_t wait_for_data(Serial *serial, size_t data_count,
+                       uint32_t timeout = READ_DEFAULT_TIMEOUT);
 
-struct sampling_rate {
-  uint8_t rate;	///< 采样频率
-} __attribute__((packed))  ;
+result_t read_command(Serial *serial, uint8_t *buffer, size_t size,
+                      lidar_error_t &error,
+                      uint32_t timeout = READ_DEFAULT_TIMEOUT);
 
-struct scan_frequency {
-  uint32_t frequency;	///< 扫描频率
-} __attribute__((packed))  ;
+result_t read_response_header_t(Serial *serial,
+                                lidar_ans_header_t &header, lidar_error_t &error,
+                                uint32_t timeout = READ_DEFAULT_TIMEOUT);
 
-struct scan_rotation {
-  uint8_t rotation;
-} __attribute__((packed))  ;
+result_t check_ans_header_t(const lidar_ans_header_t &header,
+                            lidar_error_t &error);
 
-struct scan_exposure {
-  uint8_t exposure;	///< 低光功率模式
-} __attribute__((packed))  ;
+result_t read_response_health_t(Serial *serial, device_health &health,
+                                lidar_error_t &error, uint32_t timeout = READ_DEFAULT_TIMEOUT);
 
-struct scan_heart_beat {
-  uint8_t enable;	///< 掉电保护状态
-} __attribute__((packed));
+result_t read_response_device_info_t(Serial *serial,
+                                     device_info &info,
+                                     lidar_error_t &error, uint32_t timeout = READ_DEFAULT_TIMEOUT);
 
-struct scan_points {
-  uint8_t flag;
-} __attribute__((packed))  ;
+result_t read_response_sample_rate_t(Serial *serial,
+                                     sampling_rate_t &rate,
+                                     lidar_error_t &error, uint32_t timeout = READ_DEFAULT_TIMEOUT);
 
-struct function_state {
-  uint8_t state;
-} __attribute__((packed))  ;
+result_t read_response_scan_frequency_t(Serial *serial,
+                                        scan_frequency_t &frequency,
+                                        lidar_error_t &error, uint32_t timeout = READ_DEFAULT_TIMEOUT);
 
-struct cmd_packet {
-  uint8_t syncByte;
-  uint8_t cmd_flag;
-  uint8_t size;
-  uint8_t data;
-} __attribute__((packed)) ;
+result_t read_response_offset_angle_t(Serial *serial,
+                                      offset_angle_t &angle,
+                                      lidar_error_t &error, uint32_t timeout = READ_DEFAULT_TIMEOUT);
 
-struct lidar_ans_header {
-  uint8_t  syncByte1;
-  uint8_t  syncByte2;
-  uint32_t size: 30;
-  uint32_t subType: 2;
-  uint8_t  type;
-} __attribute__((packed));
+result_t parse_payload(const scan_packet_t &scan, LaserFan &data);
 
-#if defined(_WIN32)
-#pragma pack()
-#endif
+result_t parse_intensity_payload(const scan_intensity_packet_t &scan,
+                                 LaserFan &data);
 
+result_t check_package_header_t(const node_package_header_t &header,
+                                lidar_error_t &error);
 
-struct LaserPoint {
-  float angle;
-  float range;
-  float intensity;
-  LaserPoint &operator = (const LaserPoint &data) {
-    angle = data.angle;
-    range = data.range;
-    intensity = data.intensity;
-    return *this;
-  }
-};
+result_t parse_ct_packet_t(const node_package_header_t &header,
+                           unsigned short error_count, ct_packet_t &ct);
 
-//! A struct for returning configuration from the YDLIDAR
-struct LaserConfig {
-  //! Start angle for the laser scan [rad].  0 is forward and angles are measured clockwise when viewing YDLIDAR from the top.
-  float min_angle;
-  //! Stop angle for the laser scan [rad].   0 is forward and angles are measured clockwise when viewing YDLIDAR from the top.
-  float max_angle;
-  //! Scan resoltuion [s]
-  float time_increment;
-  //! Time between scans
-  float scan_time;
-  //! Minimum range [m]
-  float min_range;
-  //! Maximum range [m]
-  float max_range;
-  //! fixed resolution size
-  int fixed_size;
-  LaserConfig &operator = (const LaserConfig &data) {
-    min_angle = data.min_angle;
-    max_angle = data.max_angle;
-    time_increment = data.time_increment;
-    scan_time = data.scan_time;
-    min_range = data.min_range;
-    max_range = data.max_range;
-    fixed_size = data.fixed_size;
-    return *this;
-  }
-};
+uint8_t crc8_t(uint8_t *ptr, uint16_t len, uint8_t default_crc = 0x00,
+               uint8_t poly = 0x8c, uint8_t inverted = 1);
 
+uint16_t checksum_response_scan_packet_t(const scan_packet_t &scan);
 
-struct LaserScan {
-  //! Array of laser point
-  std::vector<LaserPoint> data;
-  //! System time when first range was measured in nanoseconds
-  uint64_t system_time_stamp;
-  //! Configuration of scan
-  LaserConfig config;
-  LaserScan &operator = (const LaserScan &data) {
-    this->data = data.data;
-    system_time_stamp = data.system_time_stamp;
-    config = data.config;
-    return *this;
-  }
-};
+uint16_t checksum_response_scan_intensity_packet_t(const scan_intensity_packet_t
+    &scan);
+
+result_t read_response_scan_header_t(Serial *serial,
+                                     node_package_header_t &header, ct_packet_t &ct,
+                                     lidar_error_t &error, uint32_t timeout = READ_DEFAULT_TIMEOUT);
+
+result_t read_response_scan_t(Serial *serial, scan_packet_t &scan,
+                              ct_packet_t &ct,
+                              lidar_error_t &error, uint32_t timeout = READ_DEFAULT_TIMEOUT);
+
+result_t read_response_scan_intensity_t(Serial *serial,
+                                        scan_intensity_packet_t &scan, ct_packet_t &ct,
+                                        lidar_error_t &error, uint32_t timeout = READ_DEFAULT_TIMEOUT);
+
+}//namespace protocol
+}  // namespace ydlidar
+#endif  // YDLDAR_PROTOCOL_H_
