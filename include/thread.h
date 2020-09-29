@@ -11,8 +11,6 @@
 #include <assert.h>
 #endif
 
-#define UNUSED(x) (void)x
-
 #if defined(__ANDROID__)
 #define    pthread_cancel(x) 0
 #endif
@@ -23,12 +21,14 @@ class Thread {
  public:
 
   template <class CLASS, int (CLASS::*PROC)(void)> static Thread
-  ThreadCreateObjectFunctor(CLASS *pthis) {
+  ThreadCreateObjectFunctor(
+    CLASS *pthis) {
     return createThread(createThreadAux<CLASS, PROC>, pthis);
   }
 
   template <class CLASS, int (CLASS::*PROC)(void) > static _size_t THREAD_PROC
-  createThreadAux(void *param) {
+  createThreadAux(
+    void *param) {
     return (static_cast<CLASS *>(param)->*PROC)();
   }
 
@@ -36,51 +36,86 @@ class Thread {
     Thread thread_(proc, param);
 #if defined(_WIN32)
     thread_._handle = (_size_t)(_beginthreadex(NULL, 0,
-                                (unsigned int (__stdcall *)(void *))proc, param, 0, NULL));
+                                (unsigned int (__stdcall *)(void *))proc, param,
+                                0, NULL));
 #else
     assert(sizeof(thread_._handle) >= sizeof(pthread_t));
 
-    pthread_create((pthread_t *)&thread_._handle, NULL, (void *(*)(void *))proc,
-                   param);
+    int rv = pthread_create((pthread_t *)&thread_._handle, NULL,
+                            (void *(*)(void *))proc,
+                            param);
+
+    if (rv != 0) {
+      fprintf(stderr, "failed to create thread: %s\n", strerror(rv));
+    }
+
 #endif
     return thread_;
   }
 
  public:
-  explicit Thread(): _param(NULL), _func(NULL), _handle(0) {}
-  virtual ~Thread() {}
+  explicit Thread(): _param(NULL), _func(NULL), _handle(0) {
+#if !defined(_WIN32)
+    pthread_mutex_init(&mutex, NULL);
+#endif
+  }
+  virtual ~Thread() {
+#if !defined(_WIN32)
+    pthread_mutex_destroy(&mutex);
+#endif
+  }
   _size_t getHandle() {
     return _handle;
   }
   int terminate() {
-#if defined(_WIN32)
+#if !defined(_WIN32)
 
-    if (!this->_handle) {
+    if (pthread_mutex_trylock(&mutex) != 0) {
       return 0;
     }
+
+#endif
+
+    if (!this->_handle) {
+#if !defined(_WIN32)
+      pthread_mutex_unlock(&mutex);
+#endif
+      return 0;
+    }
+
+    int ret = 0;
+#if defined(_WIN32)
 
     if (TerminateThread(reinterpret_cast<HANDLE>(this->_handle), -1)) {
       CloseHandle(reinterpret_cast<HANDLE>(this->_handle));
       this->_handle = NULL;
-      return 0;
+      ret = 0;
     } else {
-      return -2;
+      ret = -2;
     }
 
 #else
-
-    if (!this->_handle) {
-      return 0;
-    }
-
-    return pthread_cancel((pthread_t)this->_handle);
+    ret = pthread_cancel((pthread_t)this->_handle);
+    pthread_mutex_unlock(&mutex);
 #endif
+    return ret;
   }
   void *getParam() {
     return _param;
   }
   int join(unsigned long timeout = -1) {
+#if !defined(_WIN32)
+
+    if (pthread_mutex_trylock(&mutex) != 0) {
+      return 0;
+    }
+
+#endif
+
     if (!this->_handle) {
+#if !defined(_WIN32)
+      pthread_mutex_unlock(&mutex);
+#endif
       return 0;
     }
 
@@ -115,10 +150,12 @@ class Thread {
 
     if (res == PTHREAD_CANCELED) {
       printf("%lu thread has been canceled\n", this->_handle);
-      fflush(stdout);
       this->_handle = 0;
+    } else {
+      printf("%lu thread wasn't canceled (shouldn't happen!)\n", this->_handle);
     }
 
+    pthread_mutex_unlock(&mutex);
 #endif
     return 0;
   }
@@ -132,5 +169,8 @@ class Thread {
   void *_param;
   thread_proc_t _func;
   _size_t _handle;
+#if !defined(_WIN32)
+  pthread_mutex_t mutex;
+#endif
 };
 
