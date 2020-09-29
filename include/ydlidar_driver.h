@@ -1,3 +1,26 @@
+//
+// The MIT License (MIT)
+//
+// Copyright (c) 2020 EAIBOT. All rights reserved.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+//
 #ifndef YDLIDAR_DRIVER_H
 #define YDLIDAR_DRIVER_H
 #include <stdlib.h>
@@ -63,6 +86,11 @@ class YDlidarDriver {
 
 
   /**
+   * @brief getDriverError
+   * @return
+   */
+  lidar_error_t getDriverError();
+  /**
    * @brief getHealth
    * @param health
    * @param timeout
@@ -78,6 +106,80 @@ class YDlidarDriver {
    */
 
   result_t getDeviceInfo(device_info &info, uint32_t timeout = DEFAULT_TIMEOUT);
+
+  /**
+   * @brief Get lidar scan frequency \n
+   * @param[in] frequency    scanning frequency
+   * @param[in] timeout      timeout
+   * @return return status
+   * @retval RESULT_OK       success
+   * @retval RESULT_FAILE    failed
+   * @note Non-scan state, perform currect operation.
+   */
+  result_t getScanFrequency(scan_frequency_t &frequency,
+                            uint32_t timeout = DEFAULT_TIMEOUT);
+
+  /**
+   * @brief Increase the scanning frequency by 1.0 HZ \n
+   * @param[in] frequency    scanning frequency
+   * @param[in] timeout      timeout
+   * @return return status
+   * @retval RESULT_OK       success
+   * @retval RESULT_FAILE    failed
+   * @note Non-scan state, perform currect operation.
+   */
+  result_t setScanFrequencyAdd(scan_frequency_t &frequency,
+                               uint32_t timeout = DEFAULT_TIMEOUT);
+
+  /**
+   * @brief Reduce the scanning frequency by 1.0 HZ \n
+   * @param[in] frequency    scanning frequency
+   * @param[in] timeout      timeout
+   * @return return status
+   * @retval RESULT_OK       success
+   * @retval RESULT_FAILE    failed
+   * @note Non-scan state, perform currect operation.
+   */
+  result_t setScanFrequencyDis(scan_frequency_t &frequency,
+                               uint32_t timeout = DEFAULT_TIMEOUT);
+
+  /**
+   * @brief Increase the scanning frequency by 0.1 HZ \n
+   * @param[in] frequency    scanning frequency
+   * @param[in] timeout      timeout
+   * @return return status
+   * @retval RESULT_OK       success
+   * @retval RESULT_FAILE    failed
+   * @note Non-scan state, perform currect operation.
+   */
+  result_t setScanFrequencyAddMic(scan_frequency_t &frequency,
+                                  uint32_t timeout = DEFAULT_TIMEOUT);
+
+  /**
+   * @brief Reduce the scanning frequency by 0.1 HZ \n
+   * @param[in] frequency    scanning frequency
+   * @param[in] timeout      timeout
+   * @return return status
+   * @retval RESULT_OK       success
+   * @retval RESULT_FAILE    failed
+   * @note Non-scan state, perform currect operation.
+   */
+  result_t setScanFrequencyDisMic(scan_frequency_t &frequency,
+                                  uint32_t timeout = DEFAULT_TIMEOUT);
+
+  /**
+   * @brief fetches zero angle tolerance values from lidar’s internal memory while lidar assembly \n
+   * @param[in] angle　　　   zero offset angle
+   * @param[in] timeout      timeout
+   * @return return status
+   * @retval RESULT_OK       success
+   * @retval RESULT_TIMEOUT  Failed
+   * @retval RESULT_FAILE    Angle is not calibrated
+   * @note Non-scan state, perform currect operation.
+   */
+  result_t getZeroOffsetAngle(offset_angle_t &angle,
+                              uint32_t timeout =  DEFAULT_TIMEOUT);
+
 
   /**
    * @brief 获取雷达列表
@@ -104,19 +206,13 @@ class YDlidarDriver {
    * @brief getPointTime
    * @return
    */
-  uint32_t getPointTime() const;
-
-  /**
-   * @brief updatePointTime
-   * @param time
-   */
-  void updatePointTime(const uint32_t &time);
+  uint32_t getPointIntervalTime() const;
 
   /**
    * @brief getPackageTime
    * @return
    */
-  uint32_t getPackageTime() const;
+  uint32_t getPackageTransferTime() const;
 
   /**
   * @brief 设置雷达异常自动重新连接 \n
@@ -126,6 +222,11 @@ class YDlidarDriver {
   */
   void setAutoReconnect(const bool &enable);
 
+  /**
+   * @brief setSingleChannel
+   * @param enable
+   */
+  void setSingleChannel(bool enable);
 
   /**
   * @brief 开启扫描 \n
@@ -138,6 +239,15 @@ class YDlidarDriver {
     */
   result_t startScan(bool force = false, uint32_t timeout = DEFAULT_TIMEOUT) ;
 
+  /*!
+   * @brief stop Scanning state
+   * @param timeout  timeout
+   * @return status
+   * @retval RESULT_OK       success
+   * @retval RESULT_FAILE    failed
+   */
+  result_t stopScan(uint32_t timeout = DEFAULT_TIMEOUT);
+
   /**
   * @brief 关闭扫描 \n
     * @return 返回执行结果
@@ -145,12 +255,6 @@ class YDlidarDriver {
     * @retval RESULT_FAILE    关闭失败
     */
   result_t stop();
-
-  /**
-   * @brief stopScan
-   * @return
-   */
-  result_t stopScan();
 
 
   /**
@@ -163,21 +267,7 @@ class YDlidarDriver {
     * @retval RESULT_FAILE    获取失败
   * @note 获取之前，必须使用::startScan函数开启扫描
     */
-  result_t grabScanData(node_info *nodebuffer, size_t &count,
-                        uint32_t timeout = DEFAULT_TIMEOUT) ;
-
-
-  /**
-  * @brief 补偿激光角度 \n
-  * 把角度限制在0到360度之间
-    * @param[in] nodebuffer 激光点信息
-  * @param[in] count      一圈激光点数
-    * @return 返回执行结果
-    * @retval RESULT_OK       成功
-    * @retval RESULT_FAILE    失败
-  * @note 补偿之前，必须使用::grabScanData函数获取激光数据成功
-    */
-  result_t ascendScanData(node_info *nodebuffer, size_t count);
+  result_t grabScanData(LaserFan *fan, uint32_t timeout = DEFAULT_TIMEOUT) ;
 
   /**
   * @brief 打开电机 \n
@@ -220,13 +310,12 @@ class YDlidarDriver {
   */
   result_t startAutoScan(bool force = false, uint32_t timeout = DEFAULT_TIMEOUT) ;
 
-
   /**
   * @brief 解包激光数据 \n
     * @param[in] node 解包后激光点信息
   * @param[in] timeout     超时时间
     */
-  result_t waitPackage(node_info *node, uint32_t timeout = DEFAULT_TIMEOUT);
+  result_t waitPackage(LaserFan &package, uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
   * @brief 发送数据到雷达 \n
@@ -238,8 +327,7 @@ class YDlidarDriver {
   * @retval RESULT_TIMEOUT  等待超时
     * @retval RESULT_FAILE    失败
     */
-  result_t waitScanData(node_info *nodebuffer, size_t &count,
-                        uint32_t timeout = DEFAULT_TIMEOUT);
+  result_t waitScanData(LaserFan &package, uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
   * @brief 激光数据解析线程 \n
@@ -259,19 +347,6 @@ class YDlidarDriver {
                        size_t payloadsize = 0);
 
   /**
-  * @brief 等待激光数据包头 \n
-    * @param[in] header 	 包头
-    * @param[in] timeout      超时时间
-  * @return 返回执行结果
-    * @retval RESULT_OK       获取成功
-  * @retval RESULT_TIMEOUT  等待超时
-    * @retval RESULT_FAILE    获取失败
-  * @note 当timeout = -1 时, 将一直等待
-    */
-  result_t waitResponseHeader(lidar_ans_header *header,
-                              uint32_t timeout = DEFAULT_TIMEOUT);
-
-  /**
   * @brief 等待固定数量串口数据 \n
     * @param[in] data_count 	 等待数据大小
     * @param[in] timeout    	 等待时间
@@ -284,15 +359,6 @@ class YDlidarDriver {
     */
   result_t waitForData(size_t data_count, uint32_t timeout = DEFAULT_TIMEOUT,
                        size_t *returned_size = NULL);
-
-
-  /**
-   * @brief checkDeviceStatus
-   * @param byte
-   * @return
-   */
-  result_t checkDeviceStatus(uint8_t *recvBuffer, uint8_t byte, int recvPos,
-                             int recvSize, int pos);
 
   /**
   * @brief 获取串口数据 \n
@@ -329,6 +395,17 @@ class YDlidarDriver {
     */
   void clearDTR();
 
+  /**
+   * @brief flushSerial
+   */
+  void flushSerial();
+
+  /**
+   * @brief setDriverError
+   * @param er
+   */
+  void setDriverError(const lidar_error_t &er);
+
  public:
   bool     m_isConnected;  ///< 串口连接状体
   bool     m_isScanning;   ///< 扫图状态
@@ -337,10 +414,9 @@ class YDlidarDriver {
 
 
   enum {
-    DEFAULT_TIMEOUT = 2000,    /**< 默认超时时间. */
-    DEFAULT_HEART_BEAT = 1000, /**< 默认检测掉电功能时间. */
+    DEFAULT_TIMEOUT = 1000,    /**< 默认超时时间. */
     MAX_SCAN_NODES = 2048,	   /**< 最大扫描点数. */
-    DEFAULT_TIMEOUT_COUNT = 3,
+    DEFAULT_TIMEOUT_COUNT = 2,
   };
   enum {
     YDLIDAR_F4 = 1, /**< F4雷达型号代号. */
@@ -353,49 +429,24 @@ class YDlidarDriver {
     YDLIDAR_G4C = 9, /**< G4C雷达型号代号. */
 
   };
-  node_info      *scan_node_buf;       ///< 激光点信息
-  size_t         scan_node_count;      ///< 激光点数
   Event          _dataEvent;			 ///< 数据同步事件
   Locker         _lock;				///< 线程锁
   Locker         _serial_lock;		///< 串口锁
-  Thread 	       _thread;				///< 线程id
+  Locker         _error_lock;       ///< 错误信息锁
+  Thread 	     _thread;				///< 线程id
 
  private:
   serial::Serial *_serial;			///< 串口
-  node_packages packages;
-
-  float       IntervalSampleAngle;
-  float       IntervalSampleAngle_LastPackage;
-  int         PackageSampleBytes;             ///< 一个包包含的激光点数
-  bool        isSupportMotorCtrl;			///< 是否支持电机控制
-  bool        CheckSumResult;
-  uint32_t    m_baudrate;					///< 波特率
-  uint32_t    m_pointTime;			///< 两个激光点时间间隔
-  uint32_t    m_packageTime;        ///零位包传送时间
-  uint32_t    trans_delay;				///< 串口传输一个byte时间
-  uint16_t    package_Sample_Index;
-  uint16_t    FirstSampleAngle;
-  uint16_t    LastSampleAngle;
-  uint16_t    CheckSum;
-  uint16_t    CheckSumCal;
-  uint16_t    SampleNumlAndCTCal;
-  uint16_t    LastSampleAngleCal;
-  uint16_t    Valu8Tou16;
-  uint8_t     last_byte;
-  int         asyncRecvPos;
-  uint16_t    async_size;
-
-  device_info info_;
-  device_health health_;
-  lidar_ans_header header_;
-  uint8_t  *headerBuffer;
-  uint8_t  *infoBuffer;
-  uint8_t  *healthBuffer;
-  bool     get_device_info_success;
-  bool     get_device_health_success;
-
-  std::string serial_port;///< 雷达端口
-  uint8_t *recvBuffer;
+  LaserFan       m_global_fan;
+  std::string    serial_port;///< 雷达端口
+  uint32_t       baudrate_;
+  bool           isSupportMotorCtrl;
+  bool           single_channel;
+  uint32_t       point_interval_time;
+  uint32_t       transfer_delay;
+  uint32_t       package_transfer_time;
+  lidar_error_t  m_error_info;
+  ct_packet_t    m_global_ct;
 
 };
 }
