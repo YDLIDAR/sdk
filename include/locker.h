@@ -202,17 +202,10 @@ class Event {
     _event = CreateEvent(NULL, isAutoReset ? FALSE : TRUE, isSignal ? TRUE : FALSE,
                          NULL);
 #else
-    int ret = pthread_condattr_init(&_cond_cattr);
-
-    if (ret != 0) {
-      fprintf(stderr, "Failed to init condattr...\n");
-      fflush(stderr);
-//      exit(1);
-    }
-
-    ret = pthread_condattr_setclock(&_cond_cattr, CLOCK_MONOTONIC);
+    pthread_condattr_init(&_cond_cattr);
+    pthread_condattr_setclock(&_cond_cattr, CLOCK_MONOTONIC);
     pthread_mutex_init(&_cond_locker, NULL);
-    ret =  pthread_cond_init(&_cond_var, &_cond_cattr);
+    pthread_cond_init(&_cond_var, &_cond_cattr);
 #endif
   }
 
@@ -270,10 +263,7 @@ class Event {
         pthread_cond_wait(&_cond_var, &_cond_locker);
       } else {
         struct timespec wait_time;
-//        timeval now;
-//        gettimeofday(&now, NULL);
         clock_gettime(CLOCK_MONOTONIC, &wait_time);
-
 
         wait_time.tv_sec += timeout / 1000;
         wait_time.tv_nsec += (timeout % 1000) * 1000000ULL;
