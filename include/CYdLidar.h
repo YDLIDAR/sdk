@@ -1,6 +1,27 @@
-﻿
+﻿//
+// The MIT License (MIT)
+//
+// Copyright (c) 2020 EAIBOT. All rights reserved.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+//
 #pragma once
-#include "line_feature.h"
 #include "utils.h"
 #include "ydlidar_driver.h"
 #include <math.h>
@@ -30,6 +51,8 @@ class YDLIDAR_API CYdLidar {
   PropertyBuilderByName(float, MinAngle,
                         private) ///< 设置和获取激光最小角度, 最小值-180度
   PropertyBuilderByName(float, OffsetTime, private)
+
+  PropertyBuilderByName(float, ScanFrequency, private)
 
   PropertyBuilderByName(bool, FixedResolution,
                         private) ///< 设置和获取激光是否是固定角度分辨率
@@ -68,6 +91,13 @@ class YDLIDAR_API CYdLidar {
   //get fixed resolution node size
   int getFixedSize() const;
 
+  /**
+   * @brief getDriverError
+   * @return
+   */
+  lidar_error_t getDriverError() const;
+
+
   //Turn off lidar connection
   void disconnecting(); //!< Closes the comms with the laser. Shouldn't have to be directly needed by the user
 
@@ -83,49 +113,51 @@ class YDLIDAR_API CYdLidar {
     */
   bool  checkStatus();
 
+  /**
+   * @brief checkScanFrequency
+   * @return
+   */
+  bool checkScanFrequency();
+
+  /**
+   * @brief checkZeroOffsetAngle
+   * @return
+   */
+  bool checkZeroOffsetAngle();
+
   /** Returns true if the normal scan runs with the device. If it's not,
     * \return false on error.
     */
   bool checkHardware();
 
+  /**
+   * @brief checkHealth
+   * @param info
+   * @return
+   */
+  bool checkHealth(const ct_packet_t &info);
+
   /** returns true if the lidar data is normal, If it's not*/
   bool checkLidarAbnormal();
 
   /** Returns true if the device is in good health, If it's not*/
-  bool getDeviceHealth();
+  bool getDeviceHealth(uint32_t timeout = 500);
 
   /** Returns true if the device information is correct, If it's not*/
-  bool getDeviceInfo();
-
-  /**
-   * @brief handleDeviceStatus
-   * @return
-   */
-  bool handleDeviceStatus();
-
-  /**
-   * @brief fitLineFeature
-   */
-  void fitLineFeature();
-
+  bool getDeviceInfo(uint32_t timeout = 500);
 
  private:
-  bool isScanning;
-  bool isConnected;
   ydlidar::YDlidarDriver *lidarPtr;
-
-  uint32_t m_pointTime;
-  uint32_t m_packageTime;        ///零位包传送时间
-  uint64_t last_node_time;
-  int m_FixedSize;
-  int m_SampleRate;
-  node_info *nodes;
-  //fit line
-  //line feature
-  std::vector<double> bearings;
-  std::vector<unsigned int> indices;
-  RangeData range_data;
-  line_feature::LineFeature line_feature_;
-
+  LaserFan               laser_packages;
+  uint32_t               point_interval_time;
+  uint32_t               package_transfer_time;///零位包传送时间
+  uint64_t               last_node_time;
+  int                    fixed_size;
+  int                    sample_rate;
+  float                  frequency_offset;
+  float                  zero_offset_angle;
+  bool                   single_channel;
+  bool                   isScanning;
+  bool                   isConnected;
 };	// End of class
 
