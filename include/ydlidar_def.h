@@ -23,9 +23,9 @@
 //
 #pragma once
 
-#include <v8stdint.h>
+#include "v8stdint.h"
 #include <vector>
-#include <ydlidar_cmd.h>
+#include "ydlidar_cmd.h"
 
 #define SUNNOISEINTENSITY 0x03
 #define GLASSNOISEINTENSITY 0x02

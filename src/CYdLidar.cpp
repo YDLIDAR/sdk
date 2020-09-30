@@ -52,7 +52,7 @@ CYdLidar::CYdLidar(): lidarPtr(0) {
   m_GlassNoise        = true;
   m_SunNoise          = true;
   m_OffsetTime        = 0.0;
-  point_interval_time = 1e9 / 3000;
+  point_interval_time = 1e9 / 3000; //单位为纳秒
   package_transfer_time = 0;
   last_node_time      = getTime();
   fixed_size          = 500;
@@ -107,10 +107,10 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
   }
 
   //  wait Scan data:
-  uint64_t tim_scan_start = getTime();
+  float tim_scan_start = getHDTimer(); //getTime();
   laser_packages.points.clear();
   result_t op_result = lidarPtr->grabScanData(&laser_packages);
-  uint64_t tim_scan_end = getTime();
+  float tim_scan_end = getHDTimer(); //getTime();
 
   // Fill in scan data:
   if (IS_OK(op_result)) {
@@ -123,14 +123,14 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     }
 
     size_t count = laser_packages.points.size();
-    uint64_t scan_time = point_interval_time * (count - 1);
-    tim_scan_end -= package_transfer_time;
-    tim_scan_end += m_OffsetTime * 1e9;
-    tim_scan_end -= point_interval_time;
+    float scan_time = (point_interval_time * (count - 1))/1000000.0;
+    tim_scan_end -= package_transfer_time / 1000000.0;
+    tim_scan_end += m_OffsetTime * 1e3;
+    tim_scan_end -= point_interval_time / 1000000.0;
     tim_scan_start = tim_scan_end -  scan_time ;
     last_node_time = tim_scan_end;
     scan_msg.data.clear();
-    scan_msg.config.scan_time = static_cast<float>(1.0 * scan_time / 1e9);
+    scan_msg.config.scan_time = scan_time; //static_cast<float>(1.0 * scan_time / 1e9);
     scan_msg.config.fixed_size = fixed_size;
     scan_msg.config.min_angle = angles::from_degrees(m_MinAngle);
     scan_msg.config.max_angle = angles::from_degrees(m_MaxAngle);

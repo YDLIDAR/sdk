@@ -716,11 +716,34 @@ int YDlidarDriver::cacheScanData() {
           }
         }
 
-      } else {
+      } 
+      else {
+
+        if(IS_TIMEOUT(ans))
+        {
+          //超时不认为是错误，也要读取数据
+           {
+              _lock.lock();//timeout lock, wait resource copy
+              memcpy(&m_global_fan.info, &local_fan.info, sizeof(ct_packet_t));
+              m_global_fan.sync_flag = local_fan.sync_flag;
+              m_global_fan.points = local_scan.points;
+              _dataEvent.set();
+              _lock.unlock();
+            }
+
+            local_scan = local_fan;
+            local_scan.points.clear();
+
+            if (local_fan.points.size()) {
+              std::copy(local_fan.points.begin(), local_fan.points.end(),
+                        std::back_inserter(local_scan.points));
+            }
+        }
+
         if (m_error_info == NoError) {
           setDriverError(TimeoutError);
         }
-
+        
         if (m_error_info != ReadError) {
           package_error++;
 
@@ -818,8 +841,6 @@ result_t YDlidarDriver::waitScanData(LaserFan &package, uint32_t timeout) {
 result_t YDlidarDriver::grabScanData(LaserFan *fan, uint32_t timeout) {
   switch (_dataEvent.wait(timeout)) {
     case Event::EVENT_TIMEOUT:
-      return RESULT_TIMEOUT;
-
     case Event::EVENT_OK: {
       if (m_global_fan.points.size() == 0) {
         return RESULT_FAIL;
