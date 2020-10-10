@@ -134,7 +134,7 @@ void YDlidarDriver::flushSerial() {
 
   if (len) {
     _serial->read(len);
-    delay(20);
+    delay(1);
   }
 }
 
@@ -152,10 +152,10 @@ result_t YDlidarDriver::startMotor() {
 
   if (isSupportMotorCtrl) {
     setDTR();
-    delay(500);
+    delay(100);
   } else {
     clearDTR();
-    delay(500);
+    delay(100);
   }
 
   return RESULT_OK;
@@ -170,10 +170,10 @@ result_t YDlidarDriver::stopMotor() {
 
   if (isSupportMotorCtrl) {
     clearDTR();
-    delay(500);
+    delay(100);
   } else {
     setDTR();
-    delay(500);
+    delay(100);
   }
 
   return RESULT_OK;
@@ -694,34 +694,11 @@ int YDlidarDriver::cacheScanData() {
           }
         }
 
-      } 
-      else {
-
-        if(IS_TIMEOUT(ans))
-        {
-          //超时不认为是错误，也要读取数据
-           {
-              _lock.lock();//timeout lock, wait resource copy
-              memcpy(&m_global_fan.info, &local_fan.info, sizeof(ct_packet_t));
-              m_global_fan.sync_flag = local_fan.sync_flag;
-              m_global_fan.points = local_scan.points;
-              _dataEvent.set();
-              _lock.unlock();
-            }
-
-            local_scan = local_fan;
-            local_scan.points.clear();
-
-            if (local_fan.points.size()) {
-              std::copy(local_fan.points.begin(), local_fan.points.end(),
-                        std::back_inserter(local_scan.points));
-            }
+      } else {
+        if (m_error_info == NoError) {
+          setDriverError(TimeoutError);
         }
 
-        //if (m_error_info == NoError) {
-        //  setDriverError(TimeoutError);
-        //}
-        
         if (m_error_info != ReadError) {
           package_error++;
 
@@ -751,14 +728,14 @@ int YDlidarDriver::cacheScanData() {
     m_last_error = m_error_info;
 
     if (local_fan.sync_flag) {
-      if ((local_scan.sync_flag)) {
-        _lock.lock();//timeout lock, wait resource copy
-        memcpy(&m_global_fan.info, &local_fan.info, sizeof(ct_packet_t));
-        m_global_fan.sync_flag = local_fan.sync_flag;
-        m_global_fan.points = local_scan.points;
-        _dataEvent.set();
-        _lock.unlock();
-      }
+//      if ((local_scan.sync_flag)) {//移除一圈完成，才触发数据事件
+//        _lock.lock();//timeout lock, wait resource copy
+//        memcpy(&m_global_fan.info, &local_fan.info, sizeof(ct_packet_t));
+//        m_global_fan.sync_flag = local_fan.sync_flag;
+//        m_global_fan.points = local_scan.points;
+//        _dataEvent.set();
+//        _lock.unlock();
+//      }
 
       local_scan = local_fan;
       local_scan.points.clear();
@@ -768,6 +745,19 @@ int YDlidarDriver::cacheScanData() {
       std::copy(local_fan.points.begin(), local_fan.points.end(),
                 std::back_inserter(local_scan.points));
     }
+
+    if (local_scan.points.size() > 1 &&
+        local_scan.sync_flag) {//有一个小包，就触发数据事件
+      _lock.lock();//timeout lock, wait resource copy
+      memcpy(&m_global_fan.info, &local_scan.info, sizeof(ct_packet_t));
+      m_global_fan.sync_flag = local_scan.sync_flag;
+      std::copy(local_scan.points.begin(), local_scan.points.end(),
+                std::back_inserter(m_global_fan.points));
+      _dataEvent.set();
+      _lock.unlock();
+      local_scan.points.clear();
+    }
+
   }
 
 
@@ -799,6 +789,11 @@ result_t YDlidarDriver::waitPackage(LaserFan &package, uint32_t timeout) {
         setDriverError(error);
       }
     }
+
+    if (error == NoError && (m_error_info < SensorError ||
+                             m_error_info > DataError)) {
+      setDriverError(error);
+    }
   } else {
     package.points.clear();
     setDriverError(error);
@@ -819,12 +814,15 @@ result_t YDlidarDriver::waitScanData(LaserFan &package, uint32_t timeout) {
 result_t YDlidarDriver::grabScanData(LaserFan *fan, uint32_t timeout) {
   switch (_dataEvent.wait(timeout)) {
     case Event::EVENT_TIMEOUT:
+      return RESULT_TIMEOUT;
+
     case Event::EVENT_OK: {
+      ScopedLocker l(_lock);
+
       if (m_global_fan.points.size() == 0) {
         return RESULT_FAIL;
       }
 
-      ScopedLocker l(_lock);
       *fan = m_global_fan;
       m_global_fan.points.clear();
     }
@@ -866,8 +864,11 @@ result_t YDlidarDriver::startScan(bool force, uint32_t timeout) {
     return RESULT_OK;
   }
 
-  stop();
-  delay(10);
+  if (!single_channel) {
+    stop();
+    delay(10);
+  }
+
   startMotor();
   {
     ScopedLocker l(_lock);
