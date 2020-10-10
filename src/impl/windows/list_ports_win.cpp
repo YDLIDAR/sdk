@@ -1,11 +1,5 @@
 #if defined(_WIN32)
 
-/*
- * Copyright (c) 2014 Craig Lilley <cralilley@gmail.com>
- * This software is made available under the terms of the MIT licence.
- * A copy of the licence can be obtained from:
- * http://opensource.org/licenses/MIT
- */
 #pragma  comment(lib, "setupapi.lib")
 #undef UNICODE
 #include "serial.h"
