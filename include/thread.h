@@ -55,31 +55,14 @@ class Thread {
 
  public:
   explicit Thread(): _param(NULL), _func(NULL), _handle(0) {
-#if !defined(_WIN32)
-    pthread_mutex_init(&mutex, NULL);
-#endif
   }
   virtual ~Thread() {
-#if !defined(_WIN32)
-    pthread_mutex_destroy(&mutex);
-#endif
   }
   _size_t getHandle() {
     return _handle;
   }
   int terminate() {
-#if !defined(_WIN32)
-
-    if (pthread_mutex_trylock(&mutex) != 0) {
-      return 0;
-    }
-
-#endif
-
     if (!this->_handle) {
-#if !defined(_WIN32)
-      pthread_mutex_unlock(&mutex);
-#endif
       return 0;
     }
 
@@ -96,7 +79,6 @@ class Thread {
 
 #else
     ret = pthread_cancel((pthread_t)this->_handle);
-    pthread_mutex_unlock(&mutex);
 #endif
     return ret;
   }
@@ -104,18 +86,7 @@ class Thread {
     return _param;
   }
   int join(unsigned long timeout = -1) {
-#if !defined(_WIN32)
-
-    if (pthread_mutex_trylock(&mutex) != 0) {
-      return 0;
-    }
-
-#endif
-
     if (!this->_handle) {
-#if !defined(_WIN32)
-      pthread_mutex_unlock(&mutex);
-#endif
       return 0;
     }
 
@@ -155,7 +126,6 @@ class Thread {
       printf("%lu thread wasn't canceled (shouldn't happen!)\n", this->_handle);
     }
 
-    pthread_mutex_unlock(&mutex);
 #endif
     return 0;
   }
@@ -169,8 +139,5 @@ class Thread {
   void *_param;
   thread_proc_t _func;
   _size_t _handle;
-#if !defined(_WIN32)
-  pthread_mutex_t mutex;
-#endif
 };
 
