@@ -414,7 +414,7 @@ class YDlidarDriver {
 
 
   enum {
-    DEFAULT_TIMEOUT = 20,    /**< 默认超时时间. */
+    DEFAULT_TIMEOUT = 500,    /**< 默认超时时间. */
     MAX_SCAN_NODES = 2048,	   /**< 最大扫描点数. */
     DEFAULT_TIMEOUT_COUNT = 2,
   };
