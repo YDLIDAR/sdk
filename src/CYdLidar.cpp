@@ -79,7 +79,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
   // Bound?
   if (!checkHardware()) {
     scan_msg.data.clear();
-    delay(200 / m_ScanFrequency);
+    delay(100 / m_ScanFrequency);
     hardwareError = false;
     return false;
   }
@@ -101,24 +101,37 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     }
 
     size_t count = laser_packages.points.size();
-    float scan_time = (point_interval_time * (count - 1))/1000000.0;
+    float scan_time = (point_interval_time * (count - 1)) / 1000000.0;
+
+    if (count == 1) {
+      scan_time = point_interval_time / 1000000.0;
+    }
+
     tim_scan_end -= package_transfer_time / 1000000.0;
     tim_scan_end += m_OffsetTime * 1e3;
     tim_scan_end -= point_interval_time / 1000000.0;
     tim_scan_start = tim_scan_end -  scan_time ;
     last_node_time = tim_scan_end;
     scan_msg.data.clear();
-    scan_msg.config.scan_time = scan_time; //static_cast<float>(1.0 * scan_time / 1e9);
+    scan_msg.config.scan_time =
+      scan_time; //static_cast<float>(1.0 * scan_time / 1e9);
     scan_msg.config.fixed_size = fixed_size;
     scan_msg.config.min_angle = angles::from_degrees(m_MinAngle);
     scan_msg.config.max_angle = angles::from_degrees(m_MaxAngle);
-    scan_msg.config.time_increment = scan_msg.config.scan_time / (double)(
-                                       count - 1);
+
+    if (count > 1) {
+      scan_msg.config.time_increment = scan_msg.config.scan_time / (double)(
+                                         count - 1);
+    } else {
+      scan_msg.config.time_increment = scan_msg.config.scan_time;
+    }
+
     scan_msg.system_time_stamp = tim_scan_start;
     scan_msg.config.min_range = m_MinRange;
     scan_msg.config.max_range = m_MaxRange;
 
-    if (!checkHealth(laser_packages.info)) {
+//    if (!checkHealth(laser_packages.info)) {
+    if (lidarPtr->getDriverError() != NoError) {
       hardwareError = true;
       return false;
     }
@@ -163,6 +176,7 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     if (IS_FAIL(op_result)) {
       // Error? Retry connection
     }
+
   }
 
   return false;
