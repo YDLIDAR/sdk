@@ -805,10 +805,6 @@ result_t check_scan_protocol(Serial *serial, int8_t &protocol,
                                       timeout);
 
     if (IS_OK(ans)) {
-      if (scan.header.nowPackageNum > 1) {
-        continue;
-      }
-
       size_t size =  sizeof(node_package_payload_t) * scan.header.nowPackageNum;
       ans = read_command(serial, (uint8_t *)&scan.payload, size, error,
                          SCAN_DEFAULT_TIMEOUT);
