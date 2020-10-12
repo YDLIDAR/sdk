@@ -473,7 +473,8 @@ result_t parse_payload(const scan_packet_t &scan, LaserFan &data) {
     }
 
     point.range = scan.payload[i].PackageSampleDistance;
-    point.intensity = scan.payload[i].PackageSampleSi;
+    point.interference_sign = scan.payload[i].PackageSampleSi;
+    point.intensity = 0;
 
     if (point.range > 0) {
       //180/M_PI=57.29578
@@ -526,7 +527,8 @@ result_t parse_intensity_payload(const scan_intensity_packet_t &scan,
       point.angle = scan.header.packageFirstSampleAngle;
     }
 
-    point.range = scan.payload[i].PackageSampleDistance;
+    point.range = scan.payload[i].PackageSample.PackageSampleDistance;
+    point.interference_sign = scan.payload[i].PackageSample.PackageSampleSi;
     point.intensity = scan.payload[i].PackageSampleIntensity;
 
     if (point.range > 0) {

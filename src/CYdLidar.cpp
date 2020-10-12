@@ -148,11 +148,11 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
       point.angle = 2 * M_PI - point.angle;
       point.angle = angles::normalize_angle(point.angle);
 
-      if (m_GlassNoise && point.intensity == GLASSNOISEINTENSITY) {
+      if (m_GlassNoise && point.interference_sign == GLASSNOISEINTENSITY) {
         point.range = 0.0;
       }
 
-      if (m_SunNoise && point.intensity == SUNNOISEINTENSITY) {
+      if (m_SunNoise && point.interference_sign == SUNNOISEINTENSITY) {
         point.range  = 0.0;
       }
 
