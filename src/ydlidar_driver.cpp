@@ -54,6 +54,8 @@ YDlidarDriver::YDlidarDriver():
   transfer_delay      = 0;
   package_transfer_time       = 0;
   m_error_info        = NoError;
+  m_new_protocol      = false;
+  m_intensity_protocol = -1;
   ydlidar::protocol::reset_ct_packet_t(m_global_ct);
 }
 
@@ -618,7 +620,10 @@ int YDlidarDriver::cacheScanData() {
   local_fan.points.clear();
   local_scan.points.clear();
   m_error_info         = NoError;
+  m_new_protocol       = false;
+  m_intensity_protocol = -1;
   ydlidar::protocol::reset_ct_packet_t(m_global_ct);
+  ydlidar::protocol::check_scan_protocol(_serial, m_intensity_protocol);
   waitScanData(local_fan);
   int timeout_count = 0;
   int package_error = 0;
@@ -772,28 +777,56 @@ result_t YDlidarDriver::waitPackage(LaserFan &package, uint32_t timeout) {
     return RESULT_FAIL;
   }
 
-  scan_packet_t scan;
-  memset(&scan, 0, sizeof(scan_packet_t));
   lidar_error_t error = NoError;
-  result_t ans = ydlidar::protocol::read_response_scan_t(_serial, scan,
-                 m_global_ct, error, timeout);
+  result_t ans = RESULT_FAIL;
+  scan_packet_t scan;
+  scan.header.packageSync = Node_NotSync;
+  scan_intensity_packet_t iscan;
+  iscan.header = scan.header;
+
+  if (m_intensity_protocol < 1) {
+    memset(&scan, 0, sizeof(scan_packet_t));
+    ans = ydlidar::protocol::read_response_scan_t(_serial, scan,
+          m_global_ct, error, timeout);
+  } else {
+    memset(&iscan, 0, sizeof(scan_intensity_packet_t));
+    ans = ydlidar::protocol::read_response_scan_intensity_t(_serial, iscan,
+          m_global_ct, error, timeout);
+  }
+
+
   memcpy(&package.info, &m_global_ct, sizeof(ct_packet_t));
 
   if (IS_OK(ans)) {
     package.points.clear();
-    package.sync_flag = scan.header.packageSync;
 
-    if (IS_OK(ydlidar::protocol::parse_payload(scan, package))) {
+    if (m_intensity_protocol < 1) {
+      package.sync_flag = scan.header.packageSync;
+    } else {
+      package.sync_flag = iscan.header.packageSync;
+
+    }
+
+    result_t ret = RESULT_FAIL;
+
+    if (m_intensity_protocol < 1) {
+      ret = ydlidar::protocol::parse_payload(scan, package);
+    } else {
+      ret = ydlidar::protocol::parse_intensity_payload(iscan, package);
+    }
+
+    if (IS_OK(ret)) {
       if (IS_OK(ydlidar::protocol::check_ct_packet_t(m_global_ct))) {
         error = ydlidar::protocol::convert_ct_packet_to_error(m_global_ct);
         setDriverError(error);
+        m_new_protocol = true;
       }
     }
 
-    if (error == NoError && (m_error_info < SensorError ||
-                             m_error_info > DataError)) {
+    if (!m_new_protocol) {
       setDriverError(error);
     }
+
   } else {
     package.points.clear();
     setDriverError(error);

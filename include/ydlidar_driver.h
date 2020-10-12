@@ -447,6 +447,8 @@ class YDlidarDriver {
   uint32_t       package_transfer_time;
   lidar_error_t  m_error_info;
   ct_packet_t    m_global_ct;
+  bool           m_new_protocol;
+  int8_t         m_intensity_protocol;
 
 };
 }
