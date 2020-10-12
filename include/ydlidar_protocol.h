@@ -100,6 +100,8 @@ uint16_t checksum_response_scan_intensity_packet_t(const scan_intensity_packet_t
 result_t read_response_scan_header_t(Serial *serial,
                                      node_package_header_t &header, ct_packet_t &ct,
                                      lidar_error_t &error, uint32_t timeout = READ_DEFAULT_TIMEOUT);
+result_t check_scan_protocol(Serial *serial, int8_t &protocol,
+                             uint32_t timeout = READ_DEFAULT_TIMEOUT);
 
 result_t read_response_scan_t(Serial *serial, scan_packet_t &scan,
                               ct_packet_t &ct,

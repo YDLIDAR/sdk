@@ -228,6 +228,7 @@ result_t read_command(Serial *serial, uint8_t *buffer, size_t size,
                       lidar_error_t &error,
                       uint32_t timeout) {
   assert(serial);
+
   result_t ans = wait_for_data(serial, size, timeout);
 
   if (!IS_OK(ans)) {
@@ -472,6 +473,7 @@ result_t parse_payload(const scan_packet_t &scan, LaserFan &data) {
     }
 
     point.range = scan.payload[i].PackageSampleDistance;
+    point.intensity = scan.payload[i].PackageSampleSi;
 
     if (point.range > 0) {
       //180/M_PI=57.29578
@@ -626,13 +628,13 @@ uint16_t checksum_response_scan_packet_t(const scan_packet_t &scan) {
   data_ptr++;
 
   for (i = 0; i < scan.header.nowPackageNum; ++i) {
-    checksum ^= *data_ptr++;
-
     if (sizeof(node_package_payload_t) == 3) {//intensity protocol
       uint8_t *p1data_back = (uint8_t *)data_ptr;
       checksum ^= *p1data_back++;
       data_ptr = (uint16_t *)(p1data_back);
     }
+
+    checksum ^= *data_ptr++;
   }
 
   return checksum;
@@ -651,13 +653,13 @@ uint16_t checksum_response_scan_intensity_packet_t(
   data_ptr++;
 
   for (i = 0; i < scan.header.nowPackageNum; ++i) {
-    checksum ^= *data_ptr++;
-
     if (sizeof(node_package_intensity_payload_t) == 3) {//intensity protocol
       uint8_t *p1data_back = (uint8_t *)data_ptr;
       checksum ^= *p1data_back++;
       data_ptr = (uint16_t *)(p1data_back);
     }
+
+    checksum ^= *data_ptr++;
   }
 
   return checksum;
@@ -785,6 +787,99 @@ result_t read_response_scan_header_t(Serial *serial,
     }
   }
 
+  return ans;
+}
+
+result_t check_scan_protocol(Serial *serial, int8_t &protocol,
+                             uint32_t timeout) {
+  assert(serial);
+  uint32_t startTs = getms();
+  uint32_t waitTime = 0;
+  result_t ans = RESULT_TIMEOUT;
+
+  while ((waitTime = (getms() - startTs)) < timeout * 2) {
+    scan_packet_t scan;
+    ct_packet_t ct;
+    lidar_error_t error;
+    ans = read_response_scan_header_t(serial, scan.header, ct, error,
+                                      timeout);
+
+    if (IS_OK(ans)) {
+      if (scan.header.nowPackageNum > 1) {
+        continue;
+      }
+
+      size_t size =  sizeof(node_package_payload_t) * scan.header.nowPackageNum;
+      ans = read_command(serial, (uint8_t *)&scan.payload, size, error,
+                         SCAN_DEFAULT_TIMEOUT);
+
+      size_t isize =  sizeof(node_package_intensity_payload_t) *
+                      scan.header.nowPackageNum;
+      scan_intensity_packet_t iscan;
+      iscan.header = scan.header;
+      memcpy(&iscan.payload, &scan.payload, size);
+      uint8_t *scan_buffer = reinterpret_cast<uint8_t *>(&iscan.payload);
+      size_t offset_size = size;
+      uint16_t buffer = 0;
+
+      if (IS_OK(ans)) {
+        if (checksum_response_scan_packet_t(scan) == scan.header.checkSum) {
+          ans = read_command(serial, (uint8_t *)&buffer, 2, error, SCAN_DEFAULT_TIMEOUT);
+
+          if (IS_OK(ans)) {
+            if (buffer == 0x55aa) {
+              protocol = 0;
+              printf("[YDLIDAR INFO]: intensity: false\n");
+              fflush(stdout);
+              return ans;
+            } else {
+              if (scan.header.nowPackageNum == 1) {
+                memcpy(scan_buffer + offset_size, &buffer, 1);
+                offset_size += 1;
+              } else {
+                memcpy(scan_buffer + offset_size, &buffer, 2);
+                offset_size += 2;
+              }
+            }
+          }
+        }
+
+        if (protocol < 0) {
+          if (isize - offset_size > 0) {
+            ans = read_command(serial, scan_buffer + offset_size, isize - offset_size,
+                               error, SCAN_DEFAULT_TIMEOUT);
+          }
+
+          if (IS_OK(ans)) {
+            if (checksum_response_scan_intensity_packet_t(iscan) == iscan.header.checkSum) {
+              if (iscan.header.nowPackageNum == 1 && offset_size > size) {
+                uint8_t buf = 0;
+                ans = read_command(serial, (uint8_t *)&buf, 1, error, SCAN_DEFAULT_TIMEOUT);
+
+                if (IS_OK(ans)) {
+                  buffer = (buffer << 8 | buf);
+                }
+              } else {
+                ans = read_command(serial, (uint8_t *)&buffer, 2, error, SCAN_DEFAULT_TIMEOUT);
+              }
+
+              if (IS_OK(ans)) {
+                if (buffer == 0x55aa) {
+                  protocol = 1;
+                  printf("[YDLIDAR INFO]: intensity: true\n");
+                  fflush(stdout);
+                  return ans;
+                }
+              }
+            }
+          }
+        }
+
+      }
+    }
+  }
+
+  ans = RESULT_TIMEOUT;
   return ans;
 }
 
