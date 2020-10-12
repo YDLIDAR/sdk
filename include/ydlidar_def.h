@@ -118,24 +118,6 @@ enum bits : uint8_t {
 }  // namespace response_scan_packet_sync
 
 
-
-struct node_package_intensity_payload_t {
-  uint8_t PackageSampleIntensity;/// intensity
-  uint16_t PackageSampleDistance; ///< range
-} __attribute__((packed));
-static_assert(sizeof(node_package_intensity_payload_t) == 3,
-              "response scan intensity payload size mismatch.");
-
-
-struct scan_intensity_packet_t {
-  node_package_header_t header;
-  node_package_intensity_payload_t  payload[40];
-} __attribute__((packed)) ;
-
-static_assert(sizeof(scan_intensity_packet_t) == 130,
-              "response scan intensity packet size mismatch.");
-
-
 /// package node info
 struct node_package_payload_t {
   uint16_t PackageSampleSi: 2; ///< si
@@ -151,6 +133,22 @@ struct scan_packet_t {
 
 static_assert(sizeof(scan_packet_t) == 90,
               "response scan packet size mismatch.");
+
+struct node_package_intensity_payload_t {
+  uint8_t PackageSampleIntensity;/// intensity
+  node_package_payload_t PackageSample; ///< range
+} __attribute__((packed));
+static_assert(sizeof(node_package_intensity_payload_t) == 3,
+              "response scan intensity payload size mismatch.");
+
+
+struct scan_intensity_packet_t {
+  node_package_header_t header;
+  node_package_intensity_payload_t  payload[40];
+} __attribute__((packed)) ;
+
+static_assert(sizeof(scan_intensity_packet_t) == 130,
+              "response scan intensity packet size mismatch.");
 
 
 struct device_info {
@@ -217,10 +215,12 @@ static_assert(sizeof(ct_packet_t) == 105,
 struct LaserPoint {
   float angle;
   float range;
-  uint16_t intensity;
+  uint8_t interference_sign;
+  uint8_t intensity;
   LaserPoint &operator = (const LaserPoint &data) {
     angle = data.angle;
     range = data.range;
+    interference_sign = data.interference_sign;
     intensity = data.intensity;
     return *this;
   }
