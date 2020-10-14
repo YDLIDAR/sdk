@@ -32,32 +32,32 @@
 
 
 typedef enum  {
-  NoError,
-  DeviceNotFoundError,
-  PermissionError,
-  OpenError,
-  ParityError,
+  NoError,//无错误
+  DeviceNotFoundError,//无串口设备
+  PermissionError,//串口权限异常
+  OpenError,//串口打开失败
+  ParityError,//串口校验位
   FramingError,
   BreakConditionError,
-  WriteError,
-  ReadError,
-  ResourceError,
-  UnsupportedOperationError,
-  TimeoutError,
-  NotOpenError,
-  HeaderError,
-  FirstSampleAngleError,
-  LastSampleAngleError,
-  PackageNumberError,
-  CheckSumError,
-  SensorError,
-  EncodeError,
-  PWRError,
+  WriteError,//写串口数据错误
+  ReadError,//读串口数据异常
+  ResourceError,//串口被占用
+  UnsupportedOperationError,//不支持的操作
+  TimeoutError,//超时(串口异常)
+  NotOpenError,//串口没打开
+  HeaderError,//包头错误
+  FirstSampleAngleError,//采样角错误
+  LastSampleAngleError,//采样角错误
+  PackageNumberError,//采样数错误
+  CheckSumError,//校验和错误
+  SensorError,//雷达硬件错误
+  EncodeError,//雷达卡主,
+  PWRError,//供电异常
   PDError,
   LDError,
-  DataError,
-  TrembleError,
-  LidarNotFoundError,
+  DataError,//激光被遮挡
+  TrembleError,//抖动(跳频）
+  LidarNotFoundError,//雷达没发现
   UnknownError,
 } lidar_error_t;
 
