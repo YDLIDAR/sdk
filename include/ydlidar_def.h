@@ -58,7 +58,7 @@ typedef enum  {
   DataError,//激光被遮挡
   TrembleError,//抖动(跳频）
   LidarNotFoundError,//雷达没发现
-  UnknownError,
+  UnknownError,//没初始化
 } lidar_error_t;
 
 #pragma pack(1)

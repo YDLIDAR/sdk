@@ -56,6 +56,9 @@ YDlidarDriver::YDlidarDriver():
   m_error_info        = NoError;
   m_new_protocol      = false;
   m_intensity_protocol = -1;
+  m_error_info_time = getms();
+  m_parsing_error_time = getms();
+  serial_read_timeout_count = 0;
   ydlidar::protocol::reset_ct_packet_t(m_global_ct);
 }
 
@@ -622,15 +625,13 @@ int YDlidarDriver::cacheScanData() {
   m_error_info         = NoError;
   m_new_protocol       = false;
   m_intensity_protocol = -1;
-  m_startscan_count    = 0;
-  m_package_error_count = 0;
-  m_ct_error_count = 0;
   ydlidar::protocol::reset_ct_packet_t(m_global_ct);
   ydlidar::protocol::check_scan_protocol(_serial, m_intensity_protocol);
   waitScanData(local_fan);
   int timeout_count = 0;
-  int package_error = 0;
-  lidar_error_t m_last_error = m_error_info;
+  m_error_info_time = getms();
+  m_parsing_error_time = getms();
+  serial_read_timeout_count = 0;
 
   while (m_isScanning) {
     ans = waitScanData(local_fan);
@@ -646,10 +647,10 @@ int YDlidarDriver::cacheScanData() {
           return RESULT_FAIL;
         } else {//做异常处理, 重新连接
           isAutoconnting = true;
-          m_startscan_count = 0;
-          m_package_error_count = 0;
-          m_ct_error_count = 0;
+          m_error_info_time = getms();
+          m_parsing_error_time = getms();
           printf("Starting automatic reconnection.....\n");
+          fflush(stdout);
 
           while (isAutoReconnect && isAutoconnting) {
             {
@@ -687,8 +688,9 @@ int YDlidarDriver::cacheScanData() {
 
               if (IS_OK(ans)) {
                 timeout_count = 0;
-                package_error = 0;
                 local_scan.sync_flag =  Node_NotSync;
+                m_error_info_time = getms();
+                m_parsing_error_time = getms();
 
                 if (getDriverError() == LidarNotFoundError ||
                     getDriverError() == DeviceNotFoundError) {
@@ -706,97 +708,31 @@ int YDlidarDriver::cacheScanData() {
         }
 
       } else {
-        if (m_error_info == NoError) {
-          setDriverError(TimeoutError);
-        }
+        timeout_count++;
+        lidar_error_t err = m_error_info;
 
-        if (m_error_info != ReadError) {
-          package_error++;
-
-          if (package_error % 2 == 0) {
-            timeout_count++;
-          }
-        } else {
-          timeout_count++;
+        if (serial_read_timeout_count > 0 && m_error_info == NoError) {
+          err = ReadError;
         }
 
         printf("timeout[%d]: %s\n", timeout_count,
-               ydlidar::protocol::DescribeError(m_error_info));
+               ydlidar::protocol::DescribeError(err));
         fflush(stdout);
         local_scan.sync_flag =  Node_NotSync;
       }
     } else {
       timeout_count = 0;
-      package_error = 0;
-    }
-
-    if (m_error_info != m_last_error) {
-      if (m_error_info == NoError) {
-        local_scan.sync_flag =  Node_NotSync;
-      }
-    }
-
-    if (m_error_info >= HeaderError && m_error_info <= CheckSumError) {
-      m_package_error_count++;
-
-      if (m_package_error_count <= 3) {
-        setDriverError(NoError);
-      }
     }
 
     if (local_fan.sync_flag) {
-//      if ((local_scan.sync_flag)) {//移除一圈完成，才触发数据事件
-//        _lock.lock();//timeout lock, wait resource copy
-//        memcpy(&m_global_fan.info, &local_fan.info, sizeof(ct_packet_t));
-//        m_global_fan.sync_flag = local_fan.sync_flag;
-//        m_global_fan.points = local_scan.points;
-//        _dataEvent.set();
-//        _lock.unlock();
-//      }
       if (local_scan.sync_flag) {
-        m_startscan_count++;
-
-        if (local_fan.info.info[0] > 0) {
-          printf("scan frequency: %f Hz\n", local_fan.info.info[0] / 10.0);
-          fflush(stdout);
-        }
-      }
-
-      if (m_error_info >= SensorError && m_error_info <= DataError) {
-        if (local_fan.info.valid && local_fan.info.info[0] < 1) {
-          m_ct_error_count += 2;
-        } else {
-          m_ct_error_count++;
-        }
-
-        printf("encoder error count: %d\n", m_ct_error_count);
+        printf("scan frequency: %f Hz\n", local_fan.info.info[0] / 10.0);
         fflush(stdout);
-      } else {
-        m_ct_error_count = 0;
       }
 
-      m_package_error_count = 0;
       local_scan = local_fan;
       local_scan.points.clear();
     }
-
-    if ((m_error_info == EncodeError || m_error_info == DataError) &&
-        m_ct_error_count < 3) {
-      setDriverError(NoError);
-      m_last_error = NoError;
-    }
-
-
-    if (m_startscan_count <= 8) {
-      if (m_error_info >= HeaderError && m_error_info <= DataError) {
-        setDriverError(NoError);
-        m_last_error = NoError;
-      }
-    } else {
-      m_startscan_count = 9;
-    }
-
-    m_last_error = m_error_info;
 
     if (local_fan.points.size()) {
       std::copy(local_fan.points.begin(), local_fan.points.end(),
@@ -846,7 +782,6 @@ result_t YDlidarDriver::waitPackage(LaserFan &package, uint32_t timeout) {
           m_global_ct, error, timeout);
   }
 
-
   memcpy(&package.info, &m_global_ct, sizeof(ct_packet_t));
 
   if (IS_OK(ans)) {
@@ -870,6 +805,18 @@ result_t YDlidarDriver::waitPackage(LaserFan &package, uint32_t timeout) {
     if (IS_OK(ret)) {
       if (IS_OK(ydlidar::protocol::check_ct_packet_t(m_global_ct))) {
         error = ydlidar::protocol::convert_ct_packet_to_error(m_global_ct);
+
+        if (error >= EncodeError && error <= DataError) {
+          if (getms() - m_error_info_time < 3500) {
+            error = NoError;
+          } else {
+            printf("ct error time: %ums\n", getms() - m_error_info_time);
+            fflush(stdout);
+          }
+        } else {
+          m_error_info_time = getms();
+        }
+
         setDriverError(error);
         m_new_protocol = true;
       }
@@ -881,6 +828,29 @@ result_t YDlidarDriver::waitPackage(LaserFan &package, uint32_t timeout) {
 
   } else {
     package.points.clear();
+    m_error_info_time = getms();
+
+    if (error >= HeaderError && error <= CheckSumError) {
+      if (getms() - m_parsing_error_time < 2000) {
+        error = NoError;
+      } else {
+        printf("package error time: %ums\n", getms() - m_parsing_error_time);
+        fflush(stdout);
+      }
+    } else {
+      m_parsing_error_time = getms();
+    }
+
+    if (error == ReadError) {
+      serial_read_timeout_count++;
+
+      if (serial_read_timeout_count <= 3) {
+        error = NoError;
+      }
+    } else {
+      serial_read_timeout_count = 0;
+    }
+
     setDriverError(error);
   }
 

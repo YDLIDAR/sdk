@@ -166,12 +166,12 @@ lidar_error_t convert_ct_packet_to_error(const ct_packet_t &ct) {
       err = LDError;
     }
 
-    if (ct.info[HEALTHINDEX] & response_health_error::SensorError) {
-      err = SensorError;
-    }
-
     if (ct.info[HEALTHINDEX] & response_health_error::EncodeError) {
       err = EncodeError;
+    }
+
+    if (ct.info[HEALTHINDEX] & response_health_error::SensorError) {
+      err = SensorError;
     }
   }
 
@@ -179,7 +179,7 @@ lidar_error_t convert_ct_packet_to_error(const ct_packet_t &ct) {
 
     if (ct.size > FREINDEX) {
       if (ct.info[FREINDEX] < 1) {
-        err = EncodeError;
+//        err = EncodeError;
       }
     }
   }
