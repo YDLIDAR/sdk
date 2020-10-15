@@ -449,6 +449,9 @@ class YDlidarDriver {
   ct_packet_t    m_global_ct;
   bool           m_new_protocol;
   int8_t         m_intensity_protocol;
+  int            m_startscan_count;
+  int            m_package_error_count;
+  int            m_ct_error_count;
 
 };
 }

@@ -85,9 +85,11 @@ int main(int argc, char *argv[]) {
               (unsigned int)scan.data.size(), 1.0 / scan.config.scan_time);
       fflush(stdout);
     } else {
-      printf("[YDLIDAR ERROR]: %s\n",
-             ydlidar::protocol::DescribeError(laser.getDriverError()));
-      fflush(stdout);
+      if (laser.getDriverError() != NoError) {
+        printf("[YDLIDAR ERROR]: %s\n",
+               ydlidar::protocol::DescribeError(laser.getDriverError()));
+        fflush(stdout);
+      }
     }
   }
 

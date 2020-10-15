@@ -1,4 +1,4 @@
-
+﻿
 #include "ydlidar_driver.h"
 #include "common.h"
 #include <math.h>
@@ -622,6 +622,9 @@ int YDlidarDriver::cacheScanData() {
   m_error_info         = NoError;
   m_new_protocol       = false;
   m_intensity_protocol = -1;
+  m_startscan_count    = 0;
+  m_package_error_count = 0;
+  m_ct_error_count = 0;
   ydlidar::protocol::reset_ct_packet_t(m_global_ct);
   ydlidar::protocol::check_scan_protocol(_serial, m_intensity_protocol);
   waitScanData(local_fan);
@@ -643,6 +646,9 @@ int YDlidarDriver::cacheScanData() {
           return RESULT_FAIL;
         } else {//做异常处理, 重新连接
           isAutoconnting = true;
+          m_startscan_count = 0;
+          m_package_error_count = 0;
+          m_ct_error_count = 0;
           printf("Starting automatic reconnection.....\n");
 
           while (isAutoReconnect && isAutoconnting) {
@@ -730,7 +736,13 @@ int YDlidarDriver::cacheScanData() {
       }
     }
 
-    m_last_error = m_error_info;
+    if (m_error_info >= HeaderError && m_error_info <= CheckSumError) {
+      m_package_error_count++;
+
+      if (m_package_error_count <= 3) {
+        setDriverError(NoError);
+      }
+    }
 
     if (local_fan.sync_flag) {
 //      if ((local_scan.sync_flag)) {//移除一圈完成，才触发数据事件
@@ -741,10 +753,50 @@ int YDlidarDriver::cacheScanData() {
 //        _dataEvent.set();
 //        _lock.unlock();
 //      }
+      if (local_scan.sync_flag) {
+        m_startscan_count++;
 
+        if (local_fan.info.info[0] > 0) {
+          printf("scan frequency: %f Hz\n", local_fan.info.info[0] / 10.0);
+          fflush(stdout);
+        }
+      }
+
+      if (m_error_info >= SensorError && m_error_info <= DataError) {
+        if (local_fan.info.valid && local_fan.info.info[0] < 1) {
+          m_ct_error_count += 2;
+        } else {
+          m_ct_error_count++;
+        }
+
+        printf("encoder error count: %d\n", m_ct_error_count);
+        fflush(stdout);
+      } else {
+        m_ct_error_count = 0;
+      }
+
+      m_package_error_count = 0;
       local_scan = local_fan;
       local_scan.points.clear();
     }
+
+    if ((m_error_info == EncodeError || m_error_info == DataError) &&
+        m_ct_error_count < 3) {
+      setDriverError(NoError);
+      m_last_error = NoError;
+    }
+
+
+    if (m_startscan_count <= 8) {
+      if (m_error_info >= HeaderError && m_error_info <= DataError) {
+        setDriverError(NoError);
+        m_last_error = NoError;
+      }
+    } else {
+      m_startscan_count = 9;
+    }
+
+    m_last_error = m_error_info;
 
     if (local_fan.points.size()) {
       std::copy(local_fan.points.begin(), local_fan.points.end(),
