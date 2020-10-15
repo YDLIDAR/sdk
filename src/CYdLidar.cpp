@@ -24,7 +24,7 @@ CYdLidar::CYdLidar(): lidarPtr(0) {
   m_MinAngle          = -180.f;
   m_MaxRange          = 8.0;
   m_MinRange          = 0.08;
-  m_AbnormalCheckCount = 3;
+  m_AbnormalCheckCount = 8;
   isScanning          = false;
   isConnected         = false;
   m_GlassNoise        = true;
@@ -273,7 +273,7 @@ bool CYdLidar::checkLidarAbnormal() {
   while (check_abnormal_count < m_AbnormalCheckCount) {
     //Ensure that the voltage is insufficient or the motor resistance is high, causing an abnormality.
     if (check_abnormal_count > 1) {
-      delay(check_abnormal_count * 1000);
+      delay(check_abnormal_count * 50);
     }
 
     LaserFan packages;
