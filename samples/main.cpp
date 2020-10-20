@@ -74,6 +74,7 @@ int main(int argc, char *argv[]) {
   laser.setGlassNoise(true);
   laser.setSunNoise(true);
   bool ret = laser.initialize();
+  ret &= laser.turnOn();
   LaserScan scan;
 
   while (ret && ydlidar::ok()) {
