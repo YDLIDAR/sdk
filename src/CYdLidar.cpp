@@ -52,6 +52,8 @@ CYdLidar::~CYdLidar() {
 void CYdLidar::disconnecting() {
   if (lidarPtr) {
     lidarPtr->disconnect();
+    printf("[YDLIDAR INFO] Now YDLIDAR disconnecting ......\n");
+    fflush(stdout);
     delete lidarPtr;
     lidarPtr    = 0;
     isConnected = false;
@@ -214,6 +216,7 @@ bool  CYdLidar::turnOn() {
     if (!IS_OK(op_result)) {
       fprintf(stderr, "[CYdLidar] Failed to start scan mode: %x, %s\n", op_result,
               ydlidar::protocol::DescribeError(lidarPtr->getDriverError()));
+      fflush(stderr);
       lidarPtr->stop();
       isScanning = false;
       return false;
@@ -228,6 +231,7 @@ bool  CYdLidar::turnOn() {
             "[CYdLidar][%fs] Failed to turn on the Lidar, because %s.\n",
             (getms() - startTs) / 1000.0,
             ydlidar::protocol::DescribeError(lidarPtr->getDriverError()));
+    fflush(stderr);
     lidarPtr->stop();
     isScanning = false;
     return false;
@@ -247,10 +251,13 @@ bool  CYdLidar::turnOn() {
 bool  CYdLidar::turnOff() {
   if (lidarPtr) {
     lidarPtr->stop();
+    printf("[YDLIDAR INFO] Now YDLIDAR Stop Scan ......\n");
+    fflush(stdout);
   }
 
   if (isScanning) {
     printf("[YDLIDAR INFO] Now YDLIDAR Scanning has stopped ......\n");
+    fflush(stdout);
   }
 
   isScanning = false;
@@ -298,17 +305,18 @@ bool CYdLidar::getDeviceHealth(uint32_t timeout) {
   uint32_t startTs = getms();
   result_t op_result;
   device_health healthinfo;
-  printf("[YDLIDAR]:SDK Version: %s\n", YDlidarDriver::getSDKVersion().c_str());
   op_result = lidarPtr->getHealth(healthinfo, timeout);
 
   if (IS_OK(op_result)) {
     printf("[YDLIDAR][%fs]:Lidar running correctly ! The health status: %s\n",
            (getms() - startTs) / 1000.0,
            (int)healthinfo.status == 0 ? "good" : "bad");
+    fflush(stdout);
 
     if (healthinfo.status == 2) {
-      fprintf(stderr,
-              "Error, YDLIDAR internal error detected. Please reboot the device to retry.\n");
+//      fprintf(stderr,
+//              "Error, YDLIDAR internal error detected. Please reboot the device to retry.\n");
+//      fflush(stderr);
       return false;
     } else {
       return true;
@@ -355,9 +363,11 @@ bool CYdLidar::getDeviceInfo(uint32_t timeout) {
   }
 
   printf("\n");
+  fflush(stdout);
   checkScanFrequency();
   //checkZeroOffsetAngle();
   printf("[YDLIDAR INFO] Current Sampling Rate : %dK\n", sample_rate);
+  fflush(stdout);
   return true;
 }
 
@@ -414,6 +424,7 @@ bool CYdLidar::checkScanFrequency() {
   fixed_size = sample_rate * 1000 / (m_ScanFrequency - 0.1);
   printf("[YDLIDAR INFO][%fs] Current Scan Frequency: %fHz\n",
          (getms() - startTs) / 1000.0, m_ScanFrequency);
+  fflush(stdout);
   return true;
 }
 
@@ -486,6 +497,7 @@ bool  CYdLidar::checkCOMMs() {
 
     if (!lidarPtr) {
       fprintf(stderr, "Create Driver fail\n");
+      fflush(stderr);
       return false;
 
     }
@@ -518,6 +530,7 @@ bool  CYdLidar::checkCOMMs() {
     fprintf(stderr,
             "[CYdLidar] Error, cannot bind to the specified serial port[%s] and baudrate[%d]\n",
             m_SerialPort.c_str(), m_SerialBaudrate);
+    fflush(stderr);
     return false;
   }
 
@@ -568,13 +581,5 @@ bool CYdLidar::initialize() {
 
   printf("LiDAR init success!\n");
   fflush(stdout);
-
-  if (!turnOn()) {
-    fprintf(stderr, "[CYdLidar::initialize] Error initializing YDLIDAR scanner.\n");
-    fflush(stderr);
-    ret = false;
-
-  }
-
   return ret;
 }
