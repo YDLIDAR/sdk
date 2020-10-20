@@ -798,6 +798,8 @@ result_t check_scan_protocol(Serial *serial, int8_t &protocol,
   uint32_t startTs = getms();
   uint32_t waitTime = 0;
   result_t ans = RESULT_TIMEOUT;
+  uint8_t scan_double_check = 0;
+  uint8_t iscan_double_check = 0;
 
   while ((waitTime = (getms() - startTs)) < timeout * 2) {
     scan_packet_t scan;
@@ -826,11 +828,19 @@ result_t check_scan_protocol(Serial *serial, int8_t &protocol,
 
           if (IS_OK(ans)) {
             if (buffer == 0x55aa) {
-              protocol = 0;
-              printf("[YDLIDAR INFO]: intensity: false\n");
-              fflush(stdout);
-              return ans;
+              scan_double_check++;
+
+              if (scan_double_check > 1) {
+                protocol = 0;
+                printf("[YDLIDAR INFO]: intensity: false\n");
+                fflush(stdout);
+                return ans;
+              } else {
+                continue;
+              }
             } else {
+              scan_double_check = 0;
+
               if (scan.header.nowPackageNum == 1) {
                 memcpy(scan_buffer + offset_size, &buffer, 1);
                 offset_size += 1;
@@ -840,6 +850,8 @@ result_t check_scan_protocol(Serial *serial, int8_t &protocol,
               }
             }
           }
+        } else {
+          scan_double_check = 0;
         }
 
         if (protocol < 0) {
@@ -863,12 +875,23 @@ result_t check_scan_protocol(Serial *serial, int8_t &protocol,
 
               if (IS_OK(ans)) {
                 if (buffer == 0x55aa) {
-                  protocol = 1;
-                  printf("[YDLIDAR INFO]: intensity: true\n");
-                  fflush(stdout);
-                  return ans;
+                  iscan_double_check++;
+
+                  if (iscan_double_check > 1) {
+                    protocol = 1;
+                    printf("[YDLIDAR INFO]: intensity: true\n");
+                    fflush(stdout);
+                    return ans;
+                  } else {
+                    continue;
+                  }
+
+                } else {
+                  iscan_double_check = 0;
                 }
               }
+            } else {
+              iscan_double_check = 0;
             }
           }
         }
