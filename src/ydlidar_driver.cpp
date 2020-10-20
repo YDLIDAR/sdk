@@ -626,7 +626,12 @@ int YDlidarDriver::cacheScanData() {
   m_new_protocol       = false;
   m_intensity_protocol = -1;
   ydlidar::protocol::reset_ct_packet_t(m_global_ct);
-  ydlidar::protocol::check_scan_protocol(_serial, m_intensity_protocol);
+  m_error_info_time = getms();
+  ans = ydlidar::protocol::check_scan_protocol(_serial, m_intensity_protocol);
+  printf("[YDLIDAR INFO] check protocol[%fs]: %d\n",
+         (getms() - m_error_info_time) / 1000.0,
+         ans);
+  fflush(stdout);
   waitScanData(local_fan);
   int timeout_count = 0;
   m_error_info_time = getms();
@@ -699,6 +704,7 @@ int YDlidarDriver::cacheScanData() {
 
                 isAutoconnting = false;
                 printf("automatic connection succeeded\n");
+                fflush(stdout);
               } else {
                 setDriverError(LidarNotFoundError);
               }
