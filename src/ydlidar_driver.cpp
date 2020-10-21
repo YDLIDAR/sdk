@@ -59,6 +59,7 @@ YDlidarDriver::YDlidarDriver():
   m_error_info_time = getms();
   m_parsing_error_time = getms();
   serial_read_timeout_count = 0;
+  global_sync_flag = 0;
   ydlidar::protocol::reset_ct_packet_t(m_global_ct);
 }
 
@@ -637,6 +638,7 @@ int YDlidarDriver::cacheScanData() {
   m_error_info_time = getms();
   m_parsing_error_time = getms();
   serial_read_timeout_count = 0;
+  global_sync_flag = 0;
 
   while (m_isScanning) {
     ans = waitScanData(local_fan);
@@ -745,14 +747,28 @@ int YDlidarDriver::cacheScanData() {
                 std::back_inserter(local_scan.points));
     }
 
-    if (local_scan.points.size() > 1 &&
+    if (local_scan.points.size() >= 1 &&
         local_scan.sync_flag) {//有一个小包，就触发数据事件
       _lock.lock();//timeout lock, wait resource copy
+
+      if ((global_sync_flag && local_fan.sync_flag) ||
+          m_global_fan.points.size() > 3000) {
+        m_global_fan.points.clear();
+      }
+
+      if (local_fan.sync_flag) {
+        global_sync_flag = local_fan.sync_flag;
+      }
+
       memcpy(&m_global_fan.info, &local_scan.info, sizeof(ct_packet_t));
       m_global_fan.sync_flag = local_scan.sync_flag;
       std::copy(local_scan.points.begin(), local_scan.points.end(),
                 std::back_inserter(m_global_fan.points));
-      _dataEvent.set();
+
+      if (m_global_fan.points.size() > 1) {
+        _dataEvent.set();
+      }
+
       _lock.unlock();
       local_scan.points.clear();
     }
@@ -886,6 +902,7 @@ result_t YDlidarDriver::grabScanData(LaserFan *fan, uint32_t timeout) {
 
       *fan = m_global_fan;
       m_global_fan.points.clear();
+      global_sync_flag = 0;
     }
 
     return RESULT_OK;

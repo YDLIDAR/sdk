@@ -267,7 +267,7 @@ class YDlidarDriver {
     * @retval RESULT_FAILE    获取失败
   * @note 获取之前，必须使用::startScan函数开启扫描
     */
-  result_t grabScanData(LaserFan *fan, uint32_t timeout = DEFAULT_TIMEOUT) ;
+  result_t grabScanData(LaserFan *fan, uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
   * @brief 打开电机 \n
@@ -438,6 +438,7 @@ class YDlidarDriver {
  private:
   serial::Serial *_serial;			///< 串口
   LaserFan       m_global_fan;
+  uint8_t        global_sync_flag;
   std::string    serial_port;///< 雷达端口
   uint32_t       baudrate_;
   bool           isSupportMotorCtrl;
