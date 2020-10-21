@@ -285,7 +285,7 @@ bool CYdLidar::checkLidarAbnormal() {
 
     LaserFan packages;
     packages.points.clear();
-    op_result =  lidarPtr->grabScanData(&packages);
+    op_result =  lidarPtr->grabScanData(&packages, 500);
 
     if (IS_OK(op_result)) {
       return !IS_OK(op_result);
