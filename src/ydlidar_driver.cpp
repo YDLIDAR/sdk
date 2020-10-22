@@ -646,8 +646,8 @@ int YDlidarDriver::cacheScanData() {
     if (!IS_OK(ans)) {
       if (!IS_TIMEOUT(ans) || timeout_count > DEFAULT_TIMEOUT_COUNT) {
         if (!isAutoReconnect) {
-          fprintf(stderr, "exit scanning thread!!\n");
-          fflush(stderr);
+          printf("exit scanning thread!!\n");
+          fflush(stdout);
           {
             m_isScanning = false;
           }

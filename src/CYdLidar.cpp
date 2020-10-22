@@ -214,9 +214,9 @@ bool  CYdLidar::turnOn() {
     op_result = lidarPtr->startScan();
 
     if (!IS_OK(op_result)) {
-      fprintf(stderr, "[CYdLidar] Failed to start scan mode: %x, %s\n", op_result,
-              ydlidar::protocol::DescribeError(lidarPtr->getDriverError()));
-      fflush(stderr);
+      printf("[CYdLidar] Failed to start scan mode: %x, %s\n", op_result,
+             ydlidar::protocol::DescribeError(lidarPtr->getDriverError()));
+      fflush(stdout);
       lidarPtr->stop();
       isScanning = false;
       return false;
@@ -227,11 +227,10 @@ bool  CYdLidar::turnOn() {
   package_transfer_time = lidarPtr->getPackageTransferTime();
 
   if (checkLidarAbnormal()) {
-    fprintf(stderr,
-            "[CYdLidar][%fs] Failed to turn on the Lidar, because %s.\n",
-            (getms() - startTs) / 1000.0,
-            ydlidar::protocol::DescribeError(lidarPtr->getDriverError()));
-    fflush(stderr);
+    printf("[CYdLidar][%fs] Failed to turn on the Lidar, because %s.\n",
+           (getms() - startTs) / 1000.0,
+           ydlidar::protocol::DescribeError(lidarPtr->getDriverError()));
+    fflush(stdout);
     lidarPtr->stop();
     isScanning = false;
     return false;
@@ -338,9 +337,9 @@ bool CYdLidar::getDeviceInfo(uint32_t timeout) {
   result_t op_result = lidarPtr->getDeviceInfo(devinfo, timeout);
 
   if (!IS_OK(op_result)) {
-    fprintf(stderr, "get Device Information Error: %s\n",
-            ydlidar::protocol::DescribeError(lidarPtr->getDriverError()));
-    fflush(stderr);
+    printf("get Device Information Error: %s\n",
+           ydlidar::protocol::DescribeError(lidarPtr->getDriverError()));
+    fflush(stdout);
     return false;
   }
 
@@ -496,8 +495,8 @@ bool  CYdLidar::checkCOMMs() {
     lidarPtr = new YDlidarDriver();
 
     if (!lidarPtr) {
-      fprintf(stderr, "Create Driver fail\n");
-      fflush(stderr);
+      printf("Create Driver fail\n");
+      fflush(stdout);
       return false;
 
     }
@@ -527,10 +526,9 @@ bool  CYdLidar::checkCOMMs() {
   result_t op_result = lidarPtr->connect(m_SerialPort.c_str(), m_SerialBaudrate);
 
   if (!IS_OK(op_result)) {
-    fprintf(stderr,
-            "[CYdLidar] Error, cannot bind to the specified serial port[%s] and baudrate[%d]\n",
-            m_SerialPort.c_str(), m_SerialBaudrate);
-    fflush(stderr);
+    printf("[CYdLidar] Error, cannot bind to the specified serial port[%s] and baudrate[%d]\n",
+           m_SerialPort.c_str(), m_SerialBaudrate);
+    fflush(stdout);
     return false;
   }
 
@@ -566,16 +564,15 @@ bool CYdLidar::initialize() {
   bool ret = true;
 
   if (!checkCOMMs()) {
-    fprintf(stderr, "[CYdLidar::initialize] Error initializing YDLIDAR scanner.\n");
-    fflush(stderr);
+    printf("[CYdLidar::initialize] Error initializing YDLIDAR scanner.\n");
+    fflush(stdout);
     return false;
   }
 
   if (!checkStatus()) {
-    fprintf(stderr,
-            "[CYdLidar::initialize] Error initializing YDLIDAR check status under [%s] and [%d].\n",
-            m_SerialPort.c_str(), m_SerialBaudrate);
-    fflush(stderr);
+    printf("[CYdLidar::initialize] Error initializing YDLIDAR check status under [%s] and [%d].\n",
+           m_SerialPort.c_str(), m_SerialBaudrate);
+    fflush(stdout);
     return false;
   }
 
