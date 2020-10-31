@@ -760,17 +760,16 @@ int YDlidarDriver::cacheScanData() {
         global_sync_flag = local_fan.sync_flag;
       }
 
-      memcpy(&m_global_fan.info, &local_scan.info, sizeof(ct_packet_t));
-      m_global_fan.sync_flag = local_scan.sync_flag;
-      std::copy(local_scan.points.begin(), local_scan.points.end(),
-                std::back_inserter(m_global_fan.points));
-
-      if (m_global_fan.points.size() > 1) {
+      if (m_global_fan.points.size() >= 1 || local_scan.points.size() > 1) {
+        memcpy(&m_global_fan.info, &local_scan.info, sizeof(ct_packet_t));
+        m_global_fan.sync_flag = local_scan.sync_flag;
+        std::copy(local_scan.points.begin(), local_scan.points.end(),
+                  std::back_inserter(m_global_fan.points));
+        local_scan.points.clear();
         _dataEvent.set();
       }
 
       _lock.unlock();
-      local_scan.points.clear();
     }
 
   }
