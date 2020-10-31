@@ -733,10 +733,10 @@ int YDlidarDriver::cacheScanData() {
     }
 
     if (local_fan.sync_flag) {
-      if (local_scan.sync_flag) {
-        printf("scan frequency: %f Hz\n", local_fan.info.info[0] / 10.0);
-        fflush(stdout);
-      }
+//      if (local_scan.sync_flag) {
+//        printf("scan frequency: %f Hz\n", local_fan.info.info[0] / 10.0);
+//        fflush(stdout);
+//      }
 
       local_scan = local_fan;
       local_scan.points.clear();
