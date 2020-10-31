@@ -73,6 +73,7 @@ int main(int argc, char *argv[]) {
   laser.setAutoReconnect(true);
   laser.setGlassNoise(true);
   laser.setSunNoise(true);
+  laser.setAbnormalCheckCount(8);
   bool ret = laser.initialize();
   ret &= laser.turnOn();
   LaserScan scan;

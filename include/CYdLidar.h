@@ -50,19 +50,21 @@ class YDLIDAR_API CYdLidar {
                         private) ///< 设置和获取激光最大角度, 最大值180度
   PropertyBuilderByName(float, MinAngle,
                         private) ///< 设置和获取激光最小角度, 最小值-180度
-  PropertyBuilderByName(float, OffsetTime, private)
+  PropertyBuilderByName(float, OffsetTime, private) ///< 设置时间戳偏移值
 
-  PropertyBuilderByName(float, ScanFrequency, private)
+  PropertyBuilderByName(float, ScanFrequency,
+                        private)///< 设置雷达扫描频率(S2Pro雷达支持)
 
   PropertyBuilderByName(bool, FixedResolution,
                         private) ///< 设置和获取激光是否是固定角度分辨率
   PropertyBuilderByName(bool, Reversion,
-                        private) ///< 设置和获取是否旋转激光180度
+                        private) ///< 设置和获取是否旋转激光激光数据180度
   PropertyBuilderByName(bool, AutoReconnect,
                         private) ///< 设置异常是否开启重新连接
   PropertyBuilderByName(bool, GlassNoise,
-                        private) ///< whether to close glass noise
-  PropertyBuilderByName(bool, SunNoise, private) ///< whether to close sun noise
+                        private) ///< 设置是否开启玻璃干扰标志过滤
+  PropertyBuilderByName(bool, SunNoise,
+                        private) ///< 设置是否开启阳光干扰标志过滤
 
   PropertyBuilderByName(int, SerialBaudrate,
                         private) ///< 设置和获取激光通讯波特率
@@ -71,8 +73,13 @@ class YDLIDAR_API CYdLidar {
   PropertyBuilderByName(std::vector<float>, IgnoreArray,
                         private) ///< 设置和获取激光剔除点
   PropertyBuilderByName(int, AbnormalCheckCount,
-                        private) ///< Maximum number of abnormal checks
-
+                        private) ///< 最大检查雷达数据的是否异常的次数
+  ///换算到时间就是(AbnormalCheckCount *500 + 50*(2+...+ AbnormalCheckCount -1))ms
+  /// 比如设置到8， 换算到时间=（8*500 + 50*(2+3+4+5+6+7))= 5350ms,
+  /// 也就是如果5s中之内没有数据或者有数据雷达数据一直异常，则turnOn失败。
+  /// 如果设置到2， 时间=(2*500)= 1000ms, 如果1s之内没有数据或者数据异常，
+  /// 则turnOn返回失败。因为启动会有延时， 可能有时启动时间大于1s, 则设置到2时，
+  /// 会出现turnOn失败。
 
  public:
   CYdLidar(); //!< Constructor
