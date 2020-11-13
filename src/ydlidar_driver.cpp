@@ -134,14 +134,14 @@ void YDlidarDriver::flushSerial() {
     return;
   }
 
-  delay(10);
+  delay(5);
   size_t len = _serial->available();
 
   if (len) {
     _serial->read(len);
   }
 
-  delay(20);
+  delay(2);
 }
 
 
@@ -433,6 +433,7 @@ int YDlidarDriver::cacheScanData() {
   size_t         scan_count = 0;
   result_t       ans = RESULT_FAIL;
   memset(local_scan, 0, sizeof(local_scan));
+  flushSerial();
   waitScanData(local_buf, count);
 
   int timeout_count   = 0;
@@ -477,6 +478,7 @@ int YDlidarDriver::cacheScanData() {
         if ((local_scan[0].sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT)) {
           _lock.lock();//timeout lock, wait resource copy
           local_scan[0].dstamp = local_buf[pos].dstamp;
+          local_scan[0].scan_frequence = local_buf[pos].scan_frequence;
           memcpy(scan_node_buf, local_scan, scan_count * sizeof(node_info));
           scan_node_count = scan_count;
           _dataEvent.set();
@@ -663,7 +665,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
       while ((waitTime = getms() - startTs) <= timeout) {
         size_t remainSize = package_Sample_Num * PackageSampleBytes - recvPos;
-        size_t recvSize;
+        size_t recvSize = 0;
         result_t ans = waitForData(remainSize, timeout - waitTime, &recvSize);
 
         if (!IS_OK(ans)) {
@@ -1117,7 +1119,7 @@ void YDlidarDriver::setIntensities(const bool &isintensities) {
     }
 
     globalRecvBuffer = new uint8_t[isintensities ? sizeof(node_package) : sizeof(
-                                                   node_packages)];
+                                     node_packages)];
   }
 
   m_intensities = isintensities;

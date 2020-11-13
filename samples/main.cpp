@@ -68,7 +68,14 @@ int main(int argc, char *argv[]) {
 
   CYdLidar laser;
   laser.setSerialPort(port);
+
   laser.setSerialBaudrate(115200);
+  laser.setIntensity(false);
+
+  //4K-带信号强度
+//  laser.setSerialBaudrate(153600);
+//  laser.setIntensity(true);
+
   laser.setFixedResolution(false);
   laser.setAutoReconnect(true);//hot plug
 

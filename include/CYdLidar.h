@@ -24,6 +24,7 @@ class YDLIDAR_API CYdLidar {
   PropertyBuilderByName(bool, GlassNoise,
                         private) ///< whether to close glass noise
   PropertyBuilderByName(bool, SunNoise, private) ///< whether to close sun noise
+  PropertyBuilderByName(bool, Intensity, private) ///< 是否带信号质量
   PropertyBuilderByName(int, SerialBaudrate,
                         private) ///< 设置和获取激光通讯波特率
   PropertyBuilderByName(int, AbnormalCheckCount,
