@@ -15,10 +15,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.2.1 |   2020-09-18  |
+| SDK     |  2.2.2 |   2020-11-13  |
 
-- [feat] double check generates lidar data at turnOn.
-- [feat] Optimize Block check condition. 
+- [feat] Delete logic of time reversal and time drift prevention and grant scan sequence.
+- [feat] Add log data of timestamp from start data transmit to complete data transmit while lidar rotates one rotation. 
 
 ## How to Fetch zero angle tolerance values from lidar’s internal memory while lidar assembly.
 ```
