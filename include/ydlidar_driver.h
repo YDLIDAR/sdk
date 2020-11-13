@@ -193,7 +193,7 @@ class YDlidarDriver {
   * @retval RESULT_FAILE    failed
   * @note Before starting, you must start the start the scan successfully with the ::startScan function
   */
-  result_t grabScanData(node_info *nodebuffer, size_t &count,
+  result_t grabScanData(node_info *nodebuffer, size_t &count, int* const seq,
                         uint32_t timeout = DEFAULT_TIMEOUT) ;
 
 
@@ -755,6 +755,7 @@ class YDlidarDriver {
 
   DriverError m_driverErrno;       /// number of last error
   uint32_t m_autoTime;
+  int sequence;
 };
 
 inline bool isNoRibOffsetAngleLidar(int model, uint8_t Maxjor, uint8_t Minjor) {

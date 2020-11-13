@@ -154,6 +154,7 @@ YDlidarDriver::YDlidarDriver():
   m_NoZeroNodeCount     = 0;
   m_autoTime            = getms();
 
+  sequence = 0;
 }
 
 YDlidarDriver::~YDlidarDriver() {
@@ -744,6 +745,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
             if (currentByte == (PH & 0xFF)) {
 
             } else {
+					
               switch (blockRecvPos) {
                 case 0:
                   if (currentByte == LIDAR_ANS_SYNC_BYTE1) {
@@ -759,11 +761,10 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
                   }
 
                   break;
-
-                default:
-                  break;
+                //default:
+                //  break;
               }
-
+				
               data_header_error = true;
               continue;
             }
@@ -1068,6 +1069,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   }
 
   if ((*node).sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
+    sequence++;
     m_node_last_time_ns = m_node_time_ns;
     uint64_t current_time_ns = getTime();
     uint64_t delay_time_ns = (nowPackageNum * PackageSampleBytes + PackagePaidBytes)
@@ -1079,9 +1081,14 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
       m_node_time_ns = current_time_ns;
     }
 
+    /*  Test No Timestamp Correction
     if (m_node_time_ns < m_node_last_time_ns) {
-      if ((m_node_last_time_ns - m_node_time_ns) < 1e9 / 15) {
+      if ((m_node_last_time_ns - m_node_time_ns) < 1e9 / 50) {
         m_node_time_ns = m_node_last_time_ns;
+      } else {
+          std::cerr << "Cannot handle time reversal due to too large time drift: "
+                    << (m_node_last_time_ns - current_time_ns + delay_time_ns) * 1e-6
+                    << " ms larger than 20 ms\n";
       }
     } else {//Optimize starting point timestamp
       if ((m_node_time_ns - m_node_last_time_ns) < 8 * 1e6 && !data_header_error
@@ -1089,6 +1096,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
         m_node_time_ns = m_node_last_time_ns;
       }
     }
+    */
 
     LastCheckSumResult = CheckSumResult;
     checkLaserFailure();
@@ -1140,7 +1148,7 @@ result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,
 }
 
 
-result_t YDlidarDriver::grabScanData(node_info *nodebuffer, size_t &count,
+result_t YDlidarDriver::grabScanData(node_info *nodebuffer, size_t &count, int* const seq,
                                      uint32_t timeout) {
   switch (_dataEvent.wait(timeout)) {
     case Event::EVENT_TIMEOUT:
@@ -1155,6 +1163,7 @@ result_t YDlidarDriver::grabScanData(node_info *nodebuffer, size_t &count,
       ScopedLocker l(_lock);
       size_t size_to_copy = min(count, scan_node_count);
       memcpy(nodebuffer, scan_node_buf, size_to_copy * sizeof(node_info));
+      *seq = sequence;
       count = size_to_copy;
       scan_node_count = 0;
     }
