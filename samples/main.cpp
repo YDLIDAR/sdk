@@ -141,11 +141,14 @@ int main(int argc, char *argv[]) {
   while (ret && ydlidar::ok()) {
     bool hardError;
     LaserScan scan;
+    uint32_t start_time = getms();
 
     if (laser.doProcessSimple(scan, hardError)) {
-      fprintf(stdout, "Scan received[%llu]: %u ranges is [%f]Hz\n",
+      fprintf(stdout,
+              "Scan received[%llu]: %u ranges is [%f]Hz, data transmit time in [%d]ms\n",
               scan.system_time_stamp,
-              (unsigned int)scan.data.size(), 1.0 / scan.config.scan_time);
+              (unsigned int)scan.data.size(), 1.0 / scan.config.scan_time,
+              getms() - start_time);
 
       for (int i = 0; i < scan.data.size(); i++) {
         uint64_t time_stamp = scan.system_time_stamp + i * scan.config.time_increment *
@@ -155,9 +158,9 @@ int main(int argc, char *argv[]) {
 
       fflush(stdout);
     } else {
-      delay(50);
-      fprintf(stderr, "Failed to get Lidar Data\n");
+      fprintf(stderr, "Failed to get Lidar Data in [%d]ms\n", getms() - start_time);
       fflush(stderr);
+      delay(50);
     }
   }
 
