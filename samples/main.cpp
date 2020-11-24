@@ -74,6 +74,14 @@ int main(int argc, char *argv[]) {
   laser.setGlassNoise(true);
   laser.setSunNoise(true);
   laser.setAbnormalCheckCount(8);
+  //不带型号强度的雷达
+//  laser.setIntensity(0);
+//  laser.setSerialBaudrate(115200);
+  //带信号强度的雷达
+//  laser.setSerialBaudrate(153600);
+//  laser.setIntensity(1);
+
+
   bool ret = laser.initialize();
   ret &= laser.turnOn();
   LaserScan scan;

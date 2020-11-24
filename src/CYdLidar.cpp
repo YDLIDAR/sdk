@@ -39,6 +39,7 @@ CYdLidar::CYdLidar(): lidarPtr(0) {
   frequency_offset    = 0.0;
   zero_offset_angle   = 0.0;
   single_channel      = false;
+  m_Intensity         = -1;
   m_IgnoreArray.clear();
 }
 
@@ -484,6 +485,7 @@ bool CYdLidar::checkStatus() {
          (getms() - startTs) / 1000.0, single_channel);
   fflush(stdout);
   lidarPtr->setSingleChannel(single_channel);
+  lidarPtr->setIntensity(m_Intensity);
   return ret;
 }
 

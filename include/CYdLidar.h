@@ -74,6 +74,8 @@ class YDLIDAR_API CYdLidar {
                         private) ///< 设置和获取激光剔除点
   PropertyBuilderByName(int, AbnormalCheckCount,
                         private) ///< 最大检查雷达数据的是否异常的次数
+  PropertyBuilderByName(int, Intensity,
+                        private) ///< 是否带信号质量(-1:自动检测(不推荐), 0:不带型号强度, 1:带信号强度)
   ///换算到时间就是(AbnormalCheckCount *500 + 50*(2+...+ AbnormalCheckCount -1))ms
   /// 比如设置到8， 换算到时间=（8*500 + 50*(2+3+4+5+6+7))= 5350ms,
   /// 也就是如果5s中之内没有数据或者有数据雷达数据一直异常，则turnOn失败。
