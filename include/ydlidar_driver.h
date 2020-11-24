@@ -229,6 +229,12 @@ class YDlidarDriver {
   void setSingleChannel(bool enable);
 
   /**
+   * @brief setIntensity
+   * @param isIntensity
+   */
+  void setIntensity(int value);
+
+  /**
   * @brief 开启扫描 \n
     * @param[in] force    扫描模式
     * @param[in] timeout  超时时间

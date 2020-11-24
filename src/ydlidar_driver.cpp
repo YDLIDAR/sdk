@@ -625,7 +625,6 @@ int YDlidarDriver::cacheScanData() {
   local_scan.points.clear();
   m_error_info         = NoError;
   m_new_protocol       = false;
-  m_intensity_protocol = -1;
   ydlidar::protocol::reset_ct_packet_t(m_global_ct);
   m_error_info_time = getms();
   ans = ydlidar::protocol::check_scan_protocol(_serial, m_intensity_protocol);
@@ -925,6 +924,13 @@ void YDlidarDriver::setAutoReconnect(const bool &enable) {
 
 void YDlidarDriver::setSingleChannel(bool enable) {
   single_channel = enable;
+}
+
+void YDlidarDriver::setIntensity(int value) {
+  m_intensity_protocol = value;
+  printf("[YDLIDAR INFO] set intensity protocol: %d\n",
+         m_intensity_protocol);
+  fflush(stdout);
 }
 
 /************************************************************************/
