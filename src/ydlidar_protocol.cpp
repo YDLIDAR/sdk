@@ -792,14 +792,42 @@ result_t read_response_scan_header_t(Serial *serial,
   return ans;
 }
 
+bool is_valid_data(uint8_t *data, size_t size) {
+  if (data == nullptr || size == 0) {
+    return false;
+  }
+
+  bool ret = false;
+
+  for (int i = 0; i < size; ++i) {
+    if (data[i] != 0x00) {
+      ret = true;
+      break;
+    }
+  }
+
+  return ret;
+}
+
 result_t check_scan_protocol(Serial *serial, int8_t &protocol,
                              uint32_t timeout) {
   assert(serial);
+
+  if (protocol > -1) {
+    return RESULT_OK;
+  }
+
   uint32_t startTs = getms();
   uint32_t waitTime = 0;
   result_t ans = RESULT_TIMEOUT;
   uint8_t scan_double_check = 0;
+  uint8_t invalid_scan_count = 0;
   uint8_t iscan_double_check = 0;
+  uint8_t invalid_iscan_count = 0;
+
+  if (serial->available() > sizeof(scan_intensity_packet_t)) {
+    serial->flushInput();
+  }
 
   while ((waitTime = (getms() - startTs)) < timeout * 2) {
     scan_packet_t scan;
@@ -828,9 +856,16 @@ result_t check_scan_protocol(Serial *serial, int8_t &protocol,
 
           if (IS_OK(ans)) {
             if (buffer == 0x55aa) {
-              scan_double_check++;
+              if (is_valid_data((uint8_t *)&scan.payload, size)) {
+                scan_double_check++;
+                iscan_double_check = 0;
+              } else {
+                invalid_scan_count++;
+              }
 
-              if (scan_double_check > 1) {
+              invalid_iscan_count = 0;
+
+              if (scan_double_check > 2 || invalid_scan_count > 5) {
                 protocol = 0;
                 printf("[YDLIDAR INFO]: intensity: false\n");
                 fflush(stdout);
@@ -840,6 +875,7 @@ result_t check_scan_protocol(Serial *serial, int8_t &protocol,
               }
             } else {
               scan_double_check = 0;
+              invalid_scan_count = 0;
 
               if (scan.header.nowPackageNum == 1) {
                 memcpy(scan_buffer + offset_size, &buffer, 1);
@@ -852,6 +888,7 @@ result_t check_scan_protocol(Serial *serial, int8_t &protocol,
           }
         } else {
           scan_double_check = 0;
+          invalid_scan_count = 0;
         }
 
         if (protocol < 0) {
@@ -875,9 +912,16 @@ result_t check_scan_protocol(Serial *serial, int8_t &protocol,
 
               if (IS_OK(ans)) {
                 if (buffer == 0x55aa) {
-                  iscan_double_check++;
+                  if (is_valid_data((uint8_t *)&iscan.payload, isize)) {
+                    iscan_double_check++;
+                    scan_double_check = 0;
+                  } else {
+                    invalid_iscan_count++;
+                  }
 
-                  if (iscan_double_check > 1) {
+                  invalid_scan_count = 0;
+
+                  if (iscan_double_check > 2 || invalid_iscan_count > 5) {
                     protocol = 1;
                     printf("[YDLIDAR INFO]: intensity: true\n");
                     fflush(stdout);
@@ -888,10 +932,12 @@ result_t check_scan_protocol(Serial *serial, int8_t &protocol,
 
                 } else {
                   iscan_double_check = 0;
+                  invalid_iscan_count = 0;
                 }
               }
             } else {
               iscan_double_check = 0;
+              invalid_iscan_count = 0;
             }
           }
         }
