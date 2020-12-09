@@ -15,10 +15,27 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.2.2 |   2020-11-13  |
+| SDK     |  2.2.3 |   2020-12-09  |
 
-- [feat] Delete logic of time reversal and time drift prevention and grant scan sequence.
-- [feat] Add log data of timestamp from start data transmit to complete data transmit while lidar rotates one rotation. 
+- [feat] add `LidarVersion` Data structure. 
+- [feature] Add `GetLidarVersion` interface function to get the lidar firmware version number.
+
+## How to Get Lidar Firmware Version number.
+```
+  CYdLidar laser;
+  bool ret = laser.initialize();
+
+  if (ret) {
+    LidarVersion _version;
+    memset(&_version, 0, sizeof(LidarVersion));
+    laser.GetLidarVersion(_version);
+    printf("Lidar FW: %d, HW: %d\n", _version.firmware, _version.hardware);
+    fflush(stdout);
+    ret = laser.turnOn();
+  }
+
+```
+
 
 ## How to Fetch zero angle tolerance values from lidar’s internal memory while lidar assembly.
 ```
@@ -103,6 +120,6 @@ You can get support from YDLidar with the following methods:
 * Github Issues
 
 ## Contact EAI
-![Development Path](image/EAI.png)
+![Development Path](image/EAI.jpg)
 
 If you have any extra questions, please feel free to [contact us](http://www.ydlidar.cn/cn/contact)

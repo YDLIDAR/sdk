@@ -134,6 +134,11 @@ int main(int argc, char *argv[]) {
   bool ret = laser.initialize();
 
   if (ret) {
+    LidarVersion _version;
+    memset(&_version, 0, sizeof(LidarVersion));
+    laser.GetLidarVersion(_version);
+    printf("Lidar FW: %d, HW: %d\n", _version.firmware, _version.hardware);
+    fflush(stdout);
     ret = laser.turnOn();
   }
 

@@ -74,6 +74,11 @@ class YDLIDAR_API CYdLidar {
   //Whether the zero offset angle is corrected?
   bool isAngleOffetCorrected() const;
 
+  /**
+   * @brief Return LiDAR's version information in a numeric form.
+   * @param version Pointer to a version structure for returning the version information.
+   */
+  void GetLidarVersion(LidarVersion &version);
 
   /**
   * @brief fetches zero angle tolerance values(±1.5°↓) from lidar’s internal memory while lidar assembly \n
@@ -196,5 +201,6 @@ class YDLIDAR_API CYdLidar {
   uint32_t errTime;
   uint32_t laserFailureTime;
   uint32_t hasLaserFailure;
+  LidarVersion m_LidarVersion;      ///< LiDAR Version information
 };	// End of class
 

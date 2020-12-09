@@ -45,6 +45,8 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   errTime             = getms();
   laserFailureTime    = getms();
   hasLaserFailure     = false;
+  memset(&m_LidarVersion, 0, sizeof(LidarVersion));
+
 }
 
 /*-------------------------------------------------------------
@@ -83,6 +85,10 @@ float CYdLidar::getAngleOffset() const {
 
 bool CYdLidar::isAngleOffetCorrected() const {
   return m_isAngleOffsetCorrected;
+}
+
+void CYdLidar::GetLidarVersion(LidarVersion &version) {
+  memcpy(&version, &m_LidarVersion, sizeof(LidarVersion));
 }
 
 result_t CYdLidar::getZeroOffsetAngle(offset_angle &angle, uint32_t timeout) {
@@ -487,6 +493,8 @@ bool CYdLidar::getDeviceInfo() {
   }
 
   m_Model = devinfo.model;
+  m_LidarVersion.hardware = devinfo.hardware_version;
+  m_LidarVersion.firmware = devinfo.firmware_version;
   std::string model = "R2-SS-1";
   int m_samp_rate = 5;
 
@@ -521,6 +529,8 @@ bool CYdLidar::getDeviceInfo() {
       fprintf(stderr, "Invalid lidar serial number!!!\n");
       return false;
     }
+
+    memcpy(&m_LidarVersion.sn[0], &devinfo.serialnum[0], 16);
 
     if (devinfo.model == YDlidarDriver::YDLIDAR_R2_SS_1) {
       checkCalibrationAngle(m_serial_number);
