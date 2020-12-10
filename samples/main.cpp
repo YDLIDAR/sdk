@@ -137,7 +137,8 @@ int main(int argc, char *argv[]) {
     LidarVersion _version;
     memset(&_version, 0, sizeof(LidarVersion));
     laser.GetLidarVersion(_version);
-    printf("Lidar FW: %d, HW: %d\n", _version.firmware, _version.hardware);
+    printf("Lidar FW Version: %d, HW Version: %d\n", _version.firmware,
+           _version.hardware);
     fflush(stdout);
     ret = laser.turnOn();
   }
@@ -146,16 +147,11 @@ int main(int argc, char *argv[]) {
   while (ret && ydlidar::ok()) {
     bool hardError;
     LaserScan scan;
-    uint64_t start_time = getTime();
 
     if (laser.doProcessSimple(scan, hardError)) {
-      uint64_t end_time = getTime();
-      fprintf(stdout,
-              "Scan received[%llu]: %u ranges is [%f]Hz, system end timestamp[%llu] - system start timestamp[%llu] = data transmit time in [%f]ms\n",
+      fprintf(stdout, "Scan received[%llu]: %u ranges is [%f]Hz\n",
               scan.system_time_stamp,
-              (unsigned int)scan.data.size(), 1.0 / scan.config.scan_time, end_time,
-              start_time,
-              (end_time - start_time) / 1000000.0);
+              (unsigned int)scan.data.size(), 1.0 / scan.config.scan_time);
 
       for (int i = 0; i < scan.data.size(); i++) {
         uint64_t time_stamp = scan.system_time_stamp + i * scan.config.time_increment *
@@ -165,12 +161,9 @@ int main(int argc, char *argv[]) {
 
       fflush(stdout);
     } else {
-      uint64_t end_time = getTime();
-      fprintf(stderr,
-              "Failed to get Lidar Data,system end timestamp[%llu] - system start timestamp[%llu] = data transmit time in [%f]ms\n",
-              end_time, start_time, (end_time - start_time) / 1000000.0);
-      fflush(stderr);
       delay(50);
+      fprintf(stderr, "Failed to get Lidar Data\n");
+      fflush(stderr);
     }
   }
 
