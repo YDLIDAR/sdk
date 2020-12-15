@@ -15,10 +15,9 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.2.4 |   2020-12-10  |
+| SDK     |  2.2.5 |   2020-12-15  |
 
-- [feat] Remove `Delete logic of time reversal and time drift prevention and grant scan sequence` function in 2.2.2. 
-- [feat] Remove `Add log data of timestamp from start data transmit to complete data transmit while lidar rotates one rotation`  function in 2.2.2.
+- [feat]  The FW version in LidarVersion changes from two bytes to one byte
 
 ## How to Get Lidar Firmware Version number.
 ```

@@ -490,7 +490,8 @@ bool CYdLidar::getDeviceInfo() {
 
   m_Model = devinfo.model;
   m_LidarVersion.hardware = devinfo.hardware_version;
-  m_LidarVersion.firmware = devinfo.firmware_version;
+  m_LidarVersion.firmware = uint8_t((uint8_t)(devinfo.firmware_version >> 8) * 100
+                                    + (uint8_t)(devinfo.firmware_version & 0xff));
   std::string model = "R2-SS-1";
   int m_samp_rate = 5;
 

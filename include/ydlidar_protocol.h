@@ -296,6 +296,6 @@ struct LaserDebug {
 /** The numeric version information struct.  */
 typedef struct {
   uint8_t  hardware;   /**< Hardware version*/
-  uint16_t firmware;      /**< Firmware Version */
+  uint8_t  firmware;      /**< Firmware Version */
   uint8_t  sn[16];     /**< serial number*/
 } LidarVersion;
