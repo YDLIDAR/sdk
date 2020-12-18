@@ -765,6 +765,7 @@ int YDlidarDriver::cacheScanData() {
         std::copy(local_scan.points.begin(), local_scan.points.end(),
                   std::back_inserter(m_global_fan.points));
         local_scan.points.clear();
+        memset(&local_scan.info, 0, sizeof(ct_packet_t));
         _dataEvent.set();
       }
 
