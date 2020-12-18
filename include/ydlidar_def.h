@@ -276,10 +276,21 @@ struct LaserScan {
   uint64_t system_time_stamp;
   //! Configuration of scan
   LaserConfig config;
+  float lidar_scan_frequency;///< 雷达输出的实时扫描频率
   LaserScan &operator = (const LaserScan &data) {
     this->data = data.data;
     system_time_stamp = data.system_time_stamp;
     config = data.config;
+    this->lidar_scan_frequency = data.lidar_scan_frequency;
     return *this;
   }
 };
+
+/** The numeric version information struct.  */
+typedef struct {
+  uint8_t hardware;   /**< Hardware version*/
+  uint8_t soft_major;      /**< major number */
+  uint8_t soft_minor;      /**< minor number */
+  uint8_t soft_patch;      /**< patch number */
+  uint8_t sn[16];     /**< serial number*/
+} LidarVersion;
