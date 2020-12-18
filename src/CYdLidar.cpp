@@ -41,6 +41,7 @@ CYdLidar::CYdLidar(): lidarPtr(0) {
   single_channel      = false;
   m_Intensity         = -1;
   m_IgnoreArray.clear();
+  memset(&m_LidarVersion, 0, sizeof(LidarVersion));
 }
 
 /*-------------------------------------------------------------
@@ -65,6 +66,10 @@ int CYdLidar::getFixedSize() const {
   return fixed_size;
 }
 
+void CYdLidar::GetLidarVersion(LidarVersion &version) {
+  memcpy(&version, &m_LidarVersion, sizeof(LidarVersion));
+}
+
 lidar_error_t CYdLidar::getDriverError() const {
   if (lidarPtr) {
     return lidarPtr->getDriverError();
@@ -78,6 +83,7 @@ lidar_error_t CYdLidar::getDriverError() const {
 -------------------------------------------------------------*/
 bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
   hardwareError			= false;
+  scan_msg.lidar_scan_frequency = 0.0;
 
   // Bound?
   if (!checkHardware()) {
@@ -132,6 +138,10 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     scan_msg.system_time_stamp = tim_scan_end;
     scan_msg.config.min_range = m_MinRange;
     scan_msg.config.max_range = m_MaxRange;
+
+    if (laser_packages.info.info[0] > 0) {
+      scan_msg.lidar_scan_frequency = laser_packages.info.info[0] / 10.0;
+    }
 
 //    if (!checkHealth(laser_packages.info)) {
     if (lidarPtr->getDriverError() != NoError) {
@@ -365,6 +375,11 @@ bool CYdLidar::getDeviceInfo(uint32_t timeout) {
 
   printf("\n");
   fflush(stdout);
+  m_LidarVersion.hardware = devinfo.hardware_version;
+  m_LidarVersion.soft_major = Major;
+  m_LidarVersion.soft_minor = Minjor / 10;
+  m_LidarVersion.soft_patch = Minjor % 10;
+  memcpy(&m_LidarVersion.sn[0], &devinfo.serialnum[0], 16);
   checkScanFrequency();
   //checkZeroOffsetAngle();
   printf("[YDLIDAR INFO] Current Sampling Rate : %dK\n", sample_rate);

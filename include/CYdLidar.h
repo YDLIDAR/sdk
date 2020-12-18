@@ -101,6 +101,12 @@ class YDLIDAR_API CYdLidar {
   int getFixedSize() const;
 
   /**
+  * @brief Return LiDAR's version information in a numeric form.
+  * @param version Pointer to a version structure for returning the version information.
+  */
+  void GetLidarVersion(LidarVersion &version);
+
+  /**
    * @brief getDriverError
    * @return
    */
@@ -168,5 +174,6 @@ class YDLIDAR_API CYdLidar {
   bool                   single_channel;
   bool                   isScanning;
   bool                   isConnected;
+  LidarVersion           m_LidarVersion;      ///< LiDAR Version information
 };	// End of class
 
