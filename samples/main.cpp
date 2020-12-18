@@ -83,7 +83,23 @@ int main(int argc, char *argv[]) {
 
 
   bool ret = laser.initialize();
-  ret &= laser.turnOn();
+
+  if (ret) {
+    LidarVersion _version;
+    memset(&_version, 0, sizeof(LidarVersion));
+    laser.GetLidarVersion(_version);
+    printf("LiDAR HW Version: %d, FW Version: %u.%u.%u, SN: ", _version.hardware,
+           _version.soft_major, _version.soft_minor, _version.soft_patch);
+
+    for (int i = 0; i < 16; i++) {
+      printf("%01X", _version.sn[i]);
+    }
+
+    printf("\n");
+    fflush(stdout);
+    ret &= laser.turnOn();
+  }
+
   LaserScan scan;
 
   while (ret && ydlidar::ok()) {
@@ -91,8 +107,16 @@ int main(int argc, char *argv[]) {
     scan.data.clear();
 
     if (laser.doProcessSimple(scan, hardError)) {
-      fprintf(stdout, "Scan received: %u ranges in %f HZ\n",
-              (unsigned int)scan.data.size(), 1.0 / scan.config.scan_time);
+
+      if (scan.lidar_scan_frequency > 0) {
+        fprintf(stdout, "Scan received: %u ranges in %f HZ, lidar frequency[%f Hz]\n",
+                (unsigned int)scan.data.size(), 1000.0 / scan.config.scan_time,
+                scan.lidar_scan_frequency);
+      } else {
+        fprintf(stdout, "Scan received: %u ranges in %f HZ\n",
+                (unsigned int)scan.data.size(), 1000.0 / scan.config.scan_time);
+      }
+
       fflush(stdout);
     } else {
       if (laser.getDriverError() != NoError) {
