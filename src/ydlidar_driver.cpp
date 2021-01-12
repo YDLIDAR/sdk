@@ -144,6 +144,7 @@ void YDlidarDriver::flushSerial() {
   }
 }
 
+
 void YDlidarDriver::setDriverError(const lidar_error_t &er) {
   ScopedLocker l(_error_lock);
   m_error_info = er;
@@ -271,8 +272,8 @@ result_t YDlidarDriver::getHealth(device_health &health, uint32_t timeout) {
     this->setDriverError(err);
 
     if (!IS_OK(ans)) {
-      printf("[YDLIDAR ERROR][Device health]: %s\n",
-             ydlidar::protocol::DescribeError(err));
+//      printf("[YDLIDAR ERROR][Device health]: %s\n",
+//             ydlidar::protocol::DescribeError(err));
       fflush(stdout);
     }
   }
@@ -301,8 +302,8 @@ result_t YDlidarDriver::getDeviceInfo(device_info &info, uint32_t timeout) {
     this->setDriverError(err);
 
     if (!IS_OK(ans)) {
-      printf("[YDLIDAR ERROR][Device info]: %s\n",
-             ydlidar::protocol::DescribeError(err));
+//      printf("[YDLIDAR ERROR][Device info]: %s\n",
+//             ydlidar::protocol::DescribeError(err));
       fflush(stdout);
     }
   }
@@ -641,6 +642,7 @@ int YDlidarDriver::cacheScanData() {
 
   while (m_isScanning) {
     ans = waitScanData(local_fan);
+    //printf("valid:%d,size:%d\n",local_fan.info.valid,local_fan.info.size);
 
     if (!IS_OK(ans)) {
       if (!IS_TIMEOUT(ans) || timeout_count > DEFAULT_TIMEOUT_COUNT) {
@@ -760,7 +762,7 @@ int YDlidarDriver::cacheScanData() {
       }
 
       if (m_global_fan.points.size() >= 1 || local_scan.points.size() > 1) {
-        memcpy(&m_global_fan.info, &local_scan.info, sizeof(ct_packet_t));
+        memcpy(&m_global_fan.info, &local_fan.info, sizeof(ct_packet_t));
         m_global_fan.sync_flag = local_scan.sync_flag;
         std::copy(local_scan.points.begin(), local_scan.points.end(),
                   std::back_inserter(m_global_fan.points));

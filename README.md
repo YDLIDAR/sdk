@@ -20,7 +20,7 @@ How to build YDLIDAR SDK samples
     
     $ cd build
     
-    $ cmake ../sdk
+    $ cmake -DARCH=arm -DCMAKE_TOOLCHAIN_FILE=../rk3308.cmake ../
     
     $ make			###linux
     
@@ -45,9 +45,9 @@ windows:
 
 You should see YDLIDAR's scan result in the console:
 
-    [YDLIDAR INFO] Now YDLIDAR SDK VERSION: 1.4.4
+    [YDLIDAR INFO] Now YDLIDAR SDK VERSION: 1.4.5
     [YDLIDAR INFO] Connection established in /dev/ttyUSB0[115200]:
-    [YDLIDAR]:SDK Version: 1.4.3
+    [YDLIDAR]:SDK Version: 1.4.5
     [YDLIDAR][0.001000s]:Lidar running correctly ! The health status: good
     [YDLIDAR][0.003000s] Device Info:
     Firmware version: 1.3

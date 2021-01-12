@@ -25,112 +25,153 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include <unistd.h>
 using namespace std;
 using namespace ydlidar;
-
 #if defined(_MSC_VER)
 #pragma comment(lib, "ydlidar_driver.lib")
 #endif
 
 int main(int argc, char *argv[]) {
 
-  ydlidar::init(argc, argv);
+    ydlidar::init(argc, argv);
 
-  std::string port;
-  std::string baudrate;
-  int baud = 115200;
-  printf("__   ______  _     ___ ____    _    ____  \n");
-  printf("\\ \\ / /  _ \\| |   |_ _|  _ \\  / \\  |  _ \\ \n");
-  printf(" \\ V /| | | | |    | || | | |/ _ \\ | |_) | \n");
-  printf("  | | | |_| | |___ | || |_| / ___ \\|  _ <  \n");
-  printf("  |_| |____/|_____|___|____/_/   \\_\\_| \\_\\ \n");
-  printf("\n");
-  fflush(stdout);
-
-  std::map<std::string, std::string> lidars = YDlidarDriver::lidarPortList();
-
-  if (lidars.size() == 1) {
-    std::map<string, string>::iterator iter = lidars.begin();
-    port = iter->second;
-  } else {
-    printf("Please enter the lidar serial port:");
-    std::cin >> port;
-    printf("Please enter the lidar serial baud rate:");
-    std::cin >> baudrate;
-    baud = atoi(baudrate.c_str());
-  }
-
-  if (!ydlidar::ok()) {
-    return 0;
-  }
-
-  CYdLidar laser;
-  laser.setSerialPort(port);
-  laser.setSerialBaudrate(baud);
-  laser.setScanFrequency(6.0);
-  laser.setFixedResolution(false);
-  laser.setReversion(false);
-  laser.setAutoReconnect(true);
-  laser.setGlassNoise(true);
-  laser.setSunNoise(true);
-  laser.setAbnormalCheckCount(8);
-  //不带型号强度的雷达
-//  laser.setIntensity(0);
-//  laser.setSerialBaudrate(115200);
-  //带信号强度的雷达
-//  laser.setSerialBaudrate(153600);
-//  laser.setIntensity(1);
-
-
-  bool ret = laser.initialize();
-
-  if (ret) {
-    LidarVersion _version;
-    memset(&_version, 0, sizeof(LidarVersion));
-    laser.GetLidarVersion(_version);
-    printf("LiDAR HW Version: %d, FW Version: %u.%u.%u, SN: ", _version.hardware,
-           _version.soft_major, _version.soft_minor, _version.soft_patch);
-
-    for (int i = 0; i < 16; i++) {
-      printf("%01X", _version.sn[i]);
-    }
-
+    std::string port;
+    std::string baudrate;
+    std::string serial_number;
+    std::string input_frequency;
+    int baud = 153600;
+    printf("__   ______  _     ___ ____    _    ____  \n");
+    printf("\\ \\ / /  _ \\| |   |_ _|  _ \\  / \\  |  _ \\ \n");
+    printf(" \\ V /| | | | |    | || | | |/ _ \\ | |_) | \n");
+    printf("  | | | |_| | |___ | || |_| / ___ \\|  _ <  \n");
+    printf("  |_| |____/|_____|___|____/_/   \\_\\_| \\_\\ \n");
     printf("\n");
     fflush(stdout);
-    ret &= laser.turnOn();
-  }
+    float frequency = 6.0;
+    int number = 1;
+//    if(argc == 3){
+//        if(string(argv[1]).find("pwm")!= string::npos){
+//            if(string(argv[2]).find("0") != string::npos)
+//                number = 0;
+//        }
+//    }
 
-  LaserScan scan;
+    std::map<std::string, std::string> lidars = YDlidarDriver::lidarPortList();
 
-  while (ret && ydlidar::ok()) {
-    bool hardError;
-    scan.data.clear();
-
-    if (laser.doProcessSimple(scan, hardError)) {
-
-      if (scan.lidar_scan_frequency > 0) {
-        fprintf(stdout, "Scan received: %u ranges in %f HZ, lidar frequency[%f Hz]\n",
-                (unsigned int)scan.data.size(), 1000.0 / scan.config.scan_time,
-                scan.lidar_scan_frequency);
-      } else {
-        fprintf(stdout, "Scan received: %u ranges in %f HZ\n",
-                (unsigned int)scan.data.size(), 1000.0 / scan.config.scan_time);
-      }
-
-      fflush(stdout);
+    if (lidars.size() == 1) {
+        std::map<string, string>::iterator iter = lidars.begin();
+        port = iter->second;
     } else {
-      if (laser.getDriverError() != NoError) {
-        printf("[YDLIDAR ERROR]: %s\n",
-               ydlidar::protocol::DescribeError(laser.getDriverError()));
-        fflush(stdout);
-      }
+        printf("Please enter the lidar serial port:");
+        std::cin >> port;
+        printf("Please enter the lidar serial baud rate:");
+        std::cin >> baudrate;
+        baud = atoi(baudrate.c_str());
+//        printf("Please enter the pwd serial number [0 or 1]:");
+//        std::cin >> serial_number;
+//        number = atoi(serial_number.c_str());
+      
+//        while (true) {
+//          printf("Please enter the lidar scan frequency[5-12]:");
+//          std::cin >> input_frequency;
+//          frequency = atof(input_frequency.c_str());
+      
+//          if (frequency <= 12 && frequency >= 5.0) {
+//            break;
+//          }
+      
+//          fprintf(stderr,
+//                  "Invalid scan frequency,The scanning frequency range is 5 to 12 HZ, Please re-enter.\n");
+//        }
+       
+        
     }
-  }
 
-  laser.turnOff();
-  laser.disconnecting();
+    if (!ydlidar::ok()) {
+        return 0;
+    }
 
-  return 0;
+    CYdLidar laser;
+    laser.setSerialPort(port);
+    laser.setSerialBaudrate(baud);
+    laser.setScanFrequency(frequency);
+    laser.setFixedResolution(false);
+    laser.setReversion(false);
+    laser.setAutoReconnect(true);
+    laser.setGlassNoise(true);
+    laser.setSunNoise(true);
+    laser.setAbnormalCheckCount(8);
+    //不带型号强度的雷达
+    //  laser.setIntensity(0);
+    //  laser.setSerialBaudrate(115200);
+    //带信号强度的雷达
+    laser.setSerialBaudrate(153600);
+    laser.setIntensity(1);
+    laser.initPwdPath(number);
+
+    CYdLidar::PIDError error = laser.initPIDParams();
+    string error_str =  laser.getErrorString(error);
+    if (error != NoError){
+        printf("init pid config failed!,error:%s",error_str.c_str());
+        fflush(stdout);
+        return 1;
+    }
+    bool ret = laser.initialize();
+
+    if (ret) {
+
+        ret &= laser.turnOn();
+    }
+
+    LaserScan scan;
+    bool getSN = false;
+    while (ret && ydlidar::ok()) {
+        bool hardError;
+        scan.data.clear();
+
+        if (laser.doProcessSimple(scan, hardError)) {
+
+            if(!getSN){
+                LidarVersion _version;
+                memset(&_version, 0, sizeof(LidarVersion));
+                getSN = laser.GetLidarVersion(_version);
+                if(getSN){
+                    printf("LiDAR HW Version: %d, Fireware Version: %u.%u,FW Version: %u.%u.%u, SN: ", _version.hardware,_version.fire_major,_version.fire_minor,
+                           _version.soft_major, _version.soft_minor, _version.soft_patch);
+
+                    for (int i = 0; i < 32; i++) {
+                        printf("%01X", _version.sn[i]);
+                    }
+
+                    printf("\n");
+                    fflush(stdout);
+                }
+            }
+
+            if (scan.lidar_scan_frequency > 0) {
+                fprintf(stdout, "Scan received: %u ranges in %f HZ, lidar frequency[%f Hz]\n",
+                        (unsigned int)scan.data.size(), 1000.0 / scan.config.scan_time,
+                        scan.lidar_scan_frequency);
+            } else {
+                fprintf(stdout, "Scan received: %u ranges in %f HZ\n",
+                        (unsigned int)scan.data.size(), 1000.0 / scan.config.scan_time);
+            }
+
+            fflush(stdout);
+        } else {
+            if (laser.getDriverError() != NoError) {
+                printf("[YDLIDAR ERROR]: %s\n",
+                       ydlidar::protocol::DescribeError(laser.getDriverError()));
+                fflush(stdout);
+            }
+        }
+    }
+
+    laser.turnOff();
+    laser.disconnecting();
+
+    return 0;
 
 
 }

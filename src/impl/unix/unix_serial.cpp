@@ -675,6 +675,8 @@ bool Serial::SerialImpl::open() {
                O_RDWR | O_NOCTTY | O_NONBLOCK | O_APPEND | O_NDELAY);
 
   if (fd_ == -1) {
+      printf("error open port:678 \n");
+      fflush(stdout);
     switch (errno) {
       case EINTR:
         // Recurse because this is a recoverable error.
