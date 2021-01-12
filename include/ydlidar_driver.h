@@ -406,12 +406,19 @@ class YDlidarDriver {
    */
   void flushSerial();
 
+
+
   /**
    * @brief setDriverError
    * @param er
    */
   void setDriverError(const lidar_error_t &er);
+public:
 
+
+
+
+private:
  public:
   bool     m_isConnected;  ///< 串口连接状体
   bool     m_isScanning;   ///< 扫图状态

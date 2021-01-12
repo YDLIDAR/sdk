@@ -97,14 +97,23 @@ class YDLIDAR_API CYdLidar {
   //Turn off the motor enable and close the scan
   bool  turnOff(); //!< See base class docs
 
+  //!<Power off the lidar
+  int  PoweroffPWM();
+
+  // exchange error to error_string
+  string getErrorString(int error);
+
+  //initialize pwd path
+  void  initPwdPath(int number);
+
   //get fixed resolution node size
   int getFixedSize() const;
 
   /**
-  * @brief Return LiDAR's version information in a numeric form.
+  * @brief Return LiDAR's version information in a numeric form and whether sn is ok.
   * @param version Pointer to a version structure for returning the version information.
   */
-  void GetLidarVersion(LidarVersion &version);
+  bool GetLidarVersion(LidarVersion &version);
 
   /**
    * @brief getDriverError
@@ -115,6 +124,19 @@ class YDLIDAR_API CYdLidar {
 
   //Turn off lidar connection
   void disconnecting(); //!< Closes the comms with the laser. Shouldn't have to be directly needed by the user
+
+  typedef  enum {
+      NoError = 0,
+      WriteExportError,
+      WriteEnableError,
+      WriteDutyError,
+      WritePeriodError,
+      WriteModeError,
+      WriteUnenabelError,
+  } PIDError;
+
+  ///<初始化PID调速的参数
+  CYdLidar::PIDError initPIDParams();
 
  protected:
   /** Returns true if communication has been established with the device. If it's not,
@@ -150,7 +172,7 @@ class YDLIDAR_API CYdLidar {
    * @param info
    * @return
    */
-  bool checkHealth(const ct_packet_t &info);
+  bool checkHealth(ct_packet_t &info);
 
   /** returns true if the lidar data is normal, If it's not*/
   bool checkLidarAbnormal();
@@ -160,6 +182,10 @@ class YDLIDAR_API CYdLidar {
 
   /** Returns true if the device information is correct, If it's not*/
   bool getDeviceInfo(uint32_t timeout = 500);
+
+
+
+
 
  private:
   ydlidar::YDlidarDriver *lidarPtr;
@@ -175,5 +201,16 @@ class YDLIDAR_API CYdLidar {
   bool                   isScanning;
   bool                   isConnected;
   LidarVersion           m_LidarVersion;      ///< LiDAR Version information
+  int16_t                    default_mode_duty;
+  bool                   sn_status;
+
+  string            ExportPath;
+  string            PeriodPath;
+  string            DutyPath;
+  string            ModePath;
+  string            EnablePath;
+  string            PWMExportPath;
+  string            UnexportPath;
+
 };	// End of class
 

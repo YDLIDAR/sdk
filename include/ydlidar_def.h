@@ -29,8 +29,17 @@
 
 #define SUNNOISEINTENSITY 0x03
 #define GLASSNOISEINTENSITY 0x02
+#define PID_P   5
+#define PID_I   0.8
+#define PID_D   0
 
+//#define  PWD0Path    "/root/test/export"
+//#define  PWD1Path    "/root/test/pwm0/enable"
+//#define  PeriodPath  "/root/test/pwm0/period"
+//#define  DutyPath    "/root/test/pwm0/duty_cycle"
+//#define  ModePath    "/root/test/pwm0/polarity"
 
+///> /sys/class/pwm/pwmchip1/export
 typedef enum  {
   NoError,//无错误
   DeviceNotFoundError,//无串口设备
@@ -197,6 +206,18 @@ struct lidar_ans_header_t {
 static_assert(sizeof(lidar_ans_header_t) == 7,
               "Ans header size mismatch.");
 
+
+/** The numeric version information struct.  */
+typedef struct {
+  uint8_t hardware;   /**< Hardware version*/
+  uint8_t soft_major;      /**< major number */
+  uint8_t soft_minor;      /**< minor number */
+  uint8_t soft_patch;      /**< patch number */
+  uint8_t fire_major;
+  uint8_t fire_minor;
+  uint8_t sn[32];     /**< serial number*/
+} LidarVersion;
+
 struct ct_packet_t {
   uint8_t size;
   uint8_t index;
@@ -286,11 +307,5 @@ struct LaserScan {
   }
 };
 
-/** The numeric version information struct.  */
-typedef struct {
-  uint8_t hardware;   /**< Hardware version*/
-  uint8_t soft_major;      /**< major number */
-  uint8_t soft_minor;      /**< minor number */
-  uint8_t soft_patch;      /**< patch number */
-  uint8_t sn[16];     /**< serial number*/
-} LidarVersion;
+
+

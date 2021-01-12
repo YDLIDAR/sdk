@@ -41,7 +41,7 @@ void reset_ct_packet_t(ct_packet_t &ct);
 
 lidar_error_t convert_ct_packet_to_error(const ct_packet_t &ct) ;
 
-result_t check_ct_packet_t(const ct_packet_t &ct);
+result_t check_ct_packet_t(const  ct_packet_t &ct);
 
 void write_command(Serial *serial, uint8_t cmd);
 
