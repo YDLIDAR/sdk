@@ -183,10 +183,6 @@ class YDLIDAR_API CYdLidar {
   /** Returns true if the device information is correct, If it's not*/
   bool getDeviceInfo(uint32_t timeout = 500);
 
-
-
-
-
  private:
   ydlidar::YDlidarDriver *lidarPtr;
   LaserFan               laser_packages;

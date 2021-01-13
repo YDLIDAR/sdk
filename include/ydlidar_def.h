@@ -33,13 +33,6 @@
 #define PID_I   0.8
 #define PID_D   0
 
-//#define  PWD0Path    "/root/test/export"
-//#define  PWD1Path    "/root/test/pwm0/enable"
-//#define  PeriodPath  "/root/test/pwm0/period"
-//#define  DutyPath    "/root/test/pwm0/duty_cycle"
-//#define  ModePath    "/root/test/pwm0/polarity"
-
-///> /sys/class/pwm/pwmchip1/export
 typedef enum  {
   NoError,//无错误
   DeviceNotFoundError,//无串口设备

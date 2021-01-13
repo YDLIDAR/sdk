@@ -125,8 +125,6 @@ CYdLidar::PIDError  CYdLidar::initPIDParams(){
    PIDError error = NoError;
    int fd =0,len = -1;
    if(!path_exists(PWMExportPath)){
-    //   printf("PWMExportPath:%s,ExportPath:%s\n",PWMExportPath.c_str(),ExportPath.c_str());
-   //    printf("export not exist\n");
        fflush(stdout);
        fd  = open(ExportPath.c_str(),O_WRONLY|O_CREAT|O_TRUNC);
        if(fd == -1){
@@ -134,7 +132,6 @@ CYdLidar::PIDError  CYdLidar::initPIDParams(){
            return error;
        }
        char a  = '0';
-       //char * a = "0";
        len = write(fd,(void*)&a,sizeof (char));
        close(fd);
 
@@ -154,9 +151,8 @@ CYdLidar::PIDError  CYdLidar::initPIDParams(){
            return error;
        }
 
-       //str.clear();
+
        string str = "20000";
-       //char * a = "0";
        len = write(fd,(void*)str.c_str(),sizeof (str.c_str()));
        close(fd);
        if(len != sizeof (str.c_str())){
@@ -171,7 +167,6 @@ CYdLidar::PIDError  CYdLidar::initPIDParams(){
        }
        str.clear();
        str = "6000";
-       //char * a = "0";
        len = write(fd,(void*)str.c_str(),sizeof (str.c_str()));
        close(fd);
        if(len != sizeof (str.c_str())){
@@ -186,7 +181,6 @@ CYdLidar::PIDError  CYdLidar::initPIDParams(){
        }
        str.clear();
        str = "normal";
-       //char * a = "0";
        len = write(fd,(void*)str.c_str(),sizeof (str.c_str()));;
        close(fd);
        if(len != sizeof (str.c_str())){
@@ -194,20 +188,15 @@ CYdLidar::PIDError  CYdLidar::initPIDParams(){
            return error;
        }
 
-    //   printf("enablePath:%s\n",EnablePath.c_str());
        fd  = open(EnablePath.c_str(),O_WRONLY|O_CREAT|O_TRUNC);
        if(fd == -1){
-      //     printf("open enable failed\n");
-       //    fflush(stdout);
            error = WriteEnableError;
            return error;
        }
 
        str.clear();
        str = "1";
-       //char * a = "0";
        len = write(fd,(void*)str.c_str(),sizeof (str.c_str()));
-       //len = write(fd,(void*)&str.,sizeof(char));
        close(fd);
        if(len != sizeof (str.c_str())){
 
@@ -241,8 +230,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
       //    printf("ct packet size less than 13 or ct packet is invalid\n");
           fflush(stdout);
           goto end;
-        //  ans = RESULT_FAIL;
-         // return ans;
       }
       //获取序列号
       uint32_t  sn_ = 0;
@@ -275,9 +262,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
       m_LidarVersion.sn[5+16] = month %10;
       m_LidarVersion.sn[6+16] = day /10;
       m_LidarVersion.sn[7+16] = day %10;
-//      m_LidarVersion.sn[8+16] = 0;
-//      m_LidarVersion.sn[9+16] = 0;
-//      m_LidarVersion.sn[10+16] = 0;
       m_LidarVersion.sn[11+16] = sn_ / 10000;
       m_LidarVersion.sn[12+16] = (sn_ % 10000) / 1000;
       m_LidarVersion.sn[13+16] = (sn_ % 1000) / 100;
@@ -295,10 +279,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
       m_LidarVersion.soft_major = Major;
       m_LidarVersion.soft_minor = Minor / 10;
       m_LidarVersion.soft_patch = Minor % 10;
-     // printf("minor:%d,major:%d,hardware:%d\n",Minor,Major,HardwareVer);
       m_LidarVersion.fire_major = FireMajor;
       m_LidarVersion.fire_minor = FireMinor;
-   //   printf("1:%02x，4:%02x，5:%02x",laser_packages.info.info[1],laser_packages.info.info[4],laser_packages.info.info[5]);
       printf("sn:");
       for(int i=0;i<32 ;i++){
           printf(" %x",m_LidarVersion.sn[i]);
@@ -355,8 +337,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     if (laser_packages.info.info[0] > 0) {
       scan_msg.lidar_scan_frequency = laser_packages.info.info[0] / 10.0;
     }
- //   printf("laser_packages.info.info[0]:%d,scan_msg.lidar_scan_frequency:%f\n",laser_packages.info.info[0],scan_msg.lidar_scan_frequency);
-
 //    if (!checkHealth(laser_packages.info)) {
     if (lidarPtr->getDriverError() != NoError) {
       hardwareError = true;
@@ -434,8 +414,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
         memset(a,0,10);
         sprintf(a,"%d",writeDuty);;
 
-        //sprintf(value,"%d",writeDuty);
-       // printf("写入值:%d\n",increase);
         std::string  dutypath = DutyPath;
         int fd = open(dutypath.c_str(),O_WRONLY | O_CREAT);
         if(fd != -1){

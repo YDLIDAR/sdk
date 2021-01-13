@@ -642,7 +642,6 @@ int YDlidarDriver::cacheScanData() {
 
   while (m_isScanning) {
     ans = waitScanData(local_fan);
-    //printf("valid:%d,size:%d\n",local_fan.info.valid,local_fan.info.size);
 
     if (!IS_OK(ans)) {
       if (!IS_TIMEOUT(ans) || timeout_count > DEFAULT_TIMEOUT_COUNT) {
