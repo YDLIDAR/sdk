@@ -162,8 +162,9 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
   size_t   count = YDlidarDriver::MAX_SCAN_NODES;
 
+  int sequence;
   //wait Scan data:
-  result_t op_result =  lidarPtr->grabScanData(nodes, count);
+  result_t op_result =  lidarPtr->grabScanData(nodes, count, &sequence);
 
   // Fill in scan data:
   if (IS_OK(op_result)) {
@@ -173,6 +174,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     float intensity = 0.0;
     float angle = 0.0;
     LaserScan scan_msg;
+    scan_msg.config.sequence = sequence;
+    outscan.config.sequence = sequence;
     LaserPoint point;
     LaserDebug debug;
     memset(&debug, 0, sizeof(debug));
@@ -371,7 +374,8 @@ bool CYdLidar::checkLidarAbnormal() {
     }
 
     size_t   count = YDlidarDriver::MAX_SCAN_NODES;
-    op_result =  lidarPtr->grabScanData(nodes, count);
+    int seq;
+    op_result =  lidarPtr->grabScanData(nodes, count, &seq);
     err = lidarPtr->getSystemError();
 
     if (IS_OK(op_result)) {

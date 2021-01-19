@@ -233,6 +233,7 @@ struct LaserConfig {
   float min_range;
   //! Maximum range [m]
   float max_range;
+  int sequence;
   LaserConfig &operator = (const LaserConfig &data) {
     this->min_angle = data.min_angle;
     this->max_angle = data.max_angle;
@@ -240,6 +241,7 @@ struct LaserConfig {
     this->scan_time = data.scan_time;
     this->min_range = data.min_range;
     this->max_range = data.max_range;
+    this->sequence = data.sequence;
     return *this;
   }
 };

@@ -18,6 +18,7 @@ Release Notes
 | SDK     |  2.2.5 |   2020-12-15  |
 
 - [feat]  The FW version in LidarVersion changes from two bytes to one byte
+- [feat]  Add logic of time reversal and time drift prevention and grant scan sequence[2021-01-19].
 
 ## How to Get Lidar Firmware Version number.
 ```
