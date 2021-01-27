@@ -57,7 +57,7 @@ class YDLIDAR_API CYdLidar {
   bool doProcessSimple(LaserScan &outscan, bool &hardwareError);
 
   //Turn on the motor enable
-  bool  turnOn();  //!< See base class docs
+  int  turnOn();  //!< See base class docs
 
   //Turn off the motor enable and close the scan
   bool  turnOff(); //!< See base class docs
@@ -178,8 +178,11 @@ class YDLIDAR_API CYdLidar {
   /** Retruns true if the scan frequency is set to user's frequency is successful, If it's not*/
   bool checkScanFrequency();
 
-  /** returns true if the lidar data is normal, If it's not*/
-  bool checkLidarAbnormal();
+  /** returns true if the lidar data is abnormal, If it's not*/
+  int checkLidarAbnormal();
+
+  /** returns true if the lidar data is nornal*/
+  bool checkLidarData();
 
  private:
   bool    isScanning;
@@ -202,5 +205,10 @@ class YDLIDAR_API CYdLidar {
   uint32_t laserFailureTime;
   uint32_t hasLaserFailure;
   LidarVersion m_LidarVersion;      ///< LiDAR Version information
+  Thread data_thread_;				///< thread id
+  Locker data_lock_;
+  bool check_thread_running_;
+  bool lidar_data_nomal;
+  uint32_t m_turn_on_time;
 };	// End of class
 

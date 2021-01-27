@@ -46,7 +46,9 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   laserFailureTime    = getms();
   hasLaserFailure     = false;
   memset(&m_LidarVersion, 0, sizeof(LidarVersion));
-
+  check_thread_running_ = false;
+  lidar_data_nomal      = false;
+  m_turn_on_time        = getms();
 }
 
 /*-------------------------------------------------------------
@@ -70,7 +72,14 @@ void CYdLidar::disconnecting() {
     lidarPtr = nullptr;
   }
 
+  {
+    ScopedLocker lck(data_lock_);
+    check_thread_running_ = false;
+    lidar_data_nomal = false;
+  }
+
   isScanning = false;
+  data_thread_.join();
 }
 
 //lidar pointer
@@ -286,25 +295,61 @@ void CYdLidar::handleVersionInfoByPackage(const LaserDebug &debug) {
 /*-------------------------------------------------------------
             turnOn
 -------------------------------------------------------------*/
-bool  CYdLidar::turnOn() {
+int  CYdLidar::turnOn() {
   ScopedLocker l(lidar_lock);
 
   if (!lidarPtr) {
     return false;
   }
 
-  uint32_t start_ts = getms();
-  hasLaserFailure     = false;
-
   if (isScanning && lidarPtr->isscanning()) {
     return true;
   }
 
+  if (lidarPtr->isscanning()) {
+    bool thread_running = true;
+    {
+      ScopedLocker lck(data_lock_);
+      thread_running = check_thread_running_;
+    }
+
+    if (!thread_running) {
+      data_thread_.join();
+
+      if (!lidar_data_nomal) {
+        lidarPtr->stop();
+        fprintf(stderr,
+                "[CYdLidar][%fs] Failed to turn on the Lidar, because the lidar is [%s].\n",
+                (getms() - m_turn_on_time) / 1000.0,
+                YDlidarDriver::DescribeError(lidarPtr->getSystemError()));
+        isScanning = false;
+      } else {
+        printf("[YDLIDAR INFO][%fs] Now YDLIDAR is scanning ......\n",
+               (getms() - m_turn_on_time) / 1000.0);
+        fflush(stdout);
+      }
+
+      isScanning = lidar_data_nomal;
+      return lidar_data_nomal;
+    }
+
+    delay(10);
+    return 2;//processing
+  }
+
+  hasLaserFailure     = false;
+  m_turn_on_time = getms();
+  {
+    ScopedLocker lck(data_lock_);
+    lidar_data_nomal = false;
+    check_thread_running_ = false;
+  }
+  data_thread_.join();
   // start scan...
-  result_t op_result = lidarPtr->startScan();
+  result_t op_result = lidarPtr->startScan(false, 500);
 
   if (!IS_OK(op_result)) {
-    op_result = lidarPtr->startScan();
+    op_result = lidarPtr->startScan(false, 350);
 
     if (!IS_OK(op_result)) {
       lidarPtr->stop();
@@ -314,21 +359,42 @@ bool  CYdLidar::turnOn() {
     }
   }
 
-  if (checkLidarAbnormal()) {
-    lidarPtr->stop();
-    fprintf(stderr,
-            "[CYdLidar][%fs] Failed to turn on the Lidar, because the lidar is [%s].\n",
-            (getms() - start_ts) / 1000.0,
-            YDlidarDriver::DescribeError(lidarPtr->getSystemError()));
-    isScanning = false;
-    return false;
+  laserFailureTime = getms();
+
+  if (!checkLidarData()) {
+    lidarPtr->setAutoReconnect(m_AutoReconnect);
+    check_thread_running_ = true;
+    data_thread_ = CLASS_THREAD(CYdLidar, checkLidarAbnormal);
+
+    if (data_thread_.getHandle() == 0) {
+      lidarPtr->stop();
+      fprintf(stderr, "[CYdLidar] Failed to start check data thread: %x\n",
+              op_result);
+      lidar_data_nomal = false;
+      check_thread_running_ = false;
+      return false;
+    }
+
+    return 2;//processing
   }
 
+//  if (checkLidarAbnormal()) {
+//    lidarPtr->stop();
+//    fprintf(stderr,
+//            "[CYdLidar][%fs] Failed to turn on the Lidar, because the lidar is [%s].\n",
+//            (getms() - start_ts) / 1000.0,
+//            YDlidarDriver::DescribeError(lidarPtr->getSystemError()));
+//    isScanning = false;
+//    return false;
+//  }
+
+  check_thread_running_ = false;
+  lidar_data_nomal = true;
   laserFailureTime = getms();
   isScanning = true;
   lidarPtr->setAutoReconnect(m_AutoReconnect);
   printf("[YDLIDAR INFO][%fs] Now YDLIDAR is scanning ......\n",
-         (getms() - start_ts) / 1000.0);
+         (getms() - m_turn_on_time) / 1000.0);
   fflush(stdout);
   return true;
 }
@@ -345,80 +411,138 @@ bool  CYdLidar::turnOff() {
     return false;
   }
 
+  {
+    ScopedLocker lck(data_lock_);
+    check_thread_running_ = false;
+    lidar_data_nomal = false;
+  }
+
   if (isScanning) {
     printf("[YDLIDAR INFO] Now YDLIDAR Scanning has stopped ......\n");
   }
 
   isScanning = false;
   hasLaserFailure     = false;
+  data_thread_.join();
   return true;
 }
 
-bool CYdLidar::checkLidarAbnormal() {
-  int check_abnormal_count = 0;
-
-  if (m_AbnormalCheckCount < 2) {
-    m_AbnormalCheckCount = 2;
-  }
-
+bool CYdLidar::checkLidarData() {
   result_t op_result = RESULT_FAIL;
-  int parse_version = 0;
   YDlidarDriver::DriverError err = YDlidarDriver::NoError;
-  laserFailureTime = getms();
-  int m_generatedData = 0;
+  uint32_t startTime = getms();
 
-  while (check_abnormal_count < m_AbnormalCheckCount) {
-    //Ensure that the voltage is insufficient or the motor resistance is high, causing an abnormality.
-    if (check_abnormal_count > 0 && !IS_OK(op_result)) {
-      delay(check_abnormal_count * 1190);
-    }
-
+  while ((getms() - startTime) < 1800 && lidarPtr->isscanning()) {
     size_t   count = YDlidarDriver::MAX_SCAN_NODES;
-    int seq;
-    op_result =  lidarPtr->grabScanData(nodes, count, &seq);
+    int seq = 0;
+    op_result =  lidarPtr->grabScanData(nodes, count, &seq, 460);
     err = lidarPtr->getSystemError();
+    int m_generatedData = 0;
 
     if (IS_OK(op_result)) {
-      LaserDebug debug;
-      memset(&debug, 0, sizeof(debug));
-
-      for (int  i = 0; i < count; i++) {
-        parsePackageNode(nodes[i], debug);
-
-        if (nodes[i].error_package) {
-          debug.MaxDebugIndex = 255;
-        }
-      }
-
-      handleVersionInfoByPackage(debug);
-
-      if (m_SingleChannel && !m_ParseSuccess) {
-        parse_version++;
-
-        if (parse_version < 3) {
-          continue;
-        }
-      }
-
       if (err != YDlidarDriver::LaserFailureError) {
         m_generatedData++;
 
         if (m_generatedData > 1) {
-          return false;
+          return true;
         }
 
         continue;
       } else {
         m_generatedData = 0;
-        fprintf(stderr, "[CYdLidar][ERROR]: %s\n", YDlidarDriver::DescribeError(err));
+        fprintf(stderr, "[CYdLidar][ERROR][%fs]: %s\n",
+                (getms() - laserFailureTime) / 1000.0, YDlidarDriver::DescribeError(err));
         fflush(stderr);
 
-        if (getms() - laserFailureTime > 30 * 1000) {
+        if ((getms() - laserFailureTime) > 29 * 1000) {
+          op_result = RESULT_FAIL;
+          break;
+        }
+
+        op_result = RESULT_FAIL;
+        continue;
+      }
+    }
+
+    m_generatedData = 0;
+  }
+
+  if (!IS_OK(op_result) && err != YDlidarDriver::NoError) {
+    fprintf(stderr, "[CYdLidar][WARNNING][%fs]: %s\n",
+            (getms() - laserFailureTime) / 1000.0, YDlidarDriver::DescribeError(err));
+    fflush(stderr);
+  }
+
+  return IS_OK(op_result);
+}
+
+int CYdLidar::checkLidarAbnormal() {
+  int check_abnormal_count = 0;
+  result_t op_result = RESULT_FAIL;
+  YDlidarDriver::DriverError err = YDlidarDriver::NoError;
+  int m_generatedData = 0;
+  uint32_t startTime = getms();
+
+  while ((getms() - startTime) < 30000 && lidarPtr->isscanning()) {
+    {
+      ScopedLocker lck(data_lock_);
+
+      if (!check_thread_running_) {
+        lidar_data_nomal = false;
+        return RESULT_FAIL;
+      }
+    }
+
+    //Ensure that the voltage is insufficient or the motor resistance is high, causing an abnormality.
+    if (check_abnormal_count > 0 && !IS_OK(op_result)) {
+      delay(100);
+
+      if (!lidarPtr->isscanning()) {
+        ScopedLocker lck(data_lock_);
+        check_thread_running_ = false;
+        lidar_data_nomal = false;
+        return RESULT_FAIL;
+      }
+
+//      delay(check_abnormal_count * 1190);
+    }
+
+
+    size_t   count = YDlidarDriver::MAX_SCAN_NODES;
+    int seq;
+    op_result =  lidarPtr->grabScanData(nodes, count, &seq, 500);
+    err = lidarPtr->getSystemError();
+
+    if (IS_OK(op_result)) {
+      if (err != YDlidarDriver::LaserFailureError) {
+        m_generatedData++;
+
+        if (m_generatedData > 1) {
+          ScopedLocker lck(data_lock_);
+          check_thread_running_ = false;
+          lidar_data_nomal = true;
+          return RESULT_OK;
+        }
+
+        continue;
+      } else {
+        m_generatedData = 0;
+        fprintf(stderr, "[CYdLidar][ERROR][%fs]: %s\n",
+                (getms() - laserFailureTime) / 1000.0, YDlidarDriver::DescribeError(err));
+        fflush(stderr);
+
+        if (getms() - laserFailureTime > 29 * 1000) {
           op_result = RESULT_FAIL;
           break;
         }
 
         continue;
+      }
+    } else {
+      if (check_abnormal_count % 3 == 0 && err != YDlidarDriver::NoError) {
+        fprintf(stderr, "[CYdLidar][WARNNING][%fs]: %s\n",
+                (getms() - laserFailureTime) / 1000.0, YDlidarDriver::DescribeError(err));
+        fflush(stderr);
       }
     }
 
@@ -430,7 +554,17 @@ bool CYdLidar::checkLidarAbnormal() {
     op_result = RESULT_FAIL;
   }
 
-  return !IS_OK(op_result);
+  {
+    ScopedLocker lck(data_lock_);
+    check_thread_running_ = false;
+    lidar_data_nomal = false;
+
+    if (IS_OK(op_result)) {
+      lidar_data_nomal = true;
+    }
+  }
+
+  return op_result;
 }
 
 /** Returns true if the device is connected & operative */
@@ -443,7 +577,7 @@ bool CYdLidar::getDeviceHealth() {
   result_t op_result;
   device_health healthinfo;
   printf("[YDLIDAR]:SDK Version: %s\n", YDlidarDriver::getSDKVersion().c_str());
-  op_result = lidarPtr->getHealth(healthinfo);
+  op_result = lidarPtr->getHealth(healthinfo, 500);
 
   if (IS_OK(op_result)) {
     printf("[YDLIDAR]:Lidar running correctly ! The health status: %s\n",
@@ -473,7 +607,7 @@ bool CYdLidar::getDeviceInfo() {
   }
 
   device_info devinfo;
-  result_t op_result = lidarPtr->getDeviceInfo(devinfo);
+  result_t op_result = lidarPtr->getDeviceInfo(devinfo, 500);
 
   if (!IS_OK(op_result)) {
     if (m_PrintError) {
@@ -871,11 +1005,11 @@ bool CYdLidar::checkStatus() {
   bool ret = getDeviceHealth();
 
   if (!ret) {
-    delay(500);
+    delay(100);
   }
 
   if (!getDeviceInfo()) {
-    delay(500);
+    delay(100);
     ret = getDeviceInfo();
 
     if (!ret) {
@@ -914,7 +1048,7 @@ int CYdLidar::checkHardware() {
       ret = 3;
       hasLaserFailure = true;
 
-      if ((getms() - laserFailureTime) > 30 * 1000) {
+      if ((getms() - laserFailureTime) > 29 * 1000) {
         ret = 4;
       }
     } else {

@@ -133,6 +133,7 @@ int main(int argc, char *argv[]) {
 
   bool ret = laser.initialize();
 
+
   if (ret) {
     LidarVersion _version;
     memset(&_version, 0, sizeof(LidarVersion));
@@ -140,7 +141,13 @@ int main(int argc, char *argv[]) {
     printf("Lidar FW Version: %d, HW Version: %d\n", _version.firmware,
            _version.hardware);
     fflush(stdout);
-    ret = laser.turnOn();
+    int rt = laser.turnOn();
+
+    while (rt == 2 && ydlidar::ok()) {//waiting processing over
+      rt = laser.turnOn();
+    }
+
+    ret = (rt == 1);
   }
 
 

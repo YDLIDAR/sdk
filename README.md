@@ -15,10 +15,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.2.5 |   2020-12-15  |
+| SDK     |  2.2.6 |   2021-01-27  |
 
-- [feat]  The FW version in LidarVersion changes from two bytes to one byte
-- [feat]  Add logic of time reversal and time drift prevention and grant scan sequence[2021-01-19].
+- [feat]  Request turnon -> judge without retry ->Judge lidar status,In case of false -> retry by special thread ->request turnon -> return value….
+- [feat] The return values of turnOn changes from bool type to int type.
 
 ## How to Get Lidar Firmware Version number.
 ```
