@@ -613,6 +613,7 @@ int YDlidarDriver::cacheScanData() {
   m_NoZeroNodeCount = 0;
   m_autoTime = getms();
   bool lastGood = false;
+  int block_timeout_count = 0;
 
   while (isScanning) {
     count = 128;
@@ -656,8 +657,17 @@ int YDlidarDriver::cacheScanData() {
           }
         }
       } else {
-        timeout_count++;
         local_scan[0].sync_flag = Node_NotSync;
+
+        if (getSystemError() == BlockError) {
+          block_timeout_count++;
+        } else {
+          block_timeout_count = 0;
+        }
+
+        if (block_timeout_count % 3 == 0) {
+          timeout_count++;
+        }
       }
     } else {
       timeout_count = 0;
@@ -670,6 +680,7 @@ int YDlidarDriver::cacheScanData() {
       lastGood = true;
       buffer_size = 0;
       m_reconnectCount = 0;
+      block_timeout_count = 0;
     }
 
 
@@ -1147,7 +1158,8 @@ result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,
 }
 
 
-result_t YDlidarDriver::grabScanData(node_info *nodebuffer, size_t &count, int* const seq,
+result_t YDlidarDriver::grabScanData(node_info *nodebuffer, size_t &count,
+                                     int *const seq,
                                      uint32_t timeout) {
   switch (_dataEvent.wait(timeout)) {
     case Event::EVENT_TIMEOUT:
