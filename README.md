@@ -15,10 +15,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.2.6 |   2021-01-27  |
+| SDK     |  2.2.7 |   2021-01-28  |
 
-- [feat]  Request turnon -> judge without retry ->Judge lidar status,In case of false -> retry by special thread ->request turnon -> return value….
-- [feat] The return values of turnOn changes from bool type to int type.
+- [feat] Remove the internal 30 seconds attempt process.
+- [feat] The return values of turnOn restore to bool type.
 
 ## How to Get Lidar Firmware Version number.
 ```

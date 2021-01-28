@@ -141,13 +141,14 @@ int main(int argc, char *argv[]) {
     printf("Lidar FW Version: %d, HW Version: %d\n", _version.firmware,
            _version.hardware);
     fflush(stdout);
-    int rt = laser.turnOn();
+    ret = laser.turnOn();
+//    int rt = laser.turnOn();
 
-    while (rt == 2 && ydlidar::ok()) {//waiting processing over
-      rt = laser.turnOn();
-    }
+//    while (rt == 2 && ydlidar::ok()) {//waiting processing over
+//      rt = laser.turnOn();
+//    }
 
-    ret = (rt == 1);
+//    ret = (rt == 1);
   }
 
 

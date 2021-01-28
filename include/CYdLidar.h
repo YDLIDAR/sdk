@@ -57,7 +57,7 @@ class YDLIDAR_API CYdLidar {
   bool doProcessSimple(LaserScan &outscan, bool &hardwareError);
 
   //Turn on the motor enable
-  int  turnOn();  //!< See base class docs
+  bool  turnOn();  //!< See base class docs
 
   //Turn off the motor enable and close the scan
   bool  turnOff(); //!< See base class docs

@@ -72,14 +72,14 @@ void CYdLidar::disconnecting() {
     lidarPtr = nullptr;
   }
 
-  {
-    ScopedLocker lck(data_lock_);
-    check_thread_running_ = false;
-    lidar_data_nomal = false;
-  }
+//  {
+//    ScopedLocker lck(data_lock_);
+//    check_thread_running_ = false;
+//    lidar_data_nomal = false;
+//  }
 
   isScanning = false;
-  data_thread_.join();
+//  data_thread_.join();
 }
 
 //lidar pointer
@@ -295,7 +295,7 @@ void CYdLidar::handleVersionInfoByPackage(const LaserDebug &debug) {
 /*-------------------------------------------------------------
             turnOn
 -------------------------------------------------------------*/
-int  CYdLidar::turnOn() {
+bool  CYdLidar::turnOn() {
   ScopedLocker l(lidar_lock);
 
   if (!lidarPtr) {
@@ -306,45 +306,45 @@ int  CYdLidar::turnOn() {
     return true;
   }
 
-  if (lidarPtr->isscanning()) {
-    bool thread_running = true;
-    {
-      ScopedLocker lck(data_lock_);
-      thread_running = check_thread_running_;
-    }
+//  if (lidarPtr->isscanning()) {
+//    bool thread_running = true;
+//    {
+//      ScopedLocker lck(data_lock_);
+//      thread_running = check_thread_running_;
+//    }
 
-    if (!thread_running) {
-      data_thread_.join();
+//    if (!thread_running) {
+//      data_thread_.join();
 
-      if (!lidar_data_nomal) {
-        lidarPtr->stop();
-        fprintf(stderr,
-                "[CYdLidar][%fs] Failed to turn on the Lidar, because the lidar is [%s].\n",
-                (getms() - m_turn_on_time) / 1000.0,
-                YDlidarDriver::DescribeError(lidarPtr->getSystemError()));
-        isScanning = false;
-      } else {
-        printf("[YDLIDAR INFO][%fs] Now YDLIDAR is scanning ......\n",
-               (getms() - m_turn_on_time) / 1000.0);
-        fflush(stdout);
-      }
+//      if (!lidar_data_nomal) {
+//        lidarPtr->stop();
+//        fprintf(stderr,
+//                "[CYdLidar][%fs] Failed to turn on the Lidar, because the lidar is [%s].\n",
+//                (getms() - m_turn_on_time) / 1000.0,
+//                YDlidarDriver::DescribeError(lidarPtr->getSystemError()));
+//        isScanning = false;
+//      } else {
+//        printf("[YDLIDAR INFO][%fs] Now YDLIDAR is scanning ......\n",
+//               (getms() - m_turn_on_time) / 1000.0);
+//        fflush(stdout);
+//      }
 
-      isScanning = lidar_data_nomal;
-      return lidar_data_nomal;
-    }
+//      isScanning = lidar_data_nomal;
+//      return lidar_data_nomal;
+//    }
 
-    delay(10);
-    return 2;//processing
-  }
+//    delay(10);
+//    return 2;//processing
+//  }
 
   hasLaserFailure     = false;
   m_turn_on_time = getms();
-  {
-    ScopedLocker lck(data_lock_);
-    lidar_data_nomal = false;
-    check_thread_running_ = false;
-  }
-  data_thread_.join();
+//  {
+//    ScopedLocker lck(data_lock_);
+//    lidar_data_nomal = false;
+//    check_thread_running_ = false;
+//  }
+//  data_thread_.join();
   // start scan...
   result_t op_result = lidarPtr->startScan(false, 500);
 
@@ -362,20 +362,27 @@ int  CYdLidar::turnOn() {
   laserFailureTime = getms();
 
   if (!checkLidarData()) {
-    lidarPtr->setAutoReconnect(m_AutoReconnect);
-    check_thread_running_ = true;
-    data_thread_ = CLASS_THREAD(CYdLidar, checkLidarAbnormal);
+    lidarPtr->stop();
+    fprintf(stderr,
+            "[CYdLidar][%fs] Failed to turn on the Lidar, because the lidar is [%s].\n",
+            (getms() - m_turn_on_time) / 1000.0,
+            YDlidarDriver::DescribeError(lidarPtr->getSystemError()));
+    isScanning = false;
+    return false;
+//    lidarPtr->setAutoReconnect(m_AutoReconnect);
+//    check_thread_running_ = true;
+//    data_thread_ = CLASS_THREAD(CYdLidar, checkLidarAbnormal);
 
-    if (data_thread_.getHandle() == 0) {
-      lidarPtr->stop();
-      fprintf(stderr, "[CYdLidar] Failed to start check data thread: %x\n",
-              op_result);
-      lidar_data_nomal = false;
-      check_thread_running_ = false;
-      return false;
-    }
+//    if (data_thread_.getHandle() == 0) {
+//      lidarPtr->stop();
+//      fprintf(stderr, "[CYdLidar] Failed to start check data thread: %x\n",
+//              op_result);
+//      lidar_data_nomal = false;
+//      check_thread_running_ = false;
+//      return false;
+//    }
 
-    return 2;//processing
+//    return 2;//processing
   }
 
 //  if (checkLidarAbnormal()) {
@@ -388,8 +395,8 @@ int  CYdLidar::turnOn() {
 //    return false;
 //  }
 
-  check_thread_running_ = false;
-  lidar_data_nomal = true;
+//  check_thread_running_ = false;
+//  lidar_data_nomal = true;
   laserFailureTime = getms();
   isScanning = true;
   lidarPtr->setAutoReconnect(m_AutoReconnect);
@@ -411,11 +418,11 @@ bool  CYdLidar::turnOff() {
     return false;
   }
 
-  {
-    ScopedLocker lck(data_lock_);
-    check_thread_running_ = false;
-    lidar_data_nomal = false;
-  }
+//  {
+//    ScopedLocker lck(data_lock_);
+//    check_thread_running_ = false;
+//    lidar_data_nomal = false;
+//  }
 
   if (isScanning) {
     printf("[YDLIDAR INFO] Now YDLIDAR Scanning has stopped ......\n");
@@ -423,21 +430,21 @@ bool  CYdLidar::turnOff() {
 
   isScanning = false;
   hasLaserFailure     = false;
-  data_thread_.join();
+//  data_thread_.join();
   return true;
 }
 
 bool CYdLidar::checkLidarData() {
   result_t op_result = RESULT_FAIL;
   YDlidarDriver::DriverError err = YDlidarDriver::NoError;
-  uint32_t startTime = getms();
+//  uint32_t startTime = getms();
+  int m_generatedData = 0;
 
-  while ((getms() - startTime) < 1800 && lidarPtr->isscanning()) {
+  while ((getms() - m_turn_on_time) < 2900 && lidarPtr->isscanning()) {
     size_t   count = YDlidarDriver::MAX_SCAN_NODES;
     int seq = 0;
     op_result =  lidarPtr->grabScanData(nodes, count, &seq, 460);
     err = lidarPtr->getSystemError();
-    int m_generatedData = 0;
 
     if (IS_OK(op_result)) {
       if (err != YDlidarDriver::LaserFailureError) {
@@ -454,7 +461,7 @@ bool CYdLidar::checkLidarData() {
                 (getms() - laserFailureTime) / 1000.0, YDlidarDriver::DescribeError(err));
         fflush(stderr);
 
-        if ((getms() - laserFailureTime) > 29 * 1000) {
+        if ((getms() - laserFailureTime) > 3 * 1000) {
           op_result = RESULT_FAIL;
           break;
         }
