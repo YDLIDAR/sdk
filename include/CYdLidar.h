@@ -156,7 +156,7 @@ class YDLIDAR_API CYdLidar {
   /**
    * @brief checkCalibrationAngle
    */
-  void checkCalibrationAngle(const std::string &serialNumber);
+  bool checkCalibrationAngle(const std::string &serialNumber);
 
   /**
    * @brief checkRibOffsetAngle

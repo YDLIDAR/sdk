@@ -15,11 +15,9 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.2.7 |   2021-01-28  |
+| SDK     |  2.2.8 |   2021-02-01  |
 
-- [feat] Remove the internal 30 seconds attempt process.
-- [feat] The return values of turnOn restore to bool type.
-
+- [fixed] Fixed sudden seg fault is appeared when turnOff.
 ## How to Get Lidar Firmware Version number.
 ```
   CYdLidar laser;
