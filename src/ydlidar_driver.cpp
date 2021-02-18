@@ -148,7 +148,6 @@ YDlidarDriver::YDlidarDriver():
   data_header_error     = false;
   m_SupportMotorDtrCtrl = true;
   m_reconnectCount      = 0;
-  isThreadFinished      = true;
   buffer_size           = 0;
   m_driverErrno         = NoError;
   m_NoZeroNodeCount     = 0;
@@ -166,7 +165,7 @@ YDlidarDriver::~YDlidarDriver() {
   _thread.join();
   int delay_count = 0;
 
-  while (!isThreadFinished && delay_count < 20) {
+  while (!_thread.isThreadFinshed() && delay_count < 5) {
     delay(100);
     delay_count++;
   }
@@ -653,7 +652,7 @@ int YDlidarDriver::cacheScanData() {
   int timeout_count   = 0;
   m_reconnectCount = 0;
   buffer_size      = 0;
-  isThreadFinished = false;
+  _thread.updateThreadState(false);
   m_NoZeroNodeCount = 0;
   m_autoTime = getms();
   bool lastGood = false;
@@ -675,7 +674,7 @@ int YDlidarDriver::cacheScanData() {
           }
           delete[] local_scan;
           local_scan = nullptr;
-          isThreadFinished = true;
+          _thread.updateThreadState(true);
           return RESULT_FAIL;
         } else {
           if (lastGood) {
@@ -700,7 +699,7 @@ int YDlidarDriver::cacheScanData() {
             isScanning = false;
             delete[] local_scan;
             local_scan = nullptr;
-            isThreadFinished = true;
+            _thread.updateThreadState(true);
             fprintf(stdout, "[YDLIDAR][TIMEOUT][%fs] Exit scan thread completed.\n",
                     (getms() - thread_start_time) / 1000.f);
             fflush(stdout);
@@ -759,7 +758,7 @@ int YDlidarDriver::cacheScanData() {
   isScanning = false;
   delete[] local_scan;
   local_scan = nullptr;
-  isThreadFinished = true;
+  _thread.updateThreadState(true);
   fprintf(stdout, "[YDLIDAR][END][%fs] Exit scan thread completed.\n",
           (getms() - thread_start_time) / 1000.f);
   fflush(stdout);
@@ -1558,7 +1557,7 @@ result_t YDlidarDriver::startScan(bool force, uint32_t timeout) {
   //wait previous thread end
   int timeout_count = 0;
 
-  while (!isThreadFinished && timeout_count < 10) {
+  while (!_thread.isThreadFinshed() && timeout_count < 3) {
     delay(100);
     timeout_count++;
   }
@@ -1701,7 +1700,7 @@ result_t YDlidarDriver::stop() {
   int timeout_count = 0;
 
   //wait thread finished
-  while (!isThreadFinished && timeout_count < 11) {
+  while (!_thread.isThreadFinshed() && timeout_count < 3) {
     delay(100);
     timeout_count++;
   }

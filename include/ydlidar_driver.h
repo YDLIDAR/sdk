@@ -193,7 +193,7 @@ class YDlidarDriver {
   * @retval RESULT_FAILE    failed
   * @note Before starting, you must start the start the scan successfully with the ::startScan function
   */
-  result_t grabScanData(node_info *nodebuffer, size_t &count, int* const seq,
+  result_t grabScanData(node_info *nodebuffer, size_t &count, int *const seq,
                         uint32_t timeout = DEFAULT_TIMEOUT) ;
 
 
@@ -668,8 +668,6 @@ class YDlidarDriver {
   std::atomic<bool>     isScanning;   ///<
   std::atomic<bool>     isAutoReconnect;  ///<
   std::atomic<bool>     isAutoconnting;  ///<
-  std::atomic<bool>     isThreadFinished;
-
 
   enum {
     DEFAULT_TIMEOUT = 2000,    /**< default timeout. */

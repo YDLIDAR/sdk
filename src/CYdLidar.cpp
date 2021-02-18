@@ -987,12 +987,14 @@ bool  CYdLidar::checkCOMMs() {
     }
   }
 
+  uint32_t startTs = getms();
   // make connection...
   result_t op_result = lidarPtr->connect(m_SerialPort.c_str(), m_SerialBaudrate);
 
   if (!IS_OK(op_result)) {
     fprintf(stderr,
-            "[CYdLidar] Error, cannot bind to the specified serial port[%s] and baudrate[%d]\n",
+            "[CYdLidar][%dms] Error, cannot bind to the specified serial port[%s] and baudrate[%d]\n",
+            getms() - startTs,
             m_SerialPort.c_str(), m_SerialBaudrate);
     return false;
   }
@@ -1120,9 +1122,12 @@ bool CYdLidar::initialize() {
     return false;
   }
 
+  uint32_t startTs = getms();
+
   if (!checkStatus()) {
     fprintf(stderr,
-            "[CYdLidar::initialize] Error initializing YDLIDAR check status.\n");
+            "[CYdLidar::initialize][%dms] Error initializing YDLIDAR check status.\n",
+            getms() - startTs);
     fflush(stderr);
     return false;
   }
