@@ -15,9 +15,10 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.2.8 |   2021-02-01  |
+| SDK     |  2.2.9 |   2021-02-19  |
 
-- [fixed] Fixed sudden seg fault is appeared when turnOff.
+- [fixed] Fixed Abort error – assert fail while pthred_mutex_trylock. 
+
 ## How to Get Lidar Firmware Version number.
 ```
   CYdLidar laser;
