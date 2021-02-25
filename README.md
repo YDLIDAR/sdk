@@ -15,9 +15,14 @@ Release Notes
 -------------------------------------------------------------------------------------------------------------------------------------------------------
 | Title      |  Version |  Data |
 | :-------- | --------:|  :--: |
-| SDK     |  2.2.9 |   2021-02-19  |
+| SDK     |  2.3.0 |   2021-02-25  |
 
-- [fixed] Fixed Abort error – assert fail while pthred_mutex_trylock. 
+- [fixed] Fixed isDoingLock for thread. 
+- [fixed] Fixed checkAutoConnecting Block.
+- [fixed] Fixed doProcessSimple lidarPtr nullptr abort. 
+- [feat] move scan_node_buf and local_scan to Heap.
+
+
 
 ## How to Get Lidar Firmware Version number.
 ```

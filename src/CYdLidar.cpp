@@ -65,6 +65,7 @@ CYdLidar::~CYdLidar() {
 
 void CYdLidar::disconnecting() {
   ScopedLocker l(lidar_lock);
+  ScopedLocker dl(del_lidar_lock);
 
   if (lidarPtr) {
     lidarPtr->disconnect();
@@ -101,6 +102,8 @@ void CYdLidar::GetLidarVersion(LidarVersion &version) {
 }
 
 result_t CYdLidar::getZeroOffsetAngle(offset_angle &angle, uint32_t timeout) {
+  ScopedLocker l(lidar_lock);
+
   if (!lidarPtr) {
     return RESULT_FAIL;
   }
@@ -113,6 +116,8 @@ result_t CYdLidar::getZeroOffsetAngle(offset_angle &angle, uint32_t timeout) {
 }
 
 result_t CYdLidar::saveRobotOffsetAngle(offset_angle &angle, uint32_t timeout) {
+  ScopedLocker l(lidar_lock);
+
   if (!lidarPtr) {
     return RESULT_FAIL;
   }
@@ -126,6 +131,8 @@ result_t CYdLidar::saveRobotOffsetAngle(offset_angle &angle, uint32_t timeout) {
 
 result_t CYdLidar::getRibOffsetAngle(std::vector<offset_angle> &angle,
                                      uint32_t timeout) {
+  ScopedLocker l(lidar_lock);
+
   if (!lidarPtr) {
     return RESULT_FAIL;
   }
@@ -140,6 +147,8 @@ result_t CYdLidar::getRibOffsetAngle(std::vector<offset_angle> &angle,
 
 result_t CYdLidar::saveRibOffsetAngle(std::vector<offset_angle> &angle,
                                       uint32_t timeout) {
+  ScopedLocker l(lidar_lock);
+
   if (!lidarPtr) {
     return RESULT_FAIL;
   }
@@ -171,9 +180,17 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
 
   size_t   count = YDlidarDriver::MAX_SCAN_NODES;
 
-  int sequence;
+  int sequence = 0;
   //wait Scan data:
-  result_t op_result =  lidarPtr->grabScanData(nodes, count, &sequence);
+  result_t op_result =  RESULT_FAIL;
+  {
+    ScopedLocker dl(del_lidar_lock);
+
+    if (lidarPtr) {
+      op_result = lidarPtr->grabScanData(nodes, count, &sequence);
+    }
+  }
+
 
   // Fill in scan data:
   if (IS_OK(op_result)) {
@@ -577,6 +594,8 @@ int CYdLidar::checkLidarAbnormal() {
 
 /** Returns true if the device is connected & operative */
 bool CYdLidar::getDeviceHealth() {
+  ScopedLocker l(lidar_lock);
+
   if (!lidarPtr) {
     return false;
   }
@@ -610,6 +629,8 @@ bool CYdLidar::getDeviceHealth() {
 }
 
 bool CYdLidar::getDeviceInfo() {
+  ScopedLocker l(lidar_lock);
+
   if (!lidarPtr) {
     return false;
   }
@@ -961,6 +982,7 @@ void CYdLidar::checkRibOffsetAngle() {
 -------------------------------------------------------------*/
 bool  CYdLidar::checkCOMMs() {
   ScopedLocker l(lidar_lock);
+  ScopedLocker dl(del_lidar_lock);
 
   if (!lidarPtr) {
     // create the driver instance
