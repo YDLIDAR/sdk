@@ -73,10 +73,9 @@ class Thread {
     }
 
     if (!this->_handle) {
+      updateDoingState(false);
       return 0;
     }
-
-    updateDoingState(true);
 
     int ret = 0;
 #if defined(_WIN32)
@@ -104,10 +103,10 @@ class Thread {
     }
 
     if (!this->_handle) {
+      updateDoingState(false);
       return 0;
     }
 
-    updateDoingState(true);
     int ret = 0;
 #if defined(_WIN32)
 
@@ -184,6 +183,11 @@ class Thread {
     bool flag = false;
     pthread_mutex_lock(&mutex);
     flag = doing_join_state;
+
+    if (!doing_join_state) {
+      doing_join_state = true;
+    }
+
     pthread_mutex_unlock(&mutex);
     return flag;
   }
