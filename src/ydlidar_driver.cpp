@@ -154,6 +154,8 @@ YDlidarDriver::YDlidarDriver():
   m_autoTime            = getms();
 
   sequence = 0;
+  scan_node_buf = new node_info[MAX_SCAN_NODES];
+  local_scan = new node_info[MAX_SCAN_NODES];
 }
 
 YDlidarDriver::~YDlidarDriver() {
@@ -170,23 +172,37 @@ YDlidarDriver::~YDlidarDriver() {
     delay_count++;
   }
 
-  if (_serial) {
-    isConnected = false;
+  {
+    ScopedLocker l(_lock);
 
-    if (_serial->isOpen()) {
-      _serial->flush();
-      _serial->closePort();
+    if (_serial) {
+      isConnected = false;
+
+      if (_serial->isOpen()) {
+        _serial->flush();
+        _serial->closePort();
+      }
     }
-  }
 
-  if (_serial) {
-    delete _serial;
-    _serial = NULL;
+    if (_serial) {
+      delete _serial;
+      _serial = NULL;
+    }
   }
 
   if (recvBuffer) {
     delete[] recvBuffer;
     recvBuffer = NULL;
+  }
+
+  if (scan_node_buf) {
+    delete[] scan_node_buf;
+    scan_node_buf = NULL;
+  }
+
+  if (local_scan) {
+    delete[] local_scan;
+    local_scan = NULL;
   }
 }
 
@@ -194,14 +210,13 @@ result_t YDlidarDriver::connect(const char *port_path, uint32_t baudrate) {
   ScopedLocker lock(_serial_lock);
   m_baudrate = baudrate;
   serial_port = string(port_path);
-
-  if (!_serial) {
-    _serial = new serial::Serial(port_path, m_baudrate,
-                                 serial::Timeout::simpleTimeout(DEFAULT_TIMEOUT));
-  }
-
   {
     ScopedLocker l(_lock);
+
+    if (!_serial) {
+      _serial = new serial::Serial(port_path, m_baudrate,
+                                   serial::Timeout::simpleTimeout(DEFAULT_TIMEOUT));
+    }
 
     if (!_serial->open()) {
       isConnected = false;
@@ -213,8 +228,8 @@ result_t YDlidarDriver::connect(const char *port_path, uint32_t baudrate) {
   }
 
   stopScan();
-  delay(50);
-  clearDTR();
+//  delay(50);
+//  clearDTR();
 
   return RESULT_OK;
 }
@@ -245,14 +260,18 @@ void YDlidarDriver::flushSerial() {
     return;
   }
 
-  size_t len = _serial->available();
+  ScopedLocker l(_lock);
 
-  if (len) {
-    _serial->read(len);
+  if (_serial) {
+    size_t len = _serial->available();
+
+    if (len) {
+      _serial->read(len);
+    }
+
+    _serial->flushInput();
+    delay(20);
   }
-
-  _serial->flushInput();
-  delay(20);
 
 }
 
@@ -268,6 +287,7 @@ void YDlidarDriver::disconnect() {
   stop();
   delay(20);
   {
+    ScopedLocker l(_lock);
     isConnected = false;
 
     if (_serial) {
@@ -455,7 +475,7 @@ result_t YDlidarDriver::waitForData(size_t data_count, uint32_t timeout,
 
 result_t YDlidarDriver::checkAutoConnecting(bool error) {
   result_t ans = RESULT_FAIL;
-  isAutoconnting = true;
+  isAutoconnting = isScanning.load();
   m_NoZeroNodeCount = 0;
 
   if (m_driverErrno != BlockError) {
@@ -465,7 +485,7 @@ result_t YDlidarDriver::checkAutoConnecting(bool error) {
   int buf_size = 0;
   bool close_serial_event = false;
 
-  while (isAutoReconnect && isAutoconnting) {
+  while (isAutoReconnect && isAutoconnting && isScanning) {
     {
       ScopedLocker l(_serial_lock);
 
@@ -506,7 +526,8 @@ result_t YDlidarDriver::checkAutoConnecting(bool error) {
       }
     }
 
-    if (!isConnected && ((m_reconnectCount >= 7) || error) && isscanning()) {
+    if (!isConnected && ((m_reconnectCount >= 7) || error) && isscanning() &&
+        close_serial_event) {
       if (!IS_OK(connect(serial_port.c_str(), m_baudrate))) {
         UpdateDriverError(NotOpenError);
       }
@@ -518,7 +539,7 @@ result_t YDlidarDriver::checkAutoConnecting(bool error) {
 
     int reconnect_count = 0;
 
-    while (isAutoReconnect && reconnect_count < m_reconnectCount) {
+    while (isAutoReconnect && isScanning && reconnect_count < m_reconnectCount) {
       delay(250);
       reconnect_count++;
     }
@@ -638,14 +659,16 @@ void YDlidarDriver::checkLaserFailure() {
 }
 
 int YDlidarDriver::cacheScanData() {
-  node_info      local_buf[128];
-  size_t         count = 128;
-  node_info      *local_scan = new node_info[MAX_SCAN_NODES];
+//  node_info      local_buf[128];
+  size_t         count = LOCAL_MAX_SCAN_NODES;
+//  node_info      *local_scan = new node_info[MAX_SCAN_NODES];
   size_t         scan_count = 0;
   result_t       ans = RESULT_FAIL;
   memset(local_scan, 0, sizeof(node_info)*MAX_SCAN_NODES);
+  memset(local_buf, 0, sizeof(local_buf));
   m_node_time_ns  = getTime();
   m_node_last_time_ns = getTime();
+  UpdateDriverError(NoError);
   uint32_t thread_start_time = getms();
   flushSerial();
   waitScanData(local_buf, count);
@@ -659,7 +682,7 @@ int YDlidarDriver::cacheScanData() {
   int block_timeout_count = 0;
 
   while (isScanning) {
-    count = 128;
+    count = LOCAL_MAX_SCAN_NODES;
     ans = waitScanData(local_buf, count, DEFAULT_TIMEOUT / 2);
 
     if (!IS_OK(ans)) {
@@ -672,8 +695,6 @@ int YDlidarDriver::cacheScanData() {
           {
             isScanning = false;
           }
-          delete[] local_scan;
-          local_scan = nullptr;
           _thread.updateThreadState(true);
           return RESULT_FAIL;
         } else {
@@ -697,8 +718,6 @@ int YDlidarDriver::cacheScanData() {
             local_scan[0].sync_flag = Node_NotSync;
           } else {
             isScanning = false;
-            delete[] local_scan;
-            local_scan = nullptr;
             _thread.updateThreadState(true);
             fprintf(stdout, "[YDLIDAR][TIMEOUT][%fs] Exit scan thread completed.\n",
                     (getms() - thread_start_time) / 1000.f);
@@ -723,7 +742,8 @@ int YDlidarDriver::cacheScanData() {
       timeout_count = 0;
       buffer_size = 0;
 
-      if (m_reconnectCount != 0) {
+      if (m_reconnectCount != 0 ||
+          getSystemError() == TimeoutError) {
         UpdateDriverError(NoError);
       }
 
@@ -756,8 +776,6 @@ int YDlidarDriver::cacheScanData() {
   }
 
   isScanning = false;
-  delete[] local_scan;
-  local_scan = nullptr;
   _thread.updateThreadState(true);
   fprintf(stdout, "[YDLIDAR][END][%fs] Exit scan thread completed.\n",
           (getms() - thread_start_time) / 1000.f);
@@ -1678,8 +1696,8 @@ result_t YDlidarDriver::startAutoScan(bool force, uint32_t timeout) {
 result_t YDlidarDriver::stop() {
   if (isAutoconnting) {
     isAutoReconnect = false;
-    isScanning = false;
     disableDataGrabbing();
+    isScanning = false;
     stopScan();
 
     if (m_SingleChannel) {

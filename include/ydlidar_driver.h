@@ -675,6 +675,7 @@ class YDlidarDriver {
     MAX_SCAN_NODES = 2048,	   /**< . */
     DEFAULT_TIMEOUT_COUNT = 1,
     DEFAULT_WAIT_COUNT = 10,
+    LOCAL_MAX_SCAN_NODES = 128,
   };
   enum {
     YDLIDAR_F4 = 1,
@@ -700,7 +701,10 @@ class YDlidarDriver {
     YDLIDAR_RATE_10K = 3,
   };
 
-  node_info      scan_node_buf[2048];  ///<
+//  node_info      scan_node_buf[2048];  ///<
+  node_info      *scan_node_buf;  ///<
+  node_info      local_buf[LOCAL_MAX_SCAN_NODES];
+  node_info      *local_scan;
   size_t         scan_node_count;      ///<
   Event          _dataEvent;			 ///< data event
   Locker         _lock;				///< thread lock
