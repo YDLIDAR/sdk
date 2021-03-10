@@ -9,6 +9,7 @@
 #include "common.h"
 #include "ydlidar_driver.h"
 #include <math.h>
+
 using namespace impl;
 
 namespace ydlidar {
@@ -1170,11 +1171,11 @@ result_t YDlidarDriver::startScan(bool force, uint32_t timeout) {
   }
 
   stop();
-//  startMotor();
   checkTransTime();
   stopScan();
   delay(100);
   flushCache();
+  fflush(stdout);
   {
     ScopedLocker l(_lock);
 
@@ -1388,6 +1389,169 @@ result_t YDlidarDriver::setScanFrequencyAdd(scan_frequency &frequency,
   }
   return RESULT_OK;
 }
+
+
+/************************************************************************/
+/* Switch scanning frequency between 8k and 16k*/
+/************************************************************************/
+result_t YDlidarDriver::switchScanFrequency(scan_frequency &frequency,
+                                            uint32_t timeout){
+    result_t  ans;
+    char  data[40];
+    uint8_t * recvBuf = reinterpret_cast<uint8_t*>(data);
+    int retryCount = 0;
+
+    if (!isConnected) {
+      return RESULT_FAIL;
+    }
+
+    disableDataGrabbing();
+    flushCache();
+    {
+      ScopedLocker l(_lock);
+
+      uint32_t waitTime = 0;
+      uint32_t startTs = getms();
+
+      //进入调试模式
+      while ((waitTime = getms() - startTs) <= timeout && retryCount < 3) {
+        size_t remainSize = 15;
+        size_t recvSize = 0;
+        result_t ans;
+
+        if ((ans = sendCommand(LIDAR_CMD_DEBUG_ON)) != RESULT_OK) {
+          goto end;
+        }
+        if ((ans = sendCommand(LIDAR_CMD_DEBUG_ON)) != RESULT_OK) {
+          goto end;
+        }
+        if ((ans = sendCommand(LIDAR_CMD_DEBUG_ON)) != RESULT_OK) {
+          goto end;
+        }
+
+        ans = waitForData(remainSize, timeout - waitTime, &recvSize);
+
+        if (!IS_OK(ans)) {
+          goto end;
+        }
+
+        if (recvSize > sizeof (data)) {
+          recvSize = remainSize;
+        }
+
+        ans = getData(recvBuf, recvSize);
+        if (IS_FAIL(ans)) {
+          goto end;
+        }
+
+        if(strstr(data,"Platform") && strstr(data,"ON")){
+            break;
+        }
+        end:
+            retryCount++;
+
+      }
+
+      if(retryCount >=3){
+          return RESULT_FAIL;
+      }
+
+
+      //切换扫描频率,8k为A5 c1，16k为A5 c2
+      uint8_t freq_cmd = LIDAR_CMD_SWITCH_SCAN_FREQ_8K;
+      if(frequency.frequency == 16){
+          freq_cmd = LIDAR_CMD_SWITCH_SCAN_FREQ_16K;
+      }
+
+      while ((waitTime = getms() - startTs) <= timeout && retryCount < 3) {
+        size_t remainSize = 24;
+        size_t recvSize = 0;
+        result_t ans;
+
+
+        if ((ans = sendCommand(freq_cmd)) != RESULT_OK) {
+          goto end1;
+        }
+
+
+        ans  = waitForData(remainSize, timeout - waitTime, &recvSize);
+
+        if (!IS_OK(ans)) {
+          goto end1;
+        }
+
+        if (recvSize > sizeof (data)) {
+          recvSize = remainSize;
+        }
+
+        ans = getData(recvBuf, recvSize);
+        if (IS_FAIL(ans)) {
+          goto end1;
+        }
+
+        if(strstr(data,"Frequency") && strstr(data,std::to_string(frequency.frequency).c_str())){
+            break;
+        }
+        end1:
+            retryCount++;
+
+      }
+
+      if(retryCount >=3){
+          return RESULT_FAIL;
+      }
+
+      //保存参数
+      while ((waitTime = getms() - startTs) <= timeout && retryCount < 3) {
+        size_t remainSize = 33;
+        size_t recvSize = 0;
+        result_t ans;
+
+
+        if ((ans = sendCommand(LIDAR_CMD_SAVE_CONFIG)) != RESULT_OK) {
+          goto end2;
+        }
+
+
+        ans  = waitForData(remainSize, timeout - waitTime, &recvSize);
+
+        if (!IS_OK(ans)) {
+          goto end2;
+        }
+
+        if (recvSize > sizeof (data)) {
+          recvSize = remainSize;
+        }
+
+        ans = getData(recvBuf, recvSize);
+        if (IS_FAIL(ans)) {
+          goto end2;
+        }
+
+        if(strstr(data,"Save") && strstr(data,"OK")){
+            break;
+        }
+        end2:
+            retryCount++;
+
+      }
+
+      if(retryCount >=3){
+          return RESULT_FAIL;
+      }
+
+      //发送软重启命令A5 40;
+      result_t ans = sendCommand(LIDAR_CMD_RESTART);
+      if (IS_FAIL(ans)) {
+         return RESULT_FAIL;
+      }
+
+
+    }
+    return RESULT_OK;
+
+}
+
 
 /************************************************************************/
 /* decrease the scan frequency by 1Hz each time                         */

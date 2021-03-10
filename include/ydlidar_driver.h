@@ -237,6 +237,19 @@ class YDlidarDriver {
                                uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
+  * @brief 切换扫描频率1HZ \n
+  * @param[in] frequency    扫描频率
+  * @param[in] timeout      超时时间
+  * @return 返回执行结果
+  * @retval RESULT_OK       成功
+  * @retval RESULT_FAILE    失败
+  * @note 停止扫描后再执行当前操作
+  */
+
+  result_t switchScanFrequency(scan_frequency &frequency,
+                               uint32_t timeout = DEFAULT_TIMEOUT);
+
+  /**
   * @brief 设置减小扫描频率1HZ \n
   * @param[in] frequency    扫描频率
   * @param[in] timeout      超时时间
@@ -245,6 +258,9 @@ class YDlidarDriver {
   * @retval RESULT_FAILE    失败
   * @note 停止扫描后再执行当前操作
   */
+
+
+
   result_t setScanFrequencyDis(scan_frequency &frequency,
                                uint32_t timeout = DEFAULT_TIMEOUT);
 

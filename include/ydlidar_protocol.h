@@ -61,6 +61,13 @@
 #define LIDAR_CMD_ADD_EXPOSURE       	    0x96
 #define LIDAR_CMD_DIS_EXPOSURE       	    0x97
 
+#define LIDAR_CMD_SWITCH_SCAN_FREQ_8K       0xC1
+#define LIDAR_CMD_SWITCH_SCAN_FREQ_16K      0xC2
+#define LIDAR_CMD_SAVE_CONFIG               0xD5
+#define LIDAR_CMD_RESTART                   0x40
+#define LIDAR_CMD_DEBUG_ON                  0xF0
+
+
 #define LIDAR_CMD_SET_HEART_BEAT        0xD9
 #define LIDAR_CMD_SET_SETPOINTSFORONERINGFLAG  0xae
 
