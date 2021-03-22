@@ -74,7 +74,7 @@ CYdLidar::CYdLidar(): lidarPtr(0) {
   single_channel      = false;
   m_Intensity         = -1;
   default_mode_duty   = 6000;
-  sn_status           = false;
+  m_device_info_status           = false;
   m_IgnoreArray.clear();
   memset(&m_LidarVersion, 0, sizeof(LidarVersion));
 }
@@ -102,12 +102,12 @@ int CYdLidar::getFixedSize() const {
 }
 
 bool CYdLidar::GetLidarVersion(LidarVersion &version) {
-    bool sn_ok = sn_status;
+    bool sn_ok = m_device_info_status;
     if(sn_ok){
         memcpy(&version,&m_LidarVersion,sizeof(version));
     }
+
     return sn_ok;
-    //memcpy(&version, &m_LidarVersion, sizeof(LidarVersion));
 }
 
 lidar_error_t CYdLidar::getDriverError() const {
@@ -224,11 +224,19 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
   float tim_scan_start = getHDTimer(); //getTime();
   laser_packages.points.clear();
   result_t op_result = lidarPtr->grabScanData(&laser_packages);
-  if(!sn_status){
-      if(laser_packages.info.size < 13 || laser_packages.info.valid != 0x01){
-      //    printf("ct.size:%d, valid:%d\n",laser_packages.info.size,laser_packages.info.valid);
-      //    printf("ct packet size less than 13 or ct packet is invalid\n");
-          fflush(stdout);
+  static int getDeviceInfo_index = 0;
+  if(!m_device_info_status){
+      if(laser_packages.info.size < 5 || laser_packages.info.valid != 0x01){
+          if(getDeviceInfo_index++ > 10){
+              m_LidarVersion.hardware = DEFAULT_HW_VERSION;
+              m_LidarVersion.fire_major = DEFAULT_FW_VERSION_MAJOR;
+              m_LidarVersion.fire_minor = DEFAULT_FW_VERSION_MINOR;
+              m_LidarVersion.fire_patch = DEFAULT_FW_VERSION_PATCH;
+              m_LidarVersion.soft_major = DEFAULT_CUSTOM_VERSION_MAJOR;
+              m_LidarVersion.soft_minor = DEFAULT_CUSTOM_VERSION_MINOR;
+              m_device_info_status = true;
+              getDeviceInfo_index = 0;
+          }
           goto end;
       }
       //获取序列号
@@ -251,8 +259,9 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
       p_sn->sn3 = (laser_packages.info.info[11]) & 0x03;
       p_sn->sn4 = (laser_packages.info.info[10]) & 0x07;
       p_sn->sn5 = (laser_packages.info.info[9]) & 0x03;
-      printf("size of lidarVersion.sn:%d",sizeof (m_LidarVersion.sn));
+
       memset(m_LidarVersion.sn,0,sizeof (m_LidarVersion.sn));
+
 
       m_LidarVersion.sn[0+16] = year/1000;
       m_LidarVersion.sn[1+16] = (year%1000) /100;
@@ -277,17 +286,11 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
 
       m_LidarVersion.hardware = HardwareVer;
       m_LidarVersion.soft_major = Major;
-      m_LidarVersion.soft_minor = Minor / 10;
-      m_LidarVersion.soft_patch = Minor % 10;
+      m_LidarVersion.soft_minor = Minor ;
       m_LidarVersion.fire_major = FireMajor;
-      m_LidarVersion.fire_minor = FireMinor;
-      printf("sn:");
-      for(int i=0;i<32 ;i++){
-          printf(" %x",m_LidarVersion.sn[i]);
-      }
-      printf("\n");
-      fflush(stdout);
-      sn_status = true;
+      m_LidarVersion.fire_minor = FireMinor /10;
+      m_LidarVersion.fire_patch = FireMinor % 10;
+      m_device_info_status = true;
   }
 
   end:
@@ -378,54 +381,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
       }
     }
 
-    ///>调速
-    static uint32_t TickCNT = 0;
-    int16_t  increase; ///> 最后得出的实际增量值
-    static  int16_t  CurErr = 0;
-    static  int16_t  LastErr = 0;
-    static  int16_t  PreErr  = 0;
-    static  int16_t  writeDuty = default_mode_duty;
-    int interger_size = 4;
-
-    if(getHDTimer() - TickCNT >= 100){
-    //    printf("开始更新increase:%d\n",laser_packages.info.info[0]);
-        TickCNT = getHDTimer();
-        if(laser_packages.info.info[0] == 0){
-            writeDuty = default_mode_duty;
-        }else{
-            CurErr = (int16_t)(((int)m_ScanFrequency) * 100 - laser_packages.info.info[0] *10); ///> 当前频率减去获取到的频率，固定设置频率为6，
-            increase = (int16_t)(PID_P * (CurErr - LastErr) *1.0 + PID_I* CurErr *1.0 + PID_D * (CurErr -2* LastErr+ PreErr));
-        //    printf("PreErr:%d,lastErr:%d,CurErr:%d,increase:%f\n",PreErr,LastErr,CurErr,increase);
-            PreErr = LastErr;
-            LastErr = CurErr;
-
-            writeDuty += increase;
-            interger_size = get_int_size(writeDuty);
-            if(default_mode_duty + increase > 19900){
-                writeDuty = 19900;
-            }else if (default_mode_duty + increase < 50){
-                writeDuty = 50;
-            }else{
-
-            }
-        }
-
-        char a[10];
-        memset(a,0,10);
-        sprintf(a,"%d",writeDuty);;
-
-        std::string  dutypath = DutyPath;
-        int fd = open(dutypath.c_str(),O_WRONLY | O_CREAT);
-        if(fd != -1){
-           int len = write(fd,a,interger_size);
-           close(fd);
-           if (len != interger_size){
-               printf("len:%d,sizeof(value):%d",len,interger_size);
-               printf("write duty failed\n");
-               fflush(stdout);
-           }
-        }
-    }
 
 
     return true;
@@ -597,6 +552,7 @@ bool  CYdLidar::turnOff() {
       printf("power off the lidar failed ,error:%s",err_str.c_str());
   }
   isScanning = false;
+  m_device_info_status = false;
   return true;
 }
 
@@ -703,7 +659,6 @@ bool CYdLidar::getDeviceInfo(uint32_t timeout) {
   m_LidarVersion.hardware = devinfo.hardware_version;
   m_LidarVersion.soft_major = Major;
   m_LidarVersion.soft_minor = Minjor / 10;
-  m_LidarVersion.soft_patch = Minjor % 10;
   memcpy(&m_LidarVersion.sn[0], &devinfo.serialnum[0], 16);
   checkScanFrequency();
   //checkZeroOffsetAngle();
