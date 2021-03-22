@@ -673,6 +673,8 @@ result_t parse_ct_packet_t(const node_package_header_t &header,
   result_t ans = RESULT_TIMEOUT;
   uint8_t *p1header = (uint8_t *)&header;
 
+ // printf("error_count:%d,header.packageSync:%d\n",error_count,header.packageSync);
+ // printf("ct  cs:%02x,crc:%02x,index:%d,valid:%d, info:%02x\n",ct.cs,ct.crc,ct.index,ct.valid,*(p1header+2));
   if (error_count == 1) {
     if (header.packageSync) {
       if (ct.cs == ct.crc && ct.index < sizeof(ct.info)) {
@@ -700,7 +702,7 @@ result_t parse_ct_packet_t(const node_package_header_t &header,
   }
 
   ct.cs = crc8_t(p1header + 2, sizeof(ct.cs), ct.cs);
-  fflush(stdout);
+
   if (ct.index < sizeof(ct.info)) {
     ct.info[ct.index] = header.packageCTInfo;
     ct.index++;
@@ -755,6 +757,7 @@ result_t read_response_scan_header_t(Serial *serial,
     } else {
       uint8_t *p3header_back = p2header + node_header_size - 2;
 
+  //    printf("read_response_header: sync_1:%02x,sync_2:%02x,ct:%02x\n",header.packageHeaderMSB,header.packageHeaderLSB,*(p2header +2));
       if (header.packageHeaderLSB != HEADER_LSB) {
         error = HeaderError;
         error_count++;
@@ -775,15 +778,19 @@ result_t read_response_scan_header_t(Serial *serial,
           error = NoError;
         }
 
+
         if (IS_OK(check_package_header_t(header, error))) {
+      //      printf("  check_package_header_t(header, error)\n");
           parse_ct_packet_t(header, error_count, ct);
           ans = RESULT_OK;
           error = NoError;
           break;
         } else {
+   //         printf("!  check_package_header_t(header, error)\n");
           p2header[0] = 0x00;
           ans = RESULT_TIMEOUT;
         }
+   //     fflush(stdout);
 
         error_count = 0;
       }

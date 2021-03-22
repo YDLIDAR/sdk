@@ -26,6 +26,7 @@
 #include <string>
 #include <memory>
 #include <unistd.h>
+#include "LogModule.h"
 using namespace std;
 using namespace ydlidar;
 #if defined(_MSC_VER)
@@ -40,7 +41,7 @@ int main(int argc, char *argv[]) {
     std::string baudrate;
     std::string serial_number;
     std::string input_frequency;
-    int baud = 153600;
+    int baud = 115200;
     printf("__   ______  _     ___ ____    _    ____  \n");
     printf("\\ \\ / /  _ \\| |   |_ _|  _ \\  / \\  |  _ \\ \n");
     printf(" \\ V /| | | | |    | || | | |/ _ \\ | |_) | \n");
@@ -49,13 +50,6 @@ int main(int argc, char *argv[]) {
     printf("\n");
     fflush(stdout);
     float frequency = 6.0;
-    int number = 1;
-//    if(argc == 3){
-//        if(string(argv[1]).find("pwm")!= string::npos){
-//            if(string(argv[2]).find("0") != string::npos)
-//                number = 0;
-//        }
-//    }
 
     std::map<std::string, std::string> lidars = YDlidarDriver::lidarPortList();
 
@@ -68,23 +62,6 @@ int main(int argc, char *argv[]) {
         printf("Please enter the lidar serial baud rate:");
         std::cin >> baudrate;
         baud = atoi(baudrate.c_str());
-//        printf("Please enter the pwd serial number [0 or 1]:");
-//        std::cin >> serial_number;
-//        number = atoi(serial_number.c_str());
-      
-//        while (true) {
-//          printf("Please enter the lidar scan frequency[5-12]:");
-//          std::cin >> input_frequency;
-//          frequency = atof(input_frequency.c_str());
-      
-//          if (frequency <= 12 && frequency >= 5.0) {
-//            break;
-//          }
-      
-//          fprintf(stderr,
-//                  "Invalid scan frequency,The scanning frequency range is 5 to 12 HZ, Please re-enter.\n");
-//        }
-       
         
     }
 
@@ -103,20 +80,12 @@ int main(int argc, char *argv[]) {
     laser.setSunNoise(true);
     laser.setAbnormalCheckCount(8);
     //不带型号强度的雷达
-    //  laser.setIntensity(0);
+      laser.setIntensity(0);
     //  laser.setSerialBaudrate(115200);
     //带信号强度的雷达
-    laser.setSerialBaudrate(153600);
-    laser.setIntensity(1);
-    laser.initPwdPath(number);
+//    laser.setSerialBaudrate(153600);
+//    laser.setIntensity(1);
 
-    CYdLidar::PIDError error = laser.initPIDParams();
-    string error_str =  laser.getErrorString(error);
-    if (error != NoError){
-        printf("init pid config failed!,error:%s",error_str.c_str());
-        fflush(stdout);
-        return 1;
-    }
     bool ret = laser.initialize();
 
     if (ret) {
@@ -125,27 +94,24 @@ int main(int argc, char *argv[]) {
     }
 
     LaserScan scan;
-    bool getSN = false;
+    bool getInfo = false;
     while (ret && ydlidar::ok()) {
         bool hardError;
         scan.data.clear();
 
         if (laser.doProcessSimple(scan, hardError)) {
 
-            if(!getSN){
+            if(laser.getdevice_info_status() && !getInfo){
                 LidarVersion _version;
                 memset(&_version, 0, sizeof(LidarVersion));
-                getSN = laser.GetLidarVersion(_version);
-                if(getSN){
-                    printf("LiDAR HW Version: %d, Fireware Version: %u.%u,FW Version: %u.%u.%u, SN: ", _version.hardware,_version.fire_major,_version.fire_minor,
-                           _version.soft_major, _version.soft_minor, _version.soft_patch);
-
-                    for (int i = 0; i < 32; i++) {
-                        printf("%01X", _version.sn[i]);
-                    }
+                bool isSucc = laser.GetLidarVersion(_version);
+                if(isSucc){
+                    printf("LiDAR HW Version: %d, Fireware Version: %u.%u.%u,Custom Version: %u.%u", _version.hardware,_version.fire_major,_version.fire_minor,
+                           _version.fire_patch,_version.soft_major, _version.soft_minor);
 
                     printf("\n");
                     fflush(stdout);
+                    getInfo = true;
                 }
             }
 
@@ -161,8 +127,11 @@ int main(int argc, char *argv[]) {
             fflush(stdout);
         } else {
             if (laser.getDriverError() != NoError) {
-                printf("[YDLIDAR ERROR]: %s\n",
+                char error[100];
+                 sprintf(error,"[YDLIDAR ERROR]: %s",
                        ydlidar::protocol::DescribeError(laser.getDriverError()));
+                 LOG_ERROR(error,"");
+                 printf("%s\n",error);
                 fflush(stdout);
             }
         }

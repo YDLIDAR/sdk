@@ -30,6 +30,7 @@
 #include "ydlidar_cmd.h"
 #include "serial.h"
 
+
 namespace ydlidar {
 namespace protocol {
 

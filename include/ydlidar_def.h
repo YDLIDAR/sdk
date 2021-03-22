@@ -29,9 +29,14 @@
 
 #define SUNNOISEINTENSITY 0x03
 #define GLASSNOISEINTENSITY 0x02
-#define PID_P   5
-#define PID_I   0.8
-#define PID_D   0
+
+#define  DEFAULT_HW_VERSION   0x01
+#define  DEFAULT_FW_VERSION_MAJOR   0x01
+#define  DEFAULT_FW_VERSION_MINOR   0x08
+#define  DEFAULT_FW_VERSION_PATCH   0x05
+#define  DEFAULT_CUSTOM_VERSION_MAJOR   0x00
+#define  DEFAULT_CUSTOM_VERSION_MINOR   0x01
+#define  DEFAULT_HEALTH_INFO            0x00
 
 typedef enum  {
   NoError,//无错误
@@ -205,9 +210,9 @@ typedef struct {
   uint8_t hardware;   /**< Hardware version*/
   uint8_t soft_major;      /**< major number */
   uint8_t soft_minor;      /**< minor number */
-  uint8_t soft_patch;      /**< patch number */
   uint8_t fire_major;
   uint8_t fire_minor;
+  uint8_t fire_patch;    /**< patch number */
   uint8_t sn[32];     /**< serial number*/
 } LidarVersion;
 
