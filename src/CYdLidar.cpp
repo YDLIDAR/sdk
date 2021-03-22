@@ -224,59 +224,10 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
   float tim_scan_start = getHDTimer(); //getTime();
   laser_packages.points.clear();
   result_t op_result = lidarPtr->grabScanData(&laser_packages);
-  static int getDeviceInfo_index = 0;
   if(!m_device_info_status){
       if(laser_packages.info.size < 5 || laser_packages.info.valid != 0x01){
-          if(getDeviceInfo_index++ > 10){
-              m_LidarVersion.hardware = DEFAULT_HW_VERSION;
-              m_LidarVersion.fire_major = DEFAULT_FW_VERSION_MAJOR;
-              m_LidarVersion.fire_minor = DEFAULT_FW_VERSION_MINOR;
-              m_LidarVersion.fire_patch = DEFAULT_FW_VERSION_PATCH;
-              m_LidarVersion.soft_major = DEFAULT_CUSTOM_VERSION_MAJOR;
-              m_LidarVersion.soft_minor = DEFAULT_CUSTOM_VERSION_MINOR;
-              m_device_info_status = true;
-              getDeviceInfo_index = 0;
-          }
           goto end;
       }
-      //获取序列号
-      uint32_t  sn_ = 0;
-      int year =  ((laser_packages.info.info[9] >>2) & 0x1f) + 2020;
-      int month = (laser_packages.info.info[10] >>3) & 0x0f;
-      int day  =  (laser_packages.info.info[11] >>2) & 0x1f;
-
-      struct SN_tmp{
-          uint32_t sn1 :7 ;
-          uint32_t sn2 :7 ;
-          uint32_t sn3 :2 ;
-          uint32_t sn4 :3 ;
-          uint32_t sn5 :2 ;
-          uint32_t sn6 :11 ;
-      } __attribute__((packed));
-      SN_tmp * p_sn = (SN_tmp*)&sn_;
-      p_sn->sn1 = laser_packages.info.info[13];
-      p_sn->sn2 = laser_packages.info.info[12];
-      p_sn->sn3 = (laser_packages.info.info[11]) & 0x03;
-      p_sn->sn4 = (laser_packages.info.info[10]) & 0x07;
-      p_sn->sn5 = (laser_packages.info.info[9]) & 0x03;
-
-      memset(m_LidarVersion.sn,0,sizeof (m_LidarVersion.sn));
-
-
-      m_LidarVersion.sn[0+16] = year/1000;
-      m_LidarVersion.sn[1+16] = (year%1000) /100;
-      m_LidarVersion.sn[2+16] = (year%100) /10;
-      m_LidarVersion.sn[3+16] = year%10;
-      m_LidarVersion.sn[4+16] = month /10;
-      m_LidarVersion.sn[5+16] = month %10;
-      m_LidarVersion.sn[6+16] = day /10;
-      m_LidarVersion.sn[7+16] = day %10;
-      m_LidarVersion.sn[11+16] = sn_ / 10000;
-      m_LidarVersion.sn[12+16] = (sn_ % 10000) / 1000;
-      m_LidarVersion.sn[13+16] = (sn_ % 1000) / 100;
-      m_LidarVersion.sn[14+16] = (sn_ % 100) / 10 ;
-      m_LidarVersion.sn[15+16] = sn_ % 10 ;
-
 
       int8_t Major = (laser_packages.info.info[1] >> 5) & 0x03;
       int8_t Minor = laser_packages.info.info[1] & 0x1f;
