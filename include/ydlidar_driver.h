@@ -542,6 +542,10 @@ class YDlidarDriver {
    */
   result_t checkAutoConnecting();
 
+  /*!
+   * @brief  换算得出点的距离和角度
+   */
+  void angTransform(uint16_t dist, int n, double *dstTheta, uint16_t *dstDist);
 
  public:
   std::atomic<bool>     isConnected;  ///< 串口连接状体
@@ -576,13 +580,10 @@ class YDlidarDriver {
   int sample_rate;                  ///<
 
   node_package package;             ///< 带信号质量协议包
-  node_packages packages;           ///< 不带信好质量协议包
 
   uint16_t package_Sample_Index;    ///< 包采样点索引
   float IntervalSampleAngle;
   float IntervalSampleAngle_LastPackage;
-  uint16_t FirstSampleAngle;        ///< 起始采样角
-  uint16_t LastSampleAngle;         ///< 结束采样角
   uint16_t CheckSum;                ///< 校验和
   uint8_t scan_frequence;           ///< 协议中雷达转速
 
@@ -611,7 +612,13 @@ class YDlidarDriver {
   bool     get_device_health_success;
 
   int package_index;
+  uint8_t package_type;
   bool has_package_error;
+
+  double  d_compensateK;
+  double  d_compensateB;
+  uint16_t  u_compensateK;
+  uint16_t  u_compensateB;
 
 };
 
