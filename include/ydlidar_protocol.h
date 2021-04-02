@@ -78,6 +78,9 @@
 #define LIDAR_CMD_SET_HEART_BEAT        0xD9
 #define LIDAR_CMD_SET_SETPOINTSFORONERINGFLAG  0xae
 
+#define SUNNOISEINTENSITY 0x03
+#define GLASSNOISEINTENSITY 0x02
+
 #define PackageSampleMaxLngth 0x100
 typedef enum
 {
@@ -103,6 +106,7 @@ struct node_info
     uint16_t   distance_q2; //! 当前测距点距离
     uint64_t   stamp; //! 时间戳
     uint8_t    scan_frequence;//! 特定版本此值才有效,无效值是0
+    uint8_t    interference_sign;   //! 雷达玻璃阳光干扰
 } __attribute__((packed)) ;
 
 struct PackageNode

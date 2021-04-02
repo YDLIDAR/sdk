@@ -27,6 +27,10 @@ class YDLIDAR_API CYdLidar {
                         private) ///< 设置和获取激光端口号
   PropertyBuilderByName(std::vector<float>, IgnoreArray,
                         private) ///< 设置和获取激光剔除点
+  PropertyBuilderByName(bool, GlassNoise,
+                        private) ///< 设置是否开启玻璃干扰标志过滤
+  PropertyBuilderByName(bool, SunNoise,
+                        private) ///< 设置是否开启阳光干扰标志过滤
 
 
  public:

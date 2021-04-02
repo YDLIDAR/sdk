@@ -26,6 +26,8 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   each_angle          = 1.0;
   m_AbnormalCheckCount  = 2;
   m_ScanFrequency     = 8.33;
+  m_GlassNoise        = false;
+  m_SunNoise          = false;
   m_IgnoreArray.clear();
   nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
 }
@@ -147,6 +149,14 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
           index = all_nodes_counts / 2 - 1 - i;
         } else {
           index = all_nodes_counts - 1 - (i - all_nodes_counts / 2);
+        }
+
+        if (m_GlassNoise && angle_compensate_nodes[i].interference_sign == GLASSNOISEINTENSITY) {
+          range = 0.0;
+        }
+
+        if (m_SunNoise && angle_compensate_nodes[i].interference_sign == SUNNOISEINTENSITY) {
+          range  = 0.0;
         }
 
         if (m_IgnoreArray.size() != 0) {
