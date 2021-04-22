@@ -94,12 +94,12 @@ int main(int argc, char *argv[]) {
     }
 
     LaserScan scan;
+    LaserScanMsg scan_for_calibrate;
     bool getSN = false;
     while (ret && ydlidar::ok()) {
         bool hardError;
         scan.data.clear();
-
-        if (laser.doProcessSimple(scan, hardError)) {
+        if (laser.doProcessSimple(scan_for_calibrate,scan, hardError)) {
 
             if(laser.getdevice_info_status()){
                 LidarVersion _version;

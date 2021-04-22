@@ -8,7 +8,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
 //#include "impl/unix/list_ports_linux.cpp"
 
 using namespace std;
@@ -74,6 +73,8 @@ CYdLidar::CYdLidar(): lidarPtr(0) {
   single_channel      = false;
   m_Intensity         = -1;
   default_mode_duty   = 6000;
+  node_counts = 720;
+  each_angle          = 0.5;
   m_device_info_status           = false;
   m_IgnoreArray.clear();
   memset(&m_LidarVersion, 0, sizeof(LidarVersion));
@@ -119,194 +120,36 @@ lidar_error_t CYdLidar::getDriverError() const {
 }
 
 /*-------------------------------------------------------------
-						doProcessSimple
+                        doProcessSimple
 -------------------------------------------------------------*/
-CYdLidar::PIDError  CYdLidar::initPIDParams(){
-   PIDError error = NoError;
-   int fd =0,len = -1;
-   if(!path_exists(PWMExportPath)){
-       fflush(stdout);
-       fd  = open(ExportPath.c_str(),O_WRONLY|O_CREAT|O_TRUNC);
-       if(fd == -1){
-           error = WriteExportError;
-           return error;
-       }
-       char a  = '0';
-       len = write(fd,(void*)&a,sizeof (char));
-       close(fd);
 
-       fflush(stdout);
-       if(len != sizeof (char)){
-           printf("write export failed\n");
-          // error = WriteExportError;
-          // return error;
-       }
-
-   }
-
-   {
-       fd  = open(PeriodPath.c_str(),O_WRONLY|O_CREAT|O_TRUNC);
-       if(fd == -1){
-           error = WritePeriodError;
-           return error;
-       }
-
-
-       string str = "20000";
-       len = write(fd,(void*)str.c_str(),sizeof (str.c_str()));
-       close(fd);
-       if(len != sizeof (str.c_str())){
-           error = WritePeriodError;
-           return error;
-       }
-
-       fd  = open(DutyPath.c_str(),O_WRONLY|O_CREAT|O_TRUNC);
-       if(fd == -1){
-           error = WriteDutyError;
-           return error;
-       }
-       str.clear();
-       str = "6000";
-       len = write(fd,(void*)str.c_str(),sizeof (str.c_str()));
-       close(fd);
-       if(len != sizeof (str.c_str())){
-           error = WriteDutyError;
-           return error;
-       }
-
-       fd  = open(ModePath.c_str(),O_WRONLY|O_CREAT|O_TRUNC);
-       if(fd == -1){
-           error = WriteModeError;
-           return error;
-       }
-       str.clear();
-       str = "normal";
-       len = write(fd,(void*)str.c_str(),sizeof (str.c_str()));;
-       close(fd);
-       if(len != sizeof (str.c_str())){
-           error = WriteModeError;
-           return error;
-       }
-
-       fd  = open(EnablePath.c_str(),O_WRONLY|O_CREAT|O_TRUNC);
-       if(fd == -1){
-           error = WriteEnableError;
-           return error;
-       }
-
-       str.clear();
-       str = "1";
-       len = write(fd,(void*)str.c_str(),sizeof (str.c_str()));
-       close(fd);
-       if(len != sizeof (str.c_str())){
-
-           printf("write enable failed,size:%d\n",len);
-           error = WriteEnableError;
-           return error;
-       }
-   }
-   return error;
-
-}
-
-bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
-  hardwareError			= false;
-  scan_msg.lidar_scan_frequency = 0.0;
-
-  // Bound?
+bool  CYdLidar::doProcessSimple(LaserScanMsg &outscan, LaserScan& msg, bool &hardwareError) {
+    hardwareError			= false;
   if (!checkHardware()) {
-    scan_msg.data.clear();
-    delay(100 / m_ScanFrequency);
-    hardwareError = false;
+    hardwareError = true;
     return false;
-  }
-  //  wait Scan data:
-  float tim_scan_start = getHDTimer(); //getTime();
-  laser_packages.points.clear();
-  result_t op_result = lidarPtr->grabScanData(&laser_packages);
-  static int getDeviceInfo_index = 0;
-  if(!m_device_info_status){
-      if(laser_packages.info.size < 5 || laser_packages.info.valid != 0x01){
-          if(getDeviceInfo_index++ > 10){
-              m_LidarVersion.hardware = DEFAULT_HW_VERSION;
-              m_LidarVersion.fire_major = DEFAULT_FW_VERSION_MAJOR;
-              m_LidarVersion.fire_minor = DEFAULT_FW_VERSION_MINOR;
-              m_LidarVersion.fire_patch = DEFAULT_FW_VERSION_PATCH;
-              m_LidarVersion.soft_major = DEFAULT_CUSTOM_VERSION_MAJOR;
-              m_LidarVersion.soft_minor = DEFAULT_CUSTOM_VERSION_MINOR;
-              m_device_info_status = true;
-              getDeviceInfo_index = 0;
-          }
-          goto end;
-      }
-      //获取序列号
-      uint32_t  sn_ = 0;
-      int year =  ((laser_packages.info.info[9] >>2) & 0x1f) + 2020;
-      int month = (laser_packages.info.info[10] >>3) & 0x0f;
-      int day  =  (laser_packages.info.info[11] >>2) & 0x1f;
-
-      struct SN_tmp{
-          uint32_t sn1 :7 ;
-          uint32_t sn2 :7 ;
-          uint32_t sn3 :2 ;
-          uint32_t sn4 :3 ;
-          uint32_t sn5 :2 ;
-          uint32_t sn6 :11 ;
-      } __attribute__((packed));
-      SN_tmp * p_sn = (SN_tmp*)&sn_;
-      p_sn->sn1 = laser_packages.info.info[13];
-      p_sn->sn2 = laser_packages.info.info[12];
-      p_sn->sn3 = (laser_packages.info.info[11]) & 0x03;
-      p_sn->sn4 = (laser_packages.info.info[10]) & 0x07;
-      p_sn->sn5 = (laser_packages.info.info[9]) & 0x03;
-
-      memset(m_LidarVersion.sn,0,sizeof (m_LidarVersion.sn));
-
-
-      m_LidarVersion.sn[0+16] = year/1000;
-      m_LidarVersion.sn[1+16] = (year%1000) /100;
-      m_LidarVersion.sn[2+16] = (year%100) /10;
-      m_LidarVersion.sn[3+16] = year%10;
-      m_LidarVersion.sn[4+16] = month /10;
-      m_LidarVersion.sn[5+16] = month %10;
-      m_LidarVersion.sn[6+16] = day /10;
-      m_LidarVersion.sn[7+16] = day %10;
-      m_LidarVersion.sn[11+16] = sn_ / 10000;
-      m_LidarVersion.sn[12+16] = (sn_ % 10000) / 1000;
-      m_LidarVersion.sn[13+16] = (sn_ % 1000) / 100;
-      m_LidarVersion.sn[14+16] = (sn_ % 100) / 10 ;
-      m_LidarVersion.sn[15+16] = sn_ % 10 ;
-
-
-      int8_t Major = (laser_packages.info.info[1] >> 5) & 0x03;
-      int8_t Minor = laser_packages.info.info[1] & 0x1f;
-      int8_t HardwareVer = (laser_packages.info.info[4] >>4) & 0x07;
-      int8_t FireMajor = (laser_packages.info.info[4]) & 0x0f;
-      int8_t FireMinor = laser_packages.info.info[5];
-
-      m_LidarVersion.hardware = HardwareVer;
-      m_LidarVersion.soft_major = Major;
-      m_LidarVersion.soft_minor = Minor ;
-      m_LidarVersion.fire_major = FireMajor;
-      m_LidarVersion.fire_minor = FireMinor /10;
-      m_LidarVersion.fire_patch = FireMinor % 10;
-      m_device_info_status = true;
-  }
-
-  end:
-
-  float tim_scan_end = getHDTimer(); //getTime();
-
-  // Fill in scan data:
-  if (IS_OK(op_result)) {
-    LaserPoint point;
-
-    if (m_MaxAngle < m_MinAngle) {
-      float temp = m_MinAngle;
-      m_MinAngle = m_MaxAngle;
-      m_MaxAngle = temp;
     }
 
+  size_t count = 2048;
+  size_t all_nodes_counts = node_counts;
+
+  //  wait Scan data:
+  uint64_t tim_scan_start = getHDTimer();
+  laser_packages.points.clear();
+  result_t op_result =  lidarPtr->grabScanData(&laser_packages, 500);
+  count = laser_packages.points.size();
+  fflush(stdout);
+  if(count == 0){
+      return false;
+  }
+
+  uint64_t tim_scan_end = getHDTimer();
+  outscan.scan_cnts = laser_packages.points.size();
+
+    // Fill in scan data:
+  if (IS_OK(op_result))
+    {
+    op_result = lidarPtr->ascendScanData(&laser_packages, count);
     size_t count = laser_packages.points.size();
     float scan_time = (point_interval_time * (count - 1)) / 1000000.0;
 
@@ -319,80 +162,152 @@ bool  CYdLidar::doProcessSimple(LaserScan &scan_msg, bool &hardwareError) {
     tim_scan_end -= point_interval_time / 1000000.0;
     tim_scan_start = tim_scan_end -  scan_time ;
     last_node_time = tim_scan_end;
-    scan_msg.data.clear();
-    scan_msg.config.scan_time =
+    msg.data.clear();
+    msg.config.scan_time =
       scan_time; //static_cast<float>(1.0 * scan_time / 1e9);
-    scan_msg.config.fixed_size = fixed_size;
-    scan_msg.config.min_angle = angles::from_degrees(m_MinAngle);
-    scan_msg.config.max_angle = angles::from_degrees(m_MaxAngle);
+    msg.config.fixed_size = fixed_size;
+    msg.config.min_angle = angles::from_degrees(m_MinAngle);
+    msg.config.max_angle = angles::from_degrees(m_MaxAngle);
 
     if (count > 1) {
-      scan_msg.config.time_increment = scan_msg.config.scan_time / (double)(
+      msg.config.time_increment = msg.config.scan_time / (double)(
                                          count - 1);
     } else {
-      scan_msg.config.time_increment = scan_msg.config.scan_time;
+      msg.config.time_increment = msg.config.scan_time;
     }
 
-    scan_msg.system_time_stamp = tim_scan_end;
-    scan_msg.config.min_range = m_MinRange;
-    scan_msg.config.max_range = m_MaxRange;
-
-    if (laser_packages.info.info[0] > 0) {
-      scan_msg.lidar_scan_frequency = laser_packages.info.info[0] / 10.0;
-    }
-//    if (!checkHealth(laser_packages.info)) {
-    if (lidarPtr->getDriverError() != NoError) {
-      hardwareError = true;
-      return false;
-    }
-
-    for (int i = 0; i < count; ++i) {
-      point = laser_packages.points[i];
-      point.range = point.range / 1000.f;
-      point.angle = angles::from_degrees(point.angle + zero_offset_angle);
-
-      if (m_Reversion) {
-        point.angle += M_PI;
+    msg.system_time_stamp = tim_scan_end;
+    msg.config.min_range = m_MinRange;
+    msg.config.max_range = m_MaxRange;
+    if (IS_OK(op_result)){
+      if (!m_FixedResolution){
+        all_nodes_counts = count;
+      } else {
+        all_nodes_counts = node_counts;
+      }
+    each_angle = 360.0/all_nodes_counts;
+    LaserPoint *points = new LaserPoint[all_nodes_counts];
+    unsigned int i = 0;
+    msg.data.clear();
+    for( ; i < count; i++) {
+      if (laser_packages.points[i].range != 0) {
+        float angle = (float)(laser_packages.points[i].angle)/64.0f;
+        LaserPoint point;
+        point.angle = angle / 180 * M_PI;
+        point.range = laser_packages.points[i].range/1000.f;
+        // std::cout<<"angle : "<< point.angle<<" range is: "<<point.range<<std::endl;
+        msg.data.push_back(point);
+        if(m_Reversion){
+          std::cout<<"m_Reversion is true"<<std::endl;
+          angle=angle+180;
+          if(angle>=360){
+            angle=angle-360;
+          }
+          laser_packages.points[i].angle = ((uint16_t)(angle * 64.0f));
+        }
+        unsigned int inter =(unsigned int)( angle / each_angle );
+        //int inter =(int)( angle / each_angle );
+        float angle_pre = angle - inter * each_angle;
+        float angle_next = (inter+1) * each_angle - angle;
+        if (angle_pre < angle_next) {
+          if(inter < all_nodes_counts)
+            points[inter]=laser_packages.points[i];
+        } else {
+          if (inter < all_nodes_counts -1)
+            points[inter + 1]=laser_packages.points[i];
+        }
       }
 
-      point.angle = 2 * M_PI - point.angle;
-      point.angle = angles::normalize_angle(point.angle);
-
-      if (m_GlassNoise && point.interference_sign == GLASSNOISEINTENSITY) {
-        point.range = 0.0;
-      }
-
-      if (m_SunNoise && point.interference_sign == SUNNOISEINTENSITY) {
-        point.range  = 0.0;
-      }
-
-      if (point.range > m_MaxRange || point.range < m_MinRange) {
-        point.range = 0.0;
-      }
-
-      if (point.angle >= scan_msg.config.min_angle &&
-          point.angle <= scan_msg.config.max_angle) {
-//        if (scan_msg.data.empty()) {
-//          scan_msg.system_time_stamp = tim_scan_start + i * point_interval_time /
-//                                       1000000.0;
-//        }
-
-        scan_msg.data.push_back(point);
-      }
     }
 
+    if (m_MaxAngle< m_MinAngle) {
+      float temp = m_MinAngle;
+      m_MinAngle = m_MaxAngle;
+      m_MaxAngle = temp;
+    }
 
 
-    return true;
+    int counts = all_nodes_counts*((m_MaxAngle-m_MinAngle)/360.0f);
+    int angle_start = 180+m_MinAngle;
+    int node_start = all_nodes_counts*(angle_start/360.0f);
+    //LOG(INFO)<<"angle_start is: "<<angle_start<<"  node_start is: "<<node_start<<"  all_nodes_counts :"<<all_nodes_counts;
+    scan_msg.ranges.resize(counts);
+    scan_msg.intensities.resize(counts);
+    scan_msg.noise_flags.resize(counts);
+    scan_msg.point_time.resize(counts);
+    float range = 0.0;
+    float intensity = 0.0;
+    bool noise_flag = false;
+    int index = 0;
+
+    for (size_t i = 0; i < all_nodes_counts; i++) {
+      range = (float)points[i].range/1000.f;
+      intensity = (float)(points[i].intensity);
+      uint16_t disturb_value = points[i].interference_sign;
+      noise_flag = (disturb_value == 2 || disturb_value == 3); //2-sunnoise 3-glassnoise
+      // uint16_t disturb_value = angle_compensate_nodes[i].distance_q2 & 3;
+      // if(disturb_value == 2 || disturb_value == 3) { //2-sunnoise 3-glassnoise
+      //   range = 0.0;
+      // }
+      uint64_t stamp = msg.config.time_increment * i + tim_scan_start;
+      if (i<all_nodes_counts/2) {
+        index = all_nodes_counts/2-1-i;
+      } else {
+        index =all_nodes_counts-1-(i-all_nodes_counts/2);
+      }
+      if (m_IgnoreArray.size() != 0) {
+        float angle = (float)((points[i].angle)/64.0f);
+        if (angle>180) {
+          angle=360-angle;
+        } else {
+          angle=-angle;
+        }
+
+        for (uint16_t j = 0; j < m_IgnoreArray.size();j = j+2) {
+          if ((m_IgnoreArray[j] < angle) && (angle <= m_IgnoreArray[j+1])) {
+            range = 0.0;
+            break;
+          }
+        }
+      }
+
+      if (range > m_MaxRange|| range < m_MinRange) {
+        range = 0.0;
+      }
+
+      int pos = index - node_start ;
+        if (0<= pos && pos < counts) {
+          scan_msg.ranges[pos] =  range;
+          scan_msg.intensities[pos] = intensity;
+          scan_msg.noise_flags[pos] = noise_flag;
+          scan_msg.point_time[pos] = stamp;
+        }
+      }
+
+      scan_msg.system_time_stamp = tim_scan_start;
+      scan_msg.self_time_stamp = tim_scan_start;
+      scan_msg.end_time_stamp = tim_scan_end;
+      scan_msg.config.min_angle = angles::from_degrees(m_MinAngle);
+      scan_msg.config.max_angle = angles::from_degrees(m_MaxAngle);
+      scan_msg.config.ang_increment = (scan_msg.config.max_angle - scan_msg.config.min_angle) / (double)counts;
+      scan_msg.config.time_increment = msg.config.time_increment;
+      scan_msg.config.min_range = m_MinRange;
+      scan_msg.config.max_range = m_MaxRange;
+      outscan = scan_msg;
+      msg.config.max_range = m_MaxRange;
+      msg.config.min_range = m_MinRange;
+      delete []points;
+      return true;
+        }
 
   } else {
-    if (IS_FAIL(op_result)) {
-      // Error? Retry connection
+    if (op_result==RESULT_FAIL) {
+            // Error? Retry connection
+            //this->disconnect();
+        }
     }
+    return false;
 
-  }
-
-  return false;
 }
 
 bool CYdLidar::checkHealth(/*const */ct_packet_t &info) {
@@ -455,81 +370,6 @@ bool  CYdLidar::turnOn() {
 }
 
 
-//
-void  CYdLidar::initPwdPath(int number){
-    string serial = "pwmchip1";
-    if(number != 1)
-        serial = "pwmchip0";
-    EnablePath = string("/sys/class/pwm/") + serial + string("/pwm0/enable");
-    ExportPath = string("/sys/class/pwm/") + serial + string("/export");
-    PWMExportPath = string("/sys/class/pwm/") + serial + string("/pwm0/export");
-    PeriodPath = string("/sys/class/pwm/") + serial + string("/pwm0/period");
-    DutyPath = string("/sys/class/pwm/") + serial + string("/pwm0/duty_cycle");
-    ModePath = string("/sys/class/pwm/") + serial + string("/pwm0/polarity");
-    UnexportPath = string("/sys/class/pwm/") + serial + string("/unexport");
-}
-
-/*-------------------------------------------------------------
-                        turnoffPWM
--------------------------------------------------------------*/
-int  CYdLidar::PoweroffPWM(){
-    PIDError  error = NoError;
-    string str = "0";
-    int fd  = open(EnablePath.c_str(),O_WRONLY|O_CREAT|O_TRUNC);
-    if(fd == -1){
-        error = WriteEnableError;
-        return error;
-    }
-    int len = write(fd,(void*)str.c_str(),sizeof (str.c_str()));
-    close(fd);
-    if(len != sizeof (str.c_str())){
-        error = WriteEnableError;
-        return error;
-    }
-
-    fd  = open(UnexportPath.c_str(),O_WRONLY|O_CREAT|O_TRUNC);
-    if(fd == -1){
-        error =  WriteUnenabelError;
-        return error;
-    }
-    len = write(fd,(void*)str.c_str(),sizeof (str.c_str()));
-    close(fd);
-    if(len != sizeof (str.c_str())){
-        error =  WriteUnenabelError;
-        return error;
-    }
-    return  error;
-
-}
-
-//
-string CYdLidar::getErrorString(int error){
-    string error_str;
-    switch (error) {
-      case CYdLidar::NoError:
-        error_str = "";
-        break;
-      case CYdLidar::WriteEnableError:
-        error_str = "write enable error!";
-        break;
-      case CYdLidar::WriteDutyError:
-        error_str = "write duty error!";
-        break;
-      case CYdLidar::WriteModeError:
-        error_str = "write mode error!";
-        break;
-      case CYdLidar::WriteExportError:
-        error_str = "write export error!";
-        break;
-      case CYdLidar::WritePeriodError:
-        error_str = "write period error!";
-        break;
-      case CYdLidar::WriteUnenabelError:
-        error_str = "write unenable error!";
-        break;
-    }
-    return error_str;
-}
 
 
 /*-------------------------------------------------------------
@@ -546,11 +386,7 @@ bool  CYdLidar::turnOff() {
     printf("[YDLIDAR INFO] Now YDLIDAR Scanning has stopped ......\n");
     fflush(stdout);
   }
-  int  rlt = PoweroffPWM();
-  string err_str = getErrorString(rlt);
-  if(rlt != 0){
-      printf("power off the lidar failed ,error:%s",err_str.c_str());
-  }
+
   isScanning = false;
   m_device_info_status = false;
   return true;

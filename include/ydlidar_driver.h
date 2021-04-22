@@ -276,6 +276,18 @@ class YDlidarDriver {
   result_t grabScanData(LaserFan *fan, uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
+  * @brief 数据顺序转换\n
+  * 获取安装零位
+    * @param[in] nodebuffer 激光点信息
+  * @param[in] count      一圈激光点数
+    * @return 返回执行结果
+    * @retval RESULT_OK       获取成功
+    * @retval RESULT_FAILE    获取失败
+  * @note doProcessSimple 时转换顺序
+    */
+  result_t ascendScanData(LaserFan * nodebuffer, size_t count);
+
+  /**
   * @brief 打开电机 \n
     * @return 返回执行结果
     * @retval RESULT_OK       成功
@@ -459,6 +471,7 @@ class YDlidarDriver {
   uint32_t       m_error_info_time;
   uint32_t       m_parsing_error_time;
   int            serial_read_timeout_count;
+  //LaserFan  tmpFan;
 
 };
 }

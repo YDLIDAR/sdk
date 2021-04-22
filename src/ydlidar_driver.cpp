@@ -2,6 +2,7 @@
 #include "ydlidar_driver.h"
 #include "common.h"
 #include <math.h>
+#include <vector>
 using namespace impl;
 
 namespace ydlidar {
@@ -733,10 +734,34 @@ int YDlidarDriver::cacheScanData() {
     }
 
     if (local_fan.sync_flag) {
-//      if (local_scan.sync_flag) {
+      if (local_scan.sync_flag) {
 //        printf("scan frequency: %f Hz\n", local_fan.info.info[0] / 10.0);
 //        fflush(stdout);
-//      }
+        if (local_scan.points.size() >= 1) {//有一个小包，就触发数据事件
+          _lock.lock();//timeout lock, wait resource copy
+
+          if ((global_sync_flag && local_fan.sync_flag) ||
+              m_global_fan.points.size() > 3000) {
+            m_global_fan.points.clear();
+          }
+
+          if (local_fan.sync_flag) {
+            global_sync_flag = local_fan.sync_flag;
+          }
+
+          if (m_global_fan.points.size() >= 1 || local_scan.points.size() > 1) {
+            memcpy(&m_global_fan.info, &local_fan.info, sizeof(ct_packet_t));
+            m_global_fan.sync_flag = local_scan.sync_flag;
+            std::copy(local_scan.points.begin(), local_scan.points.end(),
+                      std::back_inserter(m_global_fan.points));
+            local_scan.points.clear();
+            memset(&local_scan.info, 0, sizeof(ct_packet_t));
+            _dataEvent.set();
+          }
+
+          _lock.unlock();
+        }
+      }
 
       local_scan = local_fan;
       local_scan.points.clear();
@@ -747,31 +772,7 @@ int YDlidarDriver::cacheScanData() {
                 std::back_inserter(local_scan.points));
     }
 
-    if (local_scan.points.size() >= 1 &&
-        local_scan.sync_flag) {//有一个小包，就触发数据事件
-      _lock.lock();//timeout lock, wait resource copy
 
-      if ((global_sync_flag && local_fan.sync_flag) ||
-          m_global_fan.points.size() > 3000) {
-        m_global_fan.points.clear();
-      }
-
-      if (local_fan.sync_flag) {
-        global_sync_flag = local_fan.sync_flag;
-      }
-
-      if (m_global_fan.points.size() >= 1 || local_scan.points.size() > 1) {
-        memcpy(&m_global_fan.info, &local_fan.info, sizeof(ct_packet_t));
-        m_global_fan.sync_flag = local_scan.sync_flag;
-        std::copy(local_scan.points.begin(), local_scan.points.end(),
-                  std::back_inserter(m_global_fan.points));
-        local_scan.points.clear();
-        memset(&local_scan.info, 0, sizeof(ct_packet_t));
-        _dataEvent.set();
-      }
-
-      _lock.unlock();
-    }
 
   }
 
@@ -913,6 +914,84 @@ result_t YDlidarDriver::grabScanData(LaserFan *fan, uint32_t timeout) {
 
 }
 
+
+result_t YDlidarDriver::ascendScanData(LaserFan * nodebuffer, size_t count) {
+    float inc_origin_angle = (float)360.0/count;
+    int i = 0;
+
+    for (i = 0; i < (int)count; i++) {
+        if(!(*nodebuffer).points[i].range) {
+            continue;
+        } else {
+            while(i != 0) {
+                i--;
+                float expect_angle = ((*nodebuffer).points[i+1].angle)/64.0f - inc_origin_angle;
+                if (expect_angle < 0.0f) expect_angle = 0.0f;
+                uint16_t checkbit = (int)(*nodebuffer).points[i].angle & LIDAR_RESP_MEASUREMENT_CHECKBIT;
+                (*nodebuffer).points[i].angle = ((uint16_t)(expect_angle * 64.0f)) + checkbit;
+            }
+            break;
+        }
+    }
+
+    if (i == (int)count){
+        return RESULT_FAIL;
+    }
+
+    for (i = (int)count - 1; i >= 0; i--) {
+        if(!(*nodebuffer).points[i].range) {
+            continue;
+        } else {
+            while(i != ((int)count - 1)) {
+                i++;
+                float expect_angle = ((*nodebuffer).points[i-1].angle)/64.0f + inc_origin_angle;
+                if (expect_angle > 360.0f) expect_angle -= 360.0f;
+                uint16_t checkbit = (int)(*nodebuffer).points[i].angle & LIDAR_RESP_MEASUREMENT_CHECKBIT;
+                (*nodebuffer).points[i].angle = (((uint16_t)(expect_angle * 64.0f)) << LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) + checkbit;
+            }
+            break;
+        }
+    }
+
+    float frontAngle = ((*nodebuffer).points[0].angle)/64.0f;
+    for (i = 1; i < (int)count; i++) {
+        if(!(*nodebuffer).points[i].range) {
+            float expect_angle =  frontAngle + i * inc_origin_angle;
+            if (expect_angle > 360.0f) expect_angle -= 360.0f;
+            uint16_t checkbit = (int)(*nodebuffer).points[i].angle & LIDAR_RESP_MEASUREMENT_CHECKBIT;
+            (*nodebuffer).points[i].angle = (((uint16_t)(expect_angle * 64.0f)) << LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) + checkbit;
+        }
+    }
+
+    size_t zero_pos = 0;
+    float pre_degree = ((*nodebuffer).points[0].angle)/64.0f;
+
+    for (i = 1; i < (int)count ; ++i) {
+        float degree = ((*nodebuffer).points[i].angle)/64.0f;
+        if (zero_pos == 0 && (pre_degree - degree > 180)) {
+            zero_pos = i;
+            break;
+        }
+        pre_degree = degree;
+    }
+
+    LaserPoint *points = new LaserPoint[count];
+    for (i = (int)zero_pos; i < (int)count; i++) {
+        (points)[i-zero_pos] = (*nodebuffer).points[i];
+    }
+    for (i = 0; i < (int)zero_pos; i++) {
+        (points)[i+(int)count-zero_pos] = (*nodebuffer).points[i];
+    }
+
+    for(i = 0; i< (int)count; i++){
+        (*nodebuffer).points[i] = points[i];
+    }
+ //   memcpy(&(*nodebuffer).points,points,sizeof (LaserPoint) * count);
+   // memcpy(&nodebuffer->points, tmpFan, sizeof (*tmpFan));
+    delete  []points;
+
+    return RESULT_OK;
+}
 
 /**
 * @brief 设置雷达异常自动重新连接 \n

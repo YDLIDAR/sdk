@@ -265,6 +265,8 @@ struct LaserConfig {
   float min_angle;
   //! Stop angle for the laser scan [rad].   0 is forward and angles are measured clockwise when viewing YDLIDAR from the top.
   float max_angle;
+  //! Angle increment of two points before and after
+  float ang_increment;
   //! Scan resoltuion [s]
   float time_increment;
   //! Time between scans
@@ -305,5 +307,26 @@ struct LaserScan {
   }
 };
 
+
+struct LaserScanMsg {
+    //! Array of ranges
+    std::vector<float> ranges;
+    //! Array of intensities
+    std::vector<float> intensities;
+    //! Array of noise_flags
+    std::vector<bool> noise_flags;
+    //! Array of point timestamp;
+    std::vector<uint64_t> point_time;
+    //! Self reported time stamp in nanoseconds
+    uint64_t self_time_stamp;
+    //! System time when first range was measured in nanoseconds
+    uint64_t system_time_stamp;
+    //! scan counts added by ruijin
+    uint64_t scan_cnts;
+    //! scan end time added by ruijin
+    uint64_t end_time_stamp;
+    //! Configuration of scan
+    LaserConfig config;
+};
 
 

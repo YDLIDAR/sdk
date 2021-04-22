@@ -92,7 +92,7 @@ class YDLIDAR_API CYdLidar {
   bool initialize();  //!< Attempts to connect and turns the laser on. Raises an exception on error.
 
   // Return true if laser data acquistion succeeds, If it's not
-  bool doProcessSimple(LaserScan &scan_msg, bool &hardwareError);
+  bool doProcessSimple(LaserScanMsg &outscan, LaserScan& msg, bool &hardwareError);
 
   //Turn on the motor enable
   bool  turnOn();  //!< See base class docs
@@ -104,9 +104,6 @@ class YDLIDAR_API CYdLidar {
 
   // exchange error to error_string
   string getErrorString(int error);
-
-  //initialize pwd path
-  void  initPwdPath(int number);
 
   //get fixed resolution node size
   int getFixedSize() const;
@@ -127,18 +124,6 @@ class YDLIDAR_API CYdLidar {
   //Turn off lidar connection
   void disconnecting(); //!< Closes the comms with the laser. Shouldn't have to be directly needed by the user
 
-  typedef  enum {
-      NoError = 0,
-      WriteExportError,
-      WriteEnableError,
-      WriteDutyError,
-      WritePeriodError,
-      WriteModeError,
-      WriteUnenabelError,
-  } PIDError;
-
-  ///<初始化PID调速的参数
-  CYdLidar::PIDError initPIDParams();
 
  protected:
   /** Returns true if communication has been established with the device. If it's not,
@@ -201,13 +186,9 @@ class YDLIDAR_API CYdLidar {
   LidarVersion           m_LidarVersion;      ///< LiDAR Version information
   int16_t                    default_mode_duty;
 
-  string            ExportPath;
-  string            PeriodPath;
-  string            DutyPath;
-  string            ModePath;
-  string            EnablePath;
-  string            PWMExportPath;
-  string            UnexportPath;
+  int  node_counts;
+  double each_angle;
+  LaserScanMsg scan_msg;
 
 };	// End of class
 
