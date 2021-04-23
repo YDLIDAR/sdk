@@ -62,6 +62,9 @@ YDlidarDriver::YDlidarDriver():
   serial_read_timeout_count = 0;
   global_sync_flag = 0;
   ydlidar::protocol::reset_ct_packet_t(m_global_ct);
+
+  m_ns = getTime();
+  m_last_ns = getTime();
 }
 
 YDlidarDriver::~YDlidarDriver() {
@@ -805,6 +808,11 @@ result_t YDlidarDriver::waitPackage(LaserFan &package, uint32_t timeout) {
           m_global_ct, error, timeout);
   }
 
+//  printf("[parseHeader] [sync][%u] [firstSampleAngle][%f]  [LastSampleAngle][%f]  count[%u]\n",
+//         scan.header.packageSync,
+//         scan.header.packageFirstSampleAngle / 64.0,
+//         scan.header.packageLastSampleAngle / 64.0,scan.header.nowPackageNum);
+//  fflush(stdout);
   memcpy(&package.info, &m_global_ct, sizeof(ct_packet_t));
 
   if (IS_OK(ans)) {
@@ -821,8 +829,10 @@ result_t YDlidarDriver::waitPackage(LaserFan &package, uint32_t timeout) {
 
     if (m_intensity_protocol < 1) {
       ret = ydlidar::protocol::parse_payload(scan, package);
+      add_time_compensation(scan.header,package);
     } else {
       ret = ydlidar::protocol::parse_intensity_payload(iscan, package);
+      add_time_compensation(iscan.header,package);
     }
 
     if (IS_OK(ret)) {
@@ -880,6 +890,20 @@ result_t YDlidarDriver::waitPackage(LaserFan &package, uint32_t timeout) {
   return ans;
 }
 
+
+void YDlidarDriver::add_time_compensation(const node_package_header_t &header, LaserFan &data){
+
+    if(header.packageSync & LIDAR_RESP_MEASUREMENT_SYNCBIT){
+        m_last_ns = m_ns;
+        m_ns = getTime();
+    }
+    int i=0;
+    for(;i< header.nowPackageNum;i++){
+        data.points[i].stamp = m_ns + i * point_interval_time;
+    }
+    m_ns = data.points[i-1].stamp;
+}
+
 result_t YDlidarDriver::waitScanData(LaserFan &package, uint32_t timeout) {
   if (!m_isConnected) {
     return RESULT_FAIL;
@@ -919,16 +943,17 @@ result_t YDlidarDriver::ascendScanData(LaserFan * nodebuffer, size_t count) {
     float inc_origin_angle = (float)360.0/count;
     int i = 0;
 
+    //找到第一个距离不为0的点，应该是安装的位置
     for (i = 0; i < (int)count; i++) {
         if(!(*nodebuffer).points[i].range) {
             continue;
         } else {
             while(i != 0) {
                 i--;
-                float expect_angle = ((*nodebuffer).points[i+1].angle)/64.0f - inc_origin_angle;
+                float expect_angle = ((*nodebuffer).points[i+1].angle) - inc_origin_angle;
                 if (expect_angle < 0.0f) expect_angle = 0.0f;
-                uint16_t checkbit = (int)(*nodebuffer).points[i].angle & LIDAR_RESP_MEASUREMENT_CHECKBIT;
-                (*nodebuffer).points[i].angle = ((uint16_t)(expect_angle * 64.0f)) + checkbit;
+               // uint16_t checkbit = (int)(*nodebuffer).points[i].angle & LIDAR_RESP_MEASUREMENT_CHECKBIT;
+                (*nodebuffer).points[i].angle = expect_angle;
             }
             break;
         }
@@ -944,30 +969,30 @@ result_t YDlidarDriver::ascendScanData(LaserFan * nodebuffer, size_t count) {
         } else {
             while(i != ((int)count - 1)) {
                 i++;
-                float expect_angle = ((*nodebuffer).points[i-1].angle)/64.0f + inc_origin_angle;
+                float expect_angle = (*nodebuffer).points[i-1].angle + inc_origin_angle;
                 if (expect_angle > 360.0f) expect_angle -= 360.0f;
-                uint16_t checkbit = (int)(*nodebuffer).points[i].angle & LIDAR_RESP_MEASUREMENT_CHECKBIT;
-                (*nodebuffer).points[i].angle = (((uint16_t)(expect_angle * 64.0f)) << LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) + checkbit;
+             //   uint16_t checkbit = (int)(*nodebuffer).points[i].angle & LIDAR_RESP_MEASUREMENT_CHECKBIT;
+                (*nodebuffer).points[i].angle = expect_angle;
             }
             break;
         }
     }
 
-    float frontAngle = ((*nodebuffer).points[0].angle)/64.0f;
+    float frontAngle = (*nodebuffer).points[0].angle;
     for (i = 1; i < (int)count; i++) {
         if(!(*nodebuffer).points[i].range) {
             float expect_angle =  frontAngle + i * inc_origin_angle;
             if (expect_angle > 360.0f) expect_angle -= 360.0f;
-            uint16_t checkbit = (int)(*nodebuffer).points[i].angle & LIDAR_RESP_MEASUREMENT_CHECKBIT;
-            (*nodebuffer).points[i].angle = (((uint16_t)(expect_angle * 64.0f)) << LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) + checkbit;
+            //uint16_t checkbit = (int)(*nodebuffer).points[i].angle & LIDAR_RESP_MEASUREMENT_CHECKBIT;
+            (*nodebuffer).points[i].angle = expect_angle;
         }
     }
 
     size_t zero_pos = 0;
-    float pre_degree = ((*nodebuffer).points[0].angle)/64.0f;
+    float pre_degree = (*nodebuffer).points[0].angle;
 
     for (i = 1; i < (int)count ; ++i) {
-        float degree = ((*nodebuffer).points[i].angle)/64.0f;
+        float degree = (*nodebuffer).points[i].angle;
         if (zero_pos == 0 && (pre_degree - degree > 180)) {
             zero_pos = i;
             break;

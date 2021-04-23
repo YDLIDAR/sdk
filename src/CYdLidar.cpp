@@ -150,7 +150,8 @@ bool  CYdLidar::doProcessSimple(LaserScanMsg &outscan, LaserScan& msg, bool &har
   if (IS_OK(op_result))
     {
     op_result = lidarPtr->ascendScanData(&laser_packages, count);
-    size_t count = laser_packages.points.size();
+    uint64_t max_time =laser_packages.points[0].stamp ;
+    uint64_t min_time = laser_packages.points[0].stamp;
     float scan_time = (point_interval_time * (count - 1)) / 1000000.0;
 
     if (count == 1) {
@@ -191,7 +192,7 @@ bool  CYdLidar::doProcessSimple(LaserScanMsg &outscan, LaserScan& msg, bool &har
     msg.data.clear();
     for( ; i < count; i++) {
       if (laser_packages.points[i].range != 0) {
-        float angle = (float)(laser_packages.points[i].angle)/64.0f;
+        float angle = laser_packages.points[i].angle;
         LaserPoint point;
         point.angle = angle / 180 * M_PI;
         point.range = laser_packages.points[i].range/1000.f;
@@ -203,9 +204,9 @@ bool  CYdLidar::doProcessSimple(LaserScanMsg &outscan, LaserScan& msg, bool &har
           if(angle>=360){
             angle=angle-360;
           }
-          laser_packages.points[i].angle = ((uint16_t)(angle * 64.0f));
+          laser_packages.points[i].angle = angle;
         }
-        unsigned int inter =(unsigned int)( angle / each_angle );
+        unsigned int inter =(unsigned int)(angle / each_angle);
         //int inter =(int)( angle / each_angle );
         float angle_pre = angle - inter * each_angle;
         float angle_next = (inter+1) * each_angle - angle;
@@ -215,6 +216,14 @@ bool  CYdLidar::doProcessSimple(LaserScanMsg &outscan, LaserScan& msg, bool &har
         } else {
           if (inter < all_nodes_counts -1)
             points[inter + 1]=laser_packages.points[i];
+        }
+
+        if(laser_packages.points[i].stamp > max_time) {
+          max_time = laser_packages.points[i].stamp;
+        }
+
+        if(laser_packages.points[i].stamp < min_time) {
+          min_time = laser_packages.points[i].stamp;
         }
       }
 
@@ -226,6 +235,9 @@ bool  CYdLidar::doProcessSimple(LaserScanMsg &outscan, LaserScan& msg, bool &har
       m_MaxAngle = temp;
     }
 
+
+    tim_scan_start = min_time;
+    double scan_time = max_time - min_time;
 
     int counts = all_nodes_counts*((m_MaxAngle-m_MinAngle)/360.0f);
     int angle_start = 180+m_MinAngle;
@@ -249,14 +261,14 @@ bool  CYdLidar::doProcessSimple(LaserScanMsg &outscan, LaserScan& msg, bool &har
       // if(disturb_value == 2 || disturb_value == 3) { //2-sunnoise 3-glassnoise
       //   range = 0.0;
       // }
-      uint64_t stamp = msg.config.time_increment * i + tim_scan_start;
+      uint64_t stamp = points[i].stamp;
       if (i<all_nodes_counts/2) {
         index = all_nodes_counts/2-1-i;
       } else {
         index =all_nodes_counts-1-(i-all_nodes_counts/2);
       }
       if (m_IgnoreArray.size() != 0) {
-        float angle = (float)((points[i].angle)/64.0f);
+        float angle = points[i].angle;
         if (angle>180) {
           angle=360-angle;
         } else {
@@ -286,11 +298,11 @@ bool  CYdLidar::doProcessSimple(LaserScanMsg &outscan, LaserScan& msg, bool &har
 
       scan_msg.system_time_stamp = tim_scan_start;
       scan_msg.self_time_stamp = tim_scan_start;
-      scan_msg.end_time_stamp = tim_scan_end;
+      scan_msg.end_time_stamp = max_time;
       scan_msg.config.min_angle = angles::from_degrees(m_MinAngle);
       scan_msg.config.max_angle = angles::from_degrees(m_MaxAngle);
       scan_msg.config.ang_increment = (scan_msg.config.max_angle - scan_msg.config.min_angle) / (double)counts;
-      scan_msg.config.time_increment = msg.config.time_increment;
+      scan_msg.config.time_increment = scan_time / (double)counts *1e-9f;
       scan_msg.config.min_range = m_MinRange;
       scan_msg.config.max_range = m_MaxRange;
       outscan = scan_msg;

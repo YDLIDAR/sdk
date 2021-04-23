@@ -345,6 +345,14 @@ class YDlidarDriver {
   * @retval RESULT_TIMEOUT  等待超时
     * @retval RESULT_FAILE    失败
     */
+
+  /**
+  * @brief 添加激光点的时间戳 \n
+    * @param[in] scan 激光信息头信息
+    * @param[in] data 激光点信息
+    */
+  void    add_time_compensation(const node_package_header_t &scan, LaserFan &data);
+
   result_t waitScanData(LaserFan &package, uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
@@ -471,7 +479,9 @@ class YDlidarDriver {
   uint32_t       m_error_info_time;
   uint32_t       m_parsing_error_time;
   int            serial_read_timeout_count;
-  //LaserFan  tmpFan;
+
+  uint64_t    m_ns;						///<
+  uint64_t    m_last_ns;
 
 };
 }

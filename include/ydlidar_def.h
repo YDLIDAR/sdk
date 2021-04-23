@@ -236,11 +236,13 @@ struct LaserPoint {
   float range;
   uint8_t interference_sign;
   uint8_t intensity;
+  uint64_t stamp;
   LaserPoint &operator = (const LaserPoint &data) {
     angle = data.angle;
     range = data.range;
     interference_sign = data.interference_sign;
     intensity = data.intensity;
+    stamp = data.stamp;
     return *this;
   }
 };

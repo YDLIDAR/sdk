@@ -27,6 +27,7 @@
 #include <memory>
 #include <unistd.h>
 #include "LogModule.h"
+#include "timer.h"
 using namespace std;
 using namespace ydlidar;
 #if defined(_MSC_VER)
@@ -115,11 +116,13 @@ int main(int argc, char *argv[]) {
             }
 
             if (scan.lidar_scan_frequency > 0) {
-                fprintf(stdout, "Scan received: %u ranges in %f HZ, lidar frequency[%f Hz]\n",
+                fprintf(stdout, "Scan received[%llu] [%f]: %u ranges in %f HZ, lidar frequency[%f Hz]\n",
+                        impl::getHDTimer(),scan.config.scan_time,
                         (unsigned int)scan.data.size(), 1000.0 / scan.config.scan_time,
                         scan.lidar_scan_frequency);
             } else {
-                fprintf(stdout, "Scan received: %u ranges in %f HZ\n",
+                fprintf(stdout, "Scan received[%llu] [%f]: %u ranges in %f HZ\n",
+                        impl::getHDTimer(),scan.config.scan_time,
                         (unsigned int)scan.data.size(), 1000.0 / scan.config.scan_time);
             }
 
