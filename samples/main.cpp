@@ -28,13 +28,17 @@
 #include <unistd.h>
 #include "LogModule.h"
 #include "timer.h"
+#include <pthread.h>
 using namespace std;
 using namespace ydlidar;
 #if defined(_MSC_VER)
 #pragma comment(lib, "ydlidar_driver.lib")
 #endif
 
+
 int main(int argc, char *argv[]) {
+
+  //  pthread_t th1;
 
     ydlidar::init(argc, argv);
 
@@ -76,7 +80,7 @@ int main(int argc, char *argv[]) {
     laser.setScanFrequency(frequency);
     laser.setFixedResolution(false);
     laser.setReversion(false);
-    laser.setAutoReconnect(true);
+    laser.setAutoReconnect(false);
     laser.setGlassNoise(true);
     laser.setSunNoise(true);
     laser.setAbnormalCheckCount(8);
@@ -87,17 +91,26 @@ int main(int argc, char *argv[]) {
 //    laser.setSerialBaudrate(153600);
 //    laser.setIntensity(1);
 
+
     bool ret = laser.initialize();
 
     if (ret) {
 
         ret &= laser.turnOn();
+    }else {
+        char error[100];
+         sprintf(error,"[YDLIDAR ERROR]: %s",
+               ydlidar::protocol::DescribeError(laser.getDriverError()));
+         LOG_ERROR(error,"");
+         printf("%s\n",error);
+        fflush(stdout);
     }
 
     LaserScan scan;
     LaserScanMsg scan_for_calibrate;
     bool getSN = false;
     while (ret && ydlidar::ok()) {
+
         bool hardError;
         scan.data.clear();
         if (laser.doProcessSimple(scan_for_calibrate,scan, hardError)) {
@@ -141,8 +154,5 @@ int main(int argc, char *argv[]) {
 
     laser.turnOff();
     laser.disconnecting();
-
     return 0;
-
-
 }

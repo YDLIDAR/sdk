@@ -75,6 +75,12 @@ YDlidarDriver::~YDlidarDriver() {
   isAutoReconnect = false;
   _thread.join();
   ScopedLocker lk(_serial_lock);
+  int delay_count = 0;
+  while (!_thread.isThreadFinshed() && delay_count < 5) {
+    delay(100);
+    delay_count++;
+  }
+
 
   if (_serial) {
     if (_serial->isOpen()) {
@@ -85,7 +91,7 @@ YDlidarDriver::~YDlidarDriver() {
 
   if (_serial) {
     delete _serial;
-    _serial = NULL;
+    _serial = nullptr;
   }
 }
 
@@ -630,6 +636,7 @@ int YDlidarDriver::cacheScanData() {
   local_scan.points.clear();
   m_error_info         = NoError;
   m_new_protocol       = false;
+  uint32_t thread_start_time = getms();
   ydlidar::protocol::reset_ct_packet_t(m_global_ct);
   m_error_info_time = getms();
   ans = ydlidar::protocol::check_scan_protocol(_serial, m_intensity_protocol);
@@ -639,6 +646,7 @@ int YDlidarDriver::cacheScanData() {
   fflush(stdout);
   waitScanData(local_fan);
   int timeout_count = 0;
+  _thread.updateThreadState(false);
   m_error_info_time = getms();
   m_parsing_error_time = getms();
   serial_read_timeout_count = 0;
@@ -655,6 +663,7 @@ int YDlidarDriver::cacheScanData() {
           {
             m_isScanning = false;
           }
+          _thread.updateThreadState(true);
           return RESULT_FAIL;
         } else {//做异常处理, 重新连接
           isAutoconnting = true;
@@ -688,6 +697,7 @@ int YDlidarDriver::cacheScanData() {
 
             if (!isAutoReconnect) {
               m_isScanning = false;
+              _thread.updateThreadState(true);
               return RESULT_FAIL;
             }
 
@@ -781,6 +791,10 @@ int YDlidarDriver::cacheScanData() {
 
 
   m_isScanning = false;
+  _thread.updateThreadState(true);
+  fprintf(stdout, "[YDLIDAR][END][%fs] Exit scan thread completed.\n",
+          (getms() - thread_start_time) / 1000.f);
+  fflush(stdout);
   return RESULT_OK;
 }
 
@@ -895,12 +909,16 @@ void YDlidarDriver::add_time_compensation(const node_package_header_t &header, L
 
     if(header.packageSync & LIDAR_RESP_MEASUREMENT_SYNCBIT){
         m_last_ns = m_ns;
-        m_ns = getTime();
+        m_ns = getTime() - (header.nowPackageNum -1) * point_interval_time;
+        if(m_ns < m_last_ns) {
+            m_ns = m_last_ns;
+        }
     }
     int i=0;
     for(;i< header.nowPackageNum;i++){
         data.points[i].stamp = m_ns + i * point_interval_time;
     }
+    fflush(stdout);
     m_ns = data.points[i-1].stamp;
 }
 
@@ -1053,6 +1071,14 @@ result_t YDlidarDriver::startScan(bool force, uint32_t timeout) {
     return RESULT_OK;
   }
 
+  //wait previous thread end
+  int timeout_count = 0;
+
+  while (!_thread.isThreadFinshed() && timeout_count < 3) {
+    delay(100);
+    timeout_count++;
+  }
+
   if (!single_channel) {
     stop();
     delay(10);
@@ -1146,12 +1172,21 @@ result_t YDlidarDriver::startAutoScan(bool force, uint32_t timeout) {
 result_t YDlidarDriver::stop() {
   if (isAutoconnting) {
     isAutoReconnect = false;
+    disableDataGrabbing();
     m_isScanning = false;
   }
 
   disableDataGrabbing();
-  stopScan();
-  stopMotor();
+
+  int timeout_count = 0;
+
+  //wait thread finished
+  while (!_thread.isThreadFinshed() && timeout_count < 3) {
+    delay(100);
+    timeout_count++;
+  }
+
+
   return RESULT_OK;
 }
 

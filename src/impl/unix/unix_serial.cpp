@@ -1325,6 +1325,7 @@ void Serial::SerialImpl::flush() {
 
 #if !defined(__ANDROID__)
   tcdrain(fd_);
+  //::tcflush(fd_,TCIFLUSH);
 #endif
 }
 

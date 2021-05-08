@@ -189,6 +189,8 @@ class YDLIDAR_API CYdLidar {
   int  node_counts;
   double each_angle;
   LaserScanMsg scan_msg;
+  Locker         lidar_lock;
+  Locker         del_lidar_lock;
 
 };	// End of class
 

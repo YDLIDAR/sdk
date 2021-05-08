@@ -88,6 +88,8 @@ CYdLidar::~CYdLidar() {
 }
 
 void CYdLidar::disconnecting() {
+  ScopedLocker l(lidar_lock);
+  ScopedLocker dl(del_lidar_lock);
   if (lidarPtr) {
     lidarPtr->disconnect();
     printf("[YDLIDAR INFO] Now YDLIDAR disconnecting ......\n");
@@ -96,6 +98,7 @@ void CYdLidar::disconnecting() {
     lidarPtr    = 0;
     isConnected = false;
   }
+  isScanning = false;
 }
 
 int CYdLidar::getFixedSize() const {
@@ -149,6 +152,10 @@ bool  CYdLidar::doProcessSimple(LaserScanMsg &outscan, LaserScan& msg, bool &har
     // Fill in scan data:
   if (IS_OK(op_result))
     {
+//      for(size_t i=0;i<count;i++)
+//      printf("[%u] [range][%f] [angle][%f] stamp[%llu]\n",i,laser_packages.points[i].range,laser_packages.points[i].angle,
+//             laser_packages.points[i].stamp);
+//      fflush(stdout);
     op_result = lidarPtr->ascendScanData(&laser_packages, count);
     uint64_t max_time =laser_packages.points[0].stamp ;
     uint64_t min_time = laser_packages.points[0].stamp;
@@ -188,6 +195,7 @@ bool  CYdLidar::doProcessSimple(LaserScanMsg &outscan, LaserScan& msg, bool &har
       }
     each_angle = 360.0/all_nodes_counts;
     LaserPoint *points = new LaserPoint[all_nodes_counts];
+    memset(points, 0, all_nodes_counts*sizeof(LaserPoint));
     unsigned int i = 0;
     msg.data.clear();
     for( ; i < count; i++) {
@@ -217,6 +225,9 @@ bool  CYdLidar::doProcessSimple(LaserScanMsg &outscan, LaserScan& msg, bool &har
           if (inter < all_nodes_counts -1)
             points[inter + 1]=laser_packages.points[i];
         }
+
+//        printf("[points] [%d][%d] angle[%f][%f] stamp[%llu][%llu]\n",i,inter,laser_packages.points[i].angle,points[i].angle,
+//               inter,laser_packages.points[i].stamp,points[i].stamp);
 
         if(laser_packages.points[i].stamp > max_time) {
           max_time = laser_packages.points[i].stamp;
@@ -293,6 +304,9 @@ bool  CYdLidar::doProcessSimple(LaserScanMsg &outscan, LaserScan& msg, bool &har
           scan_msg.intensities[pos] = intensity;
           scan_msg.noise_flags[pos] = noise_flag;
           scan_msg.point_time[pos] = stamp;
+
+//          printf("[%d][%u] [range][%f] stamp[%llu][%llu]\n",i,pos,range,
+//                 stamp,laser_packages.points[i].stamp);
         }
       }
 
@@ -339,6 +353,7 @@ bool CYdLidar::checkHealth(/*const */ct_packet_t &info) {
 						turnOn
 -------------------------------------------------------------*/
 bool  CYdLidar::turnOn() {
+    ScopedLocker l(lidar_lock);
   if (isScanning && lidarPtr->isScanning()) {
     return true;
   }
@@ -388,6 +403,7 @@ bool  CYdLidar::turnOn() {
 						turnOff
 -------------------------------------------------------------*/
 bool  CYdLidar::turnOff() {
+    ScopedLocker l(lidar_lock);
   if (lidarPtr) {
     lidarPtr->stop();
     printf("[YDLIDAR INFO] Now YDLIDAR Stop Scan ......\n");
@@ -438,6 +454,7 @@ bool CYdLidar::checkLidarAbnormal() {
 }
 
 bool CYdLidar::getDeviceHealth(uint32_t timeout) {
+    ScopedLocker l(lidar_lock);
   if (!lidarPtr) {
     return false;
   }
@@ -469,6 +486,7 @@ bool CYdLidar::getDeviceHealth(uint32_t timeout) {
 }
 
 bool CYdLidar::getDeviceInfo(uint32_t timeout) {
+    ScopedLocker l(lidar_lock);
   if (!lidarPtr) {
     return false;
   }
@@ -573,6 +591,7 @@ bool CYdLidar::checkScanFrequency() {
 }
 
 bool CYdLidar::checkZeroOffsetAngle() {
+    ScopedLocker l(lidar_lock);
   bool ret = false;
   zero_offset_angle = 0.0;
   uint32_t startTs = getms();
@@ -609,7 +628,7 @@ bool CYdLidar::checkStatus() {
     ret = getDeviceHealth(100);
   }
 
-  if (!getDeviceInfo()) {
+  if (!(ret =getDeviceInfo())) {
     if (!ret) {
       ret = getDeviceInfo();
 
@@ -636,6 +655,8 @@ bool CYdLidar::checkStatus() {
 						checkCOMMs
 -------------------------------------------------------------*/
 bool  CYdLidar::checkCOMMs() {
+    ScopedLocker l(lidar_lock);
+    ScopedLocker dl(del_lidar_lock);
   if (!lidarPtr) {
     // create the driver instance
     lidarPtr = new YDlidarDriver();
@@ -692,6 +713,7 @@ bool  CYdLidar::checkCOMMs() {
                         checkHardware
 -------------------------------------------------------------*/
 bool CYdLidar::checkHardware() {
+    ScopedLocker l(lidar_lock);
   if (!lidarPtr) {
     return false;
   }

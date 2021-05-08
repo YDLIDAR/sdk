@@ -336,6 +336,13 @@ class YDlidarDriver {
   result_t waitPackage(LaserFan &package, uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
+  * @brief 添加激光点的时间戳 \n
+    * @param[in] scan 激光信息头信息
+    * @param[in] data 激光点信息
+    */
+  void    add_time_compensation(const node_package_header_t &scan, LaserFan &data);
+
+  /**
   * @brief 发送数据到雷达 \n
     * @param[in] nodebuffer 激光信息指针
     * @param[in] count      激光点数大小
@@ -345,14 +352,6 @@ class YDlidarDriver {
   * @retval RESULT_TIMEOUT  等待超时
     * @retval RESULT_FAILE    失败
     */
-
-  /**
-  * @brief 添加激光点的时间戳 \n
-    * @param[in] scan 激光信息头信息
-    * @param[in] data 激光点信息
-    */
-  void    add_time_compensation(const node_package_header_t &scan, LaserFan &data);
-
   result_t waitScanData(LaserFan &package, uint32_t timeout = DEFAULT_TIMEOUT);
 
   /**
