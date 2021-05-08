@@ -26,7 +26,6 @@
 #include <string>
 #include <memory>
 #include <unistd.h>
-#include "LogModule.h"
 #include "timer.h"
 using namespace std;
 using namespace ydlidar;
@@ -36,7 +35,7 @@ using namespace ydlidar;
 
 int main(int argc, char *argv[]) {
 
-    ydlidar::init(argc, argv);
+    ydlidar::init();
 
     std::string port;
     std::string baudrate;
@@ -73,19 +72,9 @@ int main(int argc, char *argv[]) {
     CYdLidar laser;
     laser.setSerialPort(port);
     laser.setSerialBaudrate(baud);
-    laser.setScanFrequency(frequency);
     laser.setFixedResolution(false);
     laser.setReversion(false);
     laser.setAutoReconnect(true);
-    laser.setGlassNoise(true);
-    laser.setSunNoise(true);
-    laser.setAbnormalCheckCount(8);
-    //不带型号强度的雷达
-      laser.setIntensity(0);
-    //  laser.setSerialBaudrate(115200);
-    //带信号强度的雷达
-//    laser.setSerialBaudrate(153600);
-//    laser.setIntensity(1);
 
     bool ret = laser.initialize();
 
@@ -94,27 +83,12 @@ int main(int argc, char *argv[]) {
         ret &= laser.turnOn();
     }
 
-    LaserScan scan;
-    LaserScanMsg scan_for_calibrate;
-    bool getSN = false;
+    LaserScan scan_for_calibrate;
+    LaserScanMsg scan;
     while (ret && ydlidar::ok()) {
         bool hardError;
         scan.data.clear();
         if (laser.doProcessSimple(scan_for_calibrate,scan, hardError)) {
-
-            if(laser.getdevice_info_status()){
-                LidarVersion _version;
-                memset(&_version, 0, sizeof(LidarVersion));
-                getSN = laser.GetLidarVersion(_version);
-                if(getSN){
-                    printf("LiDAR HW Version: %d, Fireware Version: %u.%u.%u,Custom Version: %u.%u", _version.hardware,_version.fire_major,_version.fire_minor,
-                           _version.fire_patch,_version.soft_major, _version.soft_minor);
-
-                    printf("\n");
-                    fflush(stdout);
-                }
-            }
-
             if (scan.lidar_scan_frequency > 0) {
                 fprintf(stdout, "Scan received[%llu] [%f]: %u ranges in %f HZ, lidar frequency[%f Hz]\n",
                         impl::getHDTimer(),scan.config.scan_time,
@@ -128,14 +102,9 @@ int main(int argc, char *argv[]) {
 
             fflush(stdout);
         } else {
-            if (laser.getDriverError() != NoError) {
-                char error[100];
-                 sprintf(error,"[YDLIDAR ERROR]: %s",
-                       ydlidar::protocol::DescribeError(laser.getDriverError()));
-                 LOG_ERROR(error,"");
-                 printf("%s\n",error);
-                fflush(stdout);
-            }
+
+            printf("[YDLIDAR ERROR]:\n");
+            fflush(stdout);
         }
     }
 

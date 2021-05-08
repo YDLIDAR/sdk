@@ -26,59 +26,43 @@
 #include "v8stdint.h"
 #include <vector>
 #include "ydlidar_cmd.h"
+#include "ydlidar_protocol.h"
 
 #define SUNNOISEINTENSITY 0x03
 #define GLASSNOISEINTENSITY 0x02
 
-#define  DEFAULT_HW_VERSION   0x01
-#define  DEFAULT_FW_VERSION_MAJOR   0x01
-#define  DEFAULT_FW_VERSION_MINOR   0x08
-#define  DEFAULT_FW_VERSION_PATCH   0x05
-#define  DEFAULT_CUSTOM_VERSION_MAJOR   0x00
-#define  DEFAULT_CUSTOM_VERSION_MINOR   0x01
-#define  DEFAULT_HEALTH_INFO            0x00
 
 typedef enum  {
   NoError,//无错误
   DeviceNotFoundError,//无串口设备
-  PermissionError,//串口权限异常
-  OpenError,//串口打开失败
-  ParityError,//串口校验位
+  PermissionError,
+  OpenError,//打开串口错误
+  ParityError,
   FramingError,
   BreakConditionError,
-  WriteError,//写串口数据错误
-  ReadError,//读串口数据异常
-  ResourceError,//串口被占用
-  UnsupportedOperationError,//不支持的操作
-  TimeoutError,//超时(串口异常)
+  WriteError,//
+  ReadError,//读串口超时(雷达断电，雷达堵转，雷达接线不良)(警告级别）
+  ResourceError,//串口占用
+  UnsupportedOperationError,
+  TimeoutError,//解包超时(警告级别）
   NotOpenError,//串口没打开
-  HeaderError,//包头错误
-  FirstSampleAngleError,//采样角错误
-  LastSampleAngleError,//采样角错误
-  PackageNumberError,//采样数错误
-  CheckSumError,//校验和错误
-  SensorError,//雷达硬件错误
-  EncodeError,//雷达卡主,
-  PWRError,//供电异常
-  PDError,
-  LDError,
-  DataError,//激光被遮挡
-  TrembleError,//抖动(跳频）
-  LidarNotFoundError,//雷达没发现
-  UnknownError,//没初始化
+  HeaderError,//数据包头错误(警告级别）
+  FirstSampleAngleError,//采样角错误(警告级别）
+  LastSampleAngleError,//采样角错误(警告级别）
+  PackageNumberError,//采样包数错误(警告级别）
+  CheckSumError,//通讯校验和错误(警告级别）
+  SensorError,//雷达硬件错误(致命级别）(S2不支持）
+  EncodeError,//编码错误(警告级别)(S2不支持）
+  PWRError,//供电异常(警告级别)(S2不支持）
+  PDError,//PD异常(警告级别)(S2不支持）
+  LDError,//LD异常(警告级别)(S2不支持）
+  DataError,//数据异常(雷达被遮挡)(警告级别)
+  TrembleError,
+  LidarNotFoundError,//雷达离线
+  UnknownError,//未初始化
 } lidar_error_t;
 
 #pragma pack(1)
-
-struct node_info {
-  uint8_t    sync_flag;  //sync flag
-  uint16_t   sync_quality;//!信号质量
-  uint16_t   angle_q6_checkbit; //!测距点角度
-  uint16_t   distance_q2; //! 当前测距点距离
-  uint64_t   stamp; //! 时间戳
-  uint8_t    scan_frequence;//! 特定版本此值才有效,无效值是0
-} __attribute__((packed)) ;
-
 
 /// LiDAR Intensity Nodes Package
 struct node_package_header_t {
@@ -158,20 +142,6 @@ static_assert(sizeof(scan_intensity_packet_t) == 130,
               "response scan intensity packet size mismatch.");
 
 
-struct device_info {
-  uint8_t   model; ///< 雷达型号
-  uint16_t  firmware_version; ///< 固件版本号
-  uint8_t   hardware_version; ///< 硬件版本号
-  uint8_t   serialnum[16];    ///< 系列号
-} __attribute__((packed)) ;
-static_assert(sizeof(device_info) == 20,
-              "device info size mismatch.");
-
-struct device_health {
-  uint8_t   status; ///< 健康状体
-  uint16_t  error_code; ///< 错误代码
-} __attribute__((packed))  ;
-
 struct sampling_rate_t {
   uint8_t rate;	///< 采样频率
 } __attribute__((packed))  ;
@@ -204,18 +174,6 @@ struct lidar_ans_header_t {
 static_assert(sizeof(lidar_ans_header_t) == 7,
               "Ans header size mismatch.");
 
-
-/** The numeric version information struct.  */
-typedef struct {
-  uint8_t hardware;   /**< Hardware version*/
-  uint8_t soft_major;      /**< major number */
-  uint8_t soft_minor;      /**< minor number */
-  uint8_t fire_major;
-  uint8_t fire_minor;
-  uint8_t fire_patch;    /**< patch number */
-  uint8_t sn[32];     /**< serial number*/
-} LidarVersion;
-
 struct ct_packet_t {
   uint8_t size;
   uint8_t index;
@@ -228,107 +186,7 @@ struct ct_packet_t {
 static_assert(sizeof(ct_packet_t) == 105,
               "ct packet size mismatch.");
 
-#pragma pack()
 
 
-struct LaserPoint {
-  float angle;
-  float range;
-  uint8_t interference_sign;
-  uint8_t intensity;
-  uint64_t stamp;
-  LaserPoint &operator = (const LaserPoint &data) {
-    angle = data.angle;
-    range = data.range;
-    interference_sign = data.interference_sign;
-    intensity = data.intensity;
-    stamp = data.stamp;
-    return *this;
-  }
-};
-
-struct LaserFan {
-  uint8_t    sync_flag;  //sync flag
-  /// Array of lidar points
-  ct_packet_t info;
-  std::vector<LaserPoint> points;
-  LaserFan &operator = (const LaserFan &data) {
-    this->sync_flag = data.sync_flag;
-    this->info = data.info;
-    this->points = data.points;
-    return *this;
-  }
-};
-
-
-//! A struct for returning configuration from the YDLIDAR
-struct LaserConfig {
-  //! Start angle for the laser scan [rad].  0 is forward and angles are measured clockwise when viewing YDLIDAR from the top.
-  float min_angle;
-  //! Stop angle for the laser scan [rad].   0 is forward and angles are measured clockwise when viewing YDLIDAR from the top.
-  float max_angle;
-  //! Angle increment of two points before and after
-  float ang_increment;
-  //! Scan resoltuion [s]
-  float time_increment;
-  //! Time between scans
-  float scan_time;
-  //! Minimum range [m]
-  float min_range;
-  //! Maximum range [m]
-  float max_range;
-  //! fixed resolution size
-  int fixed_size;
-  LaserConfig &operator = (const LaserConfig &data) {
-    min_angle = data.min_angle;
-    max_angle = data.max_angle;
-    time_increment = data.time_increment;
-    scan_time = data.scan_time;
-    min_range = data.min_range;
-    max_range = data.max_range;
-    fixed_size = data.fixed_size;
-    return *this;
-  }
-};
-
-
-struct LaserScan {
-  //! Array of laser point
-  std::vector<LaserPoint> data;
-  //! System time when first range was measured in nanoseconds
-  uint64_t system_time_stamp;
-  //! Configuration of scan
-  LaserConfig config;
-  float lidar_scan_frequency;///< 雷达输出的实时扫描频率
-  LaserScan &operator = (const LaserScan &data) {
-    this->data = data.data;
-    system_time_stamp = data.system_time_stamp;
-    config = data.config;
-    this->lidar_scan_frequency = data.lidar_scan_frequency;
-    return *this;
-  }
-};
-
-
-struct LaserScanMsg {
-    //! Array of ranges
-    std::vector<float> ranges;
-    //! Array of intensities
-    std::vector<float> intensities;
-    //! Array of noise_flags
-    std::vector<bool> noise_flags;
-    //! Array of point timestamp;
-    std::vector<uint64_t> point_time;
-    //! Self reported time stamp in nanoseconds
-    uint64_t self_time_stamp;
-    //! System time when first range was measured in nanoseconds
-    uint64_t system_time_stamp;
-    //! scan counts added by ruijin
-    uint64_t scan_cnts;
-    //! scan end time added by ruijin
-    uint64_t end_time_stamp;
-    //! Configuration of scan
-    LaserConfig config;
-};
 
 

@@ -1,26 +1,4 @@
-//
-// The MIT License (MIT)
-//
-// Copyright (c) 2020 EAIBOT. All rights reserved.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-//
+
 #pragma once
 
 #define LIDAR_CMD_STOP                      0x65
@@ -64,34 +42,22 @@
 #define LIDAR_CMD_ENABLE_CONST_FREQ        0x0E
 #define LIDAR_CMD_DISABLE_CONST_FREQ       0x0F
 
-#define LIDAR_CMD_GET_OFFSET_ANGLE          0x93
 #define LIDAR_CMD_SAVE_SET_EXPOSURE         0x94
 #define LIDAR_CMD_SET_LOW_EXPOSURE          0x95
 #define LIDAR_CMD_ADD_EXPOSURE       	    0x96
 #define LIDAR_CMD_DIS_EXPOSURE       	    0x97
-#define PackageSampleMaxLngth 40
 
+#define LIDAR_CMD_SET_HEART_BEAT        0xD9
+#define LIDAR_CMD_SET_SETPOINTSFORONERINGFLAG  0xae
 
+#define PackageSampleMaxLngth 0x100
 typedef enum {
-  CT_Normal = 0,
-  CT_RingStart  = 1,
-  CT_Tail,
-} CT;
+    CT_Normal = 0,
+    CT_RingStart  = 1,
+    CT_Tail,
+}CT;
 #define Node_Default_Quality (10<<2)
-#define Node_Sync 0x01
-#define Node_NotSync 0x00
+#define Node_Sync 1
+#define Node_NotSync 2
 #define PackagePaidBytes 10
 #define PH 0x55AA
-
-/// Packet Header MSB
-#define HEADER_MSB 0xAA
-/// Packet Header LSB
-#define HEADER_LSB 0x55
-
-#define FREINDEX 0
-#define HEALTHINDEX 3
-#define READ_DEFAULT_TIMEOUT 1000
-#define INFO_DEFAULT_TIMEOUT 20
-#define SCAN_DEFAULT_TIMEOUT 100
-
-

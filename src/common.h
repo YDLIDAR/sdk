@@ -1,4 +1,3 @@
-
 #pragma once
 
 #if defined(_WIN32)
@@ -10,8 +9,8 @@
 #else
 #error "unsupported target"
 #endif
-#include "locker.h"
+#include "lock.h"
 #include "thread.h"
 #include "timer.h"
 
-#define SDKVerision "1.4.5"
+#define SDKVerision "1.3.6"
