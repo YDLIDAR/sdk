@@ -1,4 +1,4 @@
-﻿#include "CYdLidar.h"
+#include "CYdLidar.h"
 #include <iostream>
 #include <string>
 #include <timer.h>
@@ -154,18 +154,20 @@ int main(int argc, char *argv[]) {
 
   while (ret && ydlidar::ok()) {
     bool hardError;
+    lidar_error_t healthError;
     LaserScan scan;
 
-    if (laser.doProcessSimple(scan, hardError)) {
+    if (laser.doProcessSimple(scan, hardError,healthError)) {
+        if(healthError != NoError){
+            fprintf(stderr, "lidar health information error is [%s]\n",
+                getHealthError(healthError));
+
+            fflush(stdout);
+        }
+
       fprintf(stdout, "Scan received[%llu]: %u ranges is [%f]Hz\n",
               scan.system_time_stamp,
               (unsigned int)scan.data.size(), 1.0 / scan.config.scan_time);
-
-      for (int i = 0; i < scan.data.size(); i++) {
-        uint64_t time_stamp = scan.system_time_stamp + i * scan.config.time_increment *
-                              1e9;
-        LaserPoint point = scan.data[i];
-      }
 
       fflush(stdout);
     } else {

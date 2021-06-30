@@ -54,7 +54,7 @@ class YDLIDAR_API CYdLidar {
   int checkHardware();
 
   // Return true if laser data acquistion succeeds, If it's not
-  bool doProcessSimple(LaserScan &outscan, bool &hardwareError);
+  bool doProcessSimple(LaserScan &outscan, bool &hardwareError,lidar_error_t &healthError);
 
   //Turn on the motor enable
   bool  turnOn();  //!< See base class docs

@@ -163,8 +163,9 @@ result_t CYdLidar::saveRibOffsetAngle(std::vector<offset_angle> &angle,
 /*-------------------------------------------------------------
 						doProcessSimple
 -------------------------------------------------------------*/
-bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
+bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError,lidar_error_t &healthError) {
   hardwareError			= false;
+  healthError           = NoError;
 
   // Bound?
   int ret = checkHardware();
@@ -276,6 +277,8 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
     scan_msg.config.max_range = m_MaxRange;
     outscan = scan_msg;
 
+    healthError =  convert_ct_packet_to_error(debug.TranIndex_W7F0Health);
+
     //parsing version
     if (m_SingleChannel) {
       handleVersionInfoByPackage(debug);
@@ -290,7 +293,6 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
   }
 
   return false;
-
 }
 
 /*-------------------------------------------------------------

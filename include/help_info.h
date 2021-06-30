@@ -77,31 +77,31 @@ inline bool isValidDate(uint8_t value) {
   return false;
 }
 
-inline bool isVersionValid(const LaserDebug &info) {
-  bool ret = false;
+//inline bool isVersionValid(const LaserDebug &info) {
+//  bool ret = false;
 
-  if (isValidValue(info.W3F4CusMajor_W4F0CusMinor) &&
-      isValidValue(info.W4F3Model_W3F0DebugInfTranVer) &&
-      isValidValue(info.W3F4HardwareVer_W4F0FirewareMajor) &&
-      isValidValue(info.W3F4BoradHardVer_W4F0Moth)) {
-    ret = true;
-  }
+//  if (isValidValue(info.W3F4CusMajor_W4F0CusMinor) &&
+//      isValidValue(info.W4F3Model_W3F0DebugInfTranVer) &&
+//      isValidValue(info.W3F4HardwareVer_W4F0FirewareMajor) &&
+//      isValidValue(info.W3F4BoradHardVer_W4F0Moth)) {
+//    ret = true;
+//  }
 
-  return ret;
-}
+//  return ret;
+//}
 
-inline bool isSerialNumbValid(const LaserDebug &info) {
-  bool ret = false;
+//inline bool isSerialNumbValid(const LaserDebug &info) {
+//  bool ret = false;
 
-  if (isValidValue(info.W2F5Output2K4K5K_W5F0Date) &&
-      isValidValue(info.W1F6GNoise_W1F5SNoise_W1F4MotorCtl_W4F0SnYear) &&
-      isValidValue(info.W7F0SnNumH) &&
-      isValidValue(info.W7F0SnNumH)) {
-    ret = true;
-  }
+//  if (isValidValue(info.W2F5Output2K4K5K_W5F0Date) &&
+//      isValidValue(info.W1F6GNoise_W1F5SNoise_W1F4MotorCtl_W4F0SnYear) &&
+//      isValidValue(info.W7F0SnNumH) &&
+//      isValidValue(info.W7F0SnNumH)) {
+//    ret = true;
+//  }
 
-  return ret;
-}
+//  return ret;
+//}
 
 inline void parsePackageNode(const node_info &node, LaserDebug &info) {
   switch (node.index) {
@@ -109,57 +109,69 @@ inline void parsePackageNode(const node_info &node, LaserDebug &info) {
 
       break;
 
-    case 1://W3F3CusHardVer_W4F0CusSoftVer;
-      info.W3F4CusMajor_W4F0CusMinor = node.debugInfo;
+    case 1://TranIndex_W2F5CusVerMajor_W5F0CusVerMinor;
+      info.TranIndex_W2F5CusVerMajor_W5F0CusVerMinor = node.debugInfo;
       break;
 
-    case 2://W4F3Model_W3F0DebugInfTranVer
-      info.W4F3Model_W3F0DebugInfTranVer = node.debugInfo;
+    case 2://TranIndex_W7F0ProtoMode
+      info.TranIndex_W7F0ProtoMode = node.debugInfo;
       break;
 
-    case 3://W3F4HardwareVer_W4F0FirewareMajor
-      info.W3F4HardwareVer_W4F0FirewareMajor = node.debugInfo;
-
-      break;
-
-    case 4://W7F0FirewareMinor
-      info.W7F0FirewareMinor = node.debugInfo;
+    case 3://TranIndex_W7F0Health
+      info.TranIndex_W7F0Health = node.debugInfo;
 
       break;
 
-    case 5://W3F4BoradHardVer_W4F0Moth
-      info.W3F4BoradHardVer_W4F0Moth = node.debugInfo;
+    case 4://TranIndex_W3F4HardwareVer_W4F0FirewareMajor
+      info.TranIndex_W3F4HardwareVer_W4F0FirewareMajor = node.debugInfo;
 
       break;
 
-    case 6://W2F5Output2K4K5K_W5F0Date
-      info.W2F5Output2K4K5K_W5F0Date = node.debugInfo;
+    case 5://TranIndex_W7F0FirewareMinor
+      info.TranIndex_W7F0FirewareMinor = node.debugInfo;
+
       break;
 
-    case 7://W1F6GNoise_W1F5SNoise_W1F4MotorCtl_W4F0SnYear
-      info.W1F6GNoise_W1F5SNoise_W1F4MotorCtl_W4F0SnYear =
+    case 6://TranIndex_W3F4MeasureMode_W4F0WorkMode
+      info.TranIndex_W3F4MeasureMode_W4F0WorkMode = node.debugInfo;
+      break;
+
+    case 7://TranIndex_W3F4MasterMode_W4F0PlatFormMode
+      info.TranIndex_W3F4MasterMode_W4F0PlatFormMode =
         node.debugInfo;
       break;
 
-    case 8://W7F0SnNumH
-      info.W7F0SnNumH = node.debugInfo;
+    case 8://TranIndex_W3F4FactorVer_W4F0LaserMode
+      info.TranIndex_W3F4FactorVer_W4F0LaserMode = node.debugInfo;
       break;
 
-    case 9://W7F0SnNumL
-      info.W7F0SnNumL = node.debugInfo;
-
-      break;
-
-    case 10://W7F0Health
-      info.W7F0Health = node.debugInfo;
+    case 9://TranIndex_W7F0PDVal
+      info.TranIndex_W7F0PDVal = node.debugInfo;
 
       break;
 
-    case 11://W3F4CusHardVer_W4F0CusSoftVer
-      info.W3F4CusHardVer_W4F0CusSoftVer = node.debugInfo;
+    case 10://TranIndex_W7F0LDVal
+      info.TranIndex_W7F0LDVal = node.debugInfo;
 
-    case 12://W7F0LaserCurrent
-      info.W7F0LaserCurrent = node.debugInfo;
+      break;
+
+    case 11://TranIndex_W7F0REFVal
+      info.TranIndex_W7F0REFVal = node.debugInfo;
+
+    case 12://TranIndex_W5F2Year_W2F0SN1
+      info.TranIndex_W5F2Year_W2F0SN1 = node.debugInfo;
+      break;
+    case 13://TranIndex_W4F3Month_W3F0SN2
+      info.TranIndex_W4F3Month_W3F0SN2 = node.debugInfo;
+      break;
+    case 14://TranIndex_W5F2Day_W2F0SN3
+      info.TranIndex_W5F2Day_W2F0SN3 = node.debugInfo;
+      break;
+    case 15://TranIndex_W7F0SN4
+      info.TranIndex_W7F0SN4 = node.debugInfo;
+      break;
+    case 16://TranIndex_W7F0SN5
+      info.TranIndex_W7F0SN5 = node.debugInfo;
       break;
 
     default:
@@ -167,7 +179,7 @@ inline void parsePackageNode(const node_info &node, LaserDebug &info) {
   }
 
   if (info.MaxDebugIndex > node.index) {
-    info.W3F4CusMajor_W4F0CusMinor = 0xff;
+    info.TranIndex_W2F5CusVerMajor_W5F0CusVerMinor = 0xff;
   }
 
   if (static_cast<int>(node.index) > info.MaxDebugIndex && node.index < 100) {
@@ -178,44 +190,44 @@ inline void parsePackageNode(const node_info &node, LaserDebug &info) {
 inline bool ParseLaserDebugInfo(const LaserDebug &info, device_info &value) {
   bool ret = false;
   uint8_t CustomVerMajor = (static_cast<uint8_t>
-                            (info.W3F4CusMajor_W4F0CusMinor) >> 4);
+                            (info.TranIndex_W2F5CusVerMajor_W5F0CusVerMinor) >> 5);
   uint8_t CustomVerMinor = static_cast<uint8_t>
-                           (info.W3F4CusMajor_W4F0CusMinor) & 0x0F;
-  uint8_t lidarmodel = (static_cast<uint8_t>(info.W4F3Model_W3F0DebugInfTranVer)
-                        >> 3);
-  uint8_t hardwareVer = static_cast<uint8_t>
-                        (info.W3F4HardwareVer_W4F0FirewareMajor) >> 4;
-  uint8_t Moth = static_cast<uint8_t>(info.W3F4BoradHardVer_W4F0Moth) & 0x0F;
+                           (info.TranIndex_W2F5CusVerMajor_W5F0CusVerMinor) & 0x1F;
+//  uint8_t lidarmodel = (static_cast<uint8_t>(info.W4F3Model_W3F0DebugInfTranVer)
+//                        >> 3);
+//  uint8_t hardwareVer = static_cast<uint8_t>
+//                        (info.W3F4HardwareVer_W4F0FirewareMajor) >> 4;
+//  uint8_t Moth = static_cast<uint8_t>(info.W3F4BoradHardVer_W4F0Moth) & 0x0F;
 
-  uint8_t Date = static_cast<uint8_t>(info.W2F5Output2K4K5K_W5F0Date) & 0x1F;
-  uint8_t Year = static_cast<uint8_t>
-                 (info.W1F6GNoise_W1F5SNoise_W1F4MotorCtl_W4F0SnYear) & 0x0F;
-  uint16_t Number = ((static_cast<uint8_t>(info.W7F0SnNumH) << 7) |
-                     static_cast<uint8_t>(info.W7F0SnNumL));
+//  uint8_t Date = static_cast<uint8_t>(info.W2F5Output2K4K5K_W5F0Date) & 0x1F;
+//  uint8_t Year = static_cast<uint8_t>
+//                 (info.W1F6GNoise_W1F5SNoise_W1F4MotorCtl_W4F0SnYear) & 0x0F;
+//  uint16_t Number = ((static_cast<uint8_t>(info.W7F0SnNumH) << 7) |
+//                     static_cast<uint8_t>(info.W7F0SnNumL));
 
-  if (isVersionValid(info) && info.MaxDebugIndex > 0 && isValidYear(Year) &&
-      isValidModel(lidarmodel)) {
+//  if (isVersionValid(info) && info.MaxDebugIndex > 0 && isValidYear(Year) &&
+//      isValidModel(lidarmodel)) {
 
-    if (isSerialNumbValid(info) && info.MaxDebugIndex > 8 && isValidMoth(Moth) &&
-        isValidDate(Date)) {
-      value.firmware_version = (CustomVerMajor << 8 | CustomVerMinor);
-      value.hardware_version = hardwareVer;
-      value.model = lidarmodel;
-      uint32_t year = Year + 2015;
-      sprintf(reinterpret_cast<char *>(value.serialnum), "%04d", year);
-      sprintf(reinterpret_cast<char *>(value.serialnum + 4), "%02d", Moth);
-      sprintf(reinterpret_cast<char *>(value.serialnum + 6), "%02d", Date);
-      sprintf(reinterpret_cast<char *>(value.serialnum + 8), "%08d", Number);
+//    if (isSerialNumbValid(info) && info.MaxDebugIndex > 8 && isValidMoth(Moth) &&
+//        isValidDate(Date)) {
+//      value.firmware_version = (CustomVerMajor << 8 | CustomVerMinor);
+//      value.hardware_version = hardwareVer;
+//      value.model = lidarmodel;
+//      uint32_t year = Year + 2015;
+//      sprintf(reinterpret_cast<char *>(value.serialnum), "%04d", year);
+//      sprintf(reinterpret_cast<char *>(value.serialnum + 4), "%02d", Moth);
+//      sprintf(reinterpret_cast<char *>(value.serialnum + 6), "%02d", Date);
+//      sprintf(reinterpret_cast<char *>(value.serialnum + 8), "%08d", Number);
 
-      for (int i = 0; i < 16; i++) {
-        value.serialnum[i] -= 48;
-      }
+//      for (int i = 0; i < 16; i++) {
+//        value.serialnum[i] -= 48;
+//      }
 
-      ret = true;
-    }
-  }
+//      ret = true;
+//    }
+//  }
 
-  return ret;
+//  return ret;
 }
 
 }

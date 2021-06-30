@@ -262,38 +262,161 @@ struct LaserScan {
 };
 
 struct LaserDebug {
-  uint8_t     W3F4CusMajor_W4F0CusMinor;
-  uint8_t     W4F3Model_W3F0DebugInfTranVer;
-  uint8_t     W3F4HardwareVer_W4F0FirewareMajor;
-  uint8_t     W7F0FirewareMinor;
-  uint8_t     W3F4BoradHardVer_W4F0Moth;
-  uint8_t     W2F5Output2K4K5K_W5F0Date;
-  uint8_t     W1F6GNoise_W1F5SNoise_W1F4MotorCtl_W4F0SnYear;
-  uint8_t     W7F0SnNumH;
-  uint8_t     W7F0SnNumL;
-  uint8_t     W7F0Health;
-  uint8_t     W3F4CusHardVer_W4F0CusSoftVer;
-  uint8_t     W7F0LaserCurrent;
-  uint8_t     MaxDebugIndex;
+  int8_t TranIndex_W2F5CusVerMajor_W5F0CusVerMinor;		 		//用户版本，用于客户做协议兼容			    02[V0.1]
+  int8_t TranIndex_W7F0ProtoMode;						 		//协议版本							be[01011111]
+  int8_t TranIndex_W7F0Health;							 		//健康信息							0
+  int8_t TranIndex_W3F4HardwareVer_W4F0FirewareMajor;			//硬件版本、固件大版本					66[H03V03]
+  int8_t TranIndex_W7F0FirewareMinor;							//固件小版本							02[R01]
+  int8_t TranIndex_W3F4MeasureMode_W4F0WorkMode;					//测距模式、工作模式						22[4K,Scan]
+  int8_t TranIndex_W3F4MasterMode_W4F0PlatFormMode;				//模组型号、底座型号						20[S4,G2]
+  int8_t TranIndex_W3F4FactorVer_W4F0LaserMode;					//工厂版本、激光管型号					20[F1,L0]
+  int8_t TranIndex_W5F2Year_W2F0SN1;
+  int8_t TranIndex_W4F3Month_W3F0SN2;
+  int8_t TranIndex_W5F2Day_W2F0SN3;
+  int8_t TranIndex_W7F0SN4;
+  int8_t TranIndex_W7F0SN5;
+  int8_t TranIndex_W7F0PDVal;									//PD电压
+  int8_t TranIndex_W7F0LDVal;									//LD电压
+  int8_t TranIndex_W7F0REFVal;
+  int8_t MaxDebugIndex;
   LaserDebug &operator = (const LaserDebug &other) {
-    this->W3F4CusMajor_W4F0CusMinor = other.W3F4CusMajor_W4F0CusMinor;
-    this->W4F3Model_W3F0DebugInfTranVer = other.W4F3Model_W3F0DebugInfTranVer;
-    this->W3F4HardwareVer_W4F0FirewareMajor =
-      other.W3F4HardwareVer_W4F0FirewareMajor;
-    this->W7F0FirewareMinor = other.W7F0FirewareMinor;
-    this->W3F4BoradHardVer_W4F0Moth = other.W3F4BoradHardVer_W4F0Moth;
-    this->W2F5Output2K4K5K_W5F0Date = other.W2F5Output2K4K5K_W5F0Date;
-    this->W1F6GNoise_W1F5SNoise_W1F4MotorCtl_W4F0SnYear =
-      other.W1F6GNoise_W1F5SNoise_W1F4MotorCtl_W4F0SnYear;
-    this->W7F0SnNumH = other.W7F0SnNumH;
-    this->W7F0SnNumL = other.W7F0SnNumL;
-    this->W7F0Health = other.W7F0Health;
-    this->W3F4CusHardVer_W4F0CusSoftVer = other.W3F4CusHardVer_W4F0CusSoftVer;
-    this->W7F0LaserCurrent = other.W7F0LaserCurrent;
-    this->MaxDebugIndex = other.MaxDebugIndex;
+    this->TranIndex_W2F5CusVerMajor_W5F0CusVerMinor = other.TranIndex_W2F5CusVerMajor_W5F0CusVerMinor;
+    this->TranIndex_W7F0ProtoMode = other.TranIndex_W7F0ProtoMode;
+    this->TranIndex_W7F0Health =
+      other.TranIndex_W7F0Health;
+    this->TranIndex_W3F4HardwareVer_W4F0FirewareMajor = other.TranIndex_W3F4HardwareVer_W4F0FirewareMajor;
+    this->TranIndex_W7F0FirewareMinor = other.TranIndex_W7F0FirewareMinor;
+    this->TranIndex_W3F4MeasureMode_W4F0WorkMode = other.TranIndex_W3F4MeasureMode_W4F0WorkMode;
+    this->TranIndex_W3F4MasterMode_W4F0PlatFormMode =
+      other.TranIndex_W3F4MasterMode_W4F0PlatFormMode;
+    this->TranIndex_W3F4FactorVer_W4F0LaserMode = other.TranIndex_W3F4FactorVer_W4F0LaserMode;
+    this->TranIndex_W5F2Year_W2F0SN1 = other.TranIndex_W5F2Year_W2F0SN1;
+    this->TranIndex_W4F3Month_W3F0SN2 = other.TranIndex_W4F3Month_W3F0SN2;
+    this->TranIndex_W5F2Day_W2F0SN3 = other.TranIndex_W5F2Day_W2F0SN3;
+    this->TranIndex_W7F0SN4 = other.TranIndex_W7F0SN4;
+    this->TranIndex_W7F0SN5 = other.TranIndex_W7F0SN5;
+    this->TranIndex_W7F0PDVal = other.TranIndex_W7F0PDVal;
+    this->TranIndex_W7F0LDVal = other.TranIndex_W7F0LDVal;
+    this->TranIndex_W7F0REFVal = other.TranIndex_W7F0REFVal;
     return *this;
   }
 };
+
+typedef enum  {
+  NoError,//无错误
+  DeviceNotFoundError,//无串口设备
+  PermissionError,//串口权限异常
+  OpenError,//串口打开失败
+  ParityError,//串口校验位
+  FramingError,
+  BreakConditionError,
+  WriteError,//写串口数据错误
+  ReadError,//读串口数据异常
+  ResourceError,//串口被占用
+  UnsupportedOperationError,//不支持的操作
+  TimeoutError,//超时(串口异常)
+  NotOpenError,//串口没打开
+  HeaderError,//包头错误
+  FirstSampleAngleError,//采样角错误
+  LastSampleAngleError,//采样角错误
+  PackageNumberError,//采样数错误
+  CheckSumError,//校验和错误
+  SensorError,//雷达硬件错误
+  EncodeError,//雷达卡主,
+  PWRError,//供电异常
+  PDError,
+  LDError,
+  DataError,//激光被遮挡
+  TrembleError,//抖动(跳频）
+  LidarNotFoundError,//雷达没发现
+  UnknownError,//没初始化
+} lidar_error_t;
+
+namespace response_health_error {
+enum bits : uint8_t {
+  SensorError = 1 << 0,  // sensor error
+  EncodeError = 1 << 1,  // encode error
+  PWRError = 1 << 2,  // ref error
+  PDError = 1 << 3,  // pd error
+  LDError = 1 << 4,  // ld error
+  DataError = 1 << 5,  // data error
+  CSError = 1 << 6,  // cs error
+};
+}  // namespace response_health_error
+
+inline lidar_error_t convert_ct_packet_to_error(int8_t  health_info) {
+  lidar_error_t err = NoError;
+
+  if (health_info & response_health_error::DataError) {
+      err = DataError;
+  }
+
+  if (health_info & response_health_error::PWRError) {
+      err = PWRError;
+  }
+
+  if (health_info & response_health_error::PDError) {
+      err = PDError;
+  }
+
+  if (health_info & response_health_error::LDError) {
+      err = LDError;
+  }
+
+  if (health_info & response_health_error::EncodeError) {
+      err = EncodeError;
+  }
+
+  if (health_info & response_health_error::SensorError) {
+      err = SensorError;
+  }
+
+  if (err == NoError) {
+  }
+
+  return err;
+}
+
+inline const char *getHealthError(lidar_error_t err) {
+  char const *errorString = "Unknown error";
+
+  switch (err) {
+    case lidar_error_t::NoError:
+      errorString = ("No error");
+      break;
+
+    case lidar_error_t::DataError:
+      errorString = ("data error");
+      break;
+
+    case lidar_error_t::PWRError:
+      errorString = ("PWR  error");
+      break;
+
+
+    case lidar_error_t::PDError:
+      errorString = ("PDE error");
+      break;
+
+    case lidar_error_t::LDError:
+      errorString = ("LD  error");
+      break;
+
+    case lidar_error_t::EncodeError:
+      errorString = ("Encode error");
+      break;
+
+    case lidar_error_t::SensorError:
+      errorString = ("sensor error");
+      break;
+
+    default:
+      // an empty string will be interpreted as "Unknown error"
+      break;
+  }
+
+  return errorString;
+}
 
 /** The numeric version information struct.  */
 typedef struct {
