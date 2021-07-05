@@ -106,6 +106,9 @@
 #define LIDAR_CMD_ADD_EXPOSURE       	    0x96
 #define LIDAR_CMD_DIS_EXPOSURE       	    0x97
 
+#define Angle_Px   1.22
+#define Angle_Py   5.315
+#define Angle_PAngle   22.5
 
 #define PackageSampleMaxLngth 0x100
 typedef enum {
@@ -118,8 +121,7 @@ typedef enum {
 #define Node_NotSync 2
 #define PackagePaidBytes 10
 #define PH 0x55AA
-#define NORMAL_PACKAGE_SIZE 90
-#define INTENSITY_NORMAL_PACKAGE_SIZE 130
+#define NORMAL_PACKAGE_SIZE 170
 
 
 typedef enum {

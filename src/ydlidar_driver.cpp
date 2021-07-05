@@ -85,6 +85,7 @@ YDlidarDriver::YDlidarDriver():
     scan_node_buf = new node_info[MAX_SCAN_NODES];
     package_index = 0;
     has_package_error = false;
+    isValidPoint  =  true;
 }
 
 YDlidarDriver::~YDlidarDriver() {
@@ -450,8 +451,8 @@ result_t YDlidarDriver::checkAutoConnecting() {
 }
 
 int YDlidarDriver::cacheScanData() {
-    node_info      local_buf[128];
-    size_t         count = 128;
+    node_info      local_buf[200];
+    size_t         count = 200;
     node_info      local_scan[MAX_SCAN_NODES];
     size_t         scan_count = 0;
     result_t       ans = RESULT_FAIL;
@@ -468,7 +469,7 @@ int YDlidarDriver::cacheScanData() {
     retryCount = 0;
 
     while (isScanning) {
-        count = 128;
+        count = 160;
         ans = waitScanData(local_buf, count);
 
         if (!IS_OK(ans)) {
@@ -503,21 +504,22 @@ int YDlidarDriver::cacheScanData() {
         }
 
 
+       // printf("test ans:%d,sync:%d,count:%d\n",ans,local_buf[count - 1].sync_flag,count);
+       // continue;
         for (size_t pos = 0; pos < count; ++pos) {
             local_scan[scan_count++] = local_buf[pos];
             if (local_buf[pos].sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
                 _lock.lock();//timeout lock, wait resource copy
-                local_scan[scan_count-1].sync_flag = Node_NotSync;
-                local_scan[0].sync_flag = Node_Sync;
                 local_scan[0].stamp = local_buf[pos].stamp;
-                local_scan[0].scan_frequence = local_buf[pos].scan_frequence;
+                local_scan[0].scan_frequence = 0; //local_buf[pos].scan_frequence;
                 memcpy(scan_node_buf, local_scan, scan_count * sizeof(node_info));
                 scan_node_count = scan_count;
                 _dataEvent.set();
                 _lock.unlock();
                 scan_count = 0;
+            }else {
+                local_scan[scan_count++] = local_buf[pos];
             }
-
 
             if (scan_count == _countof(local_scan)) {
                 scan_count -= 1;
@@ -723,10 +725,9 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     uint32_t startTs    = getms();
     uint32_t waitTime   = 0;
     uint8_t  *packageBuffer = (uint8_t *)&package.package_Head;
-
+    isValidPoint  =  true;
     uint8_t  package_Sample_Num         = 0;
     int  package_recvPos    = 0;
-    package_type    = 0;
 
     if (package_Sample_Index == 0) {
         recvPos = 0;
@@ -748,7 +749,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
             for (size_t pos = 0; pos < recvSize; ++pos) {
                 uint8_t currentByte = globalRecvBuffer[pos];
-
                 switch (recvPos) {
                 case 0:
                     if (currentByte == (PH & 0xFF)) {
@@ -773,8 +773,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
                 case 2:
                     SampleNumlAndCTCal = currentByte;
-                    package_type = (currentByte & 0x01) ? 0:1; //为1代表右相机，为0代表左相机，先右相机后左相机,让左相机最后一个点为零位点。
-
+                    package_type = (currentByte & 0x01) ? 0 : 1; //让左相机的最后一个点为包尾,默认先右后左，先左后右也行
                     if ((package_type == CT_Normal) || (package_type == CT_RingStart)) {
                         if (package_type == CT_RingStart) {
 
@@ -809,26 +808,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
                 case 7:
                     u_compensateB = currentByte * 0x100 + u_compensateB;
                     d_compensateB = u_compensateB/ 10000.00;
-
-                    //            if (package_Sample_Num == 1) {
-                    //              IntervalSampleAngle = 0;
-                    //            } else {
-                    //              if (LastSampleAngle < FirstSampleAngle) {
-                    //                if ((FirstSampleAngle > 270 * 64) && (LastSampleAngle < 90 * 64)) {
-                    //                  IntervalSampleAngle = (float)((360 * 64 + LastSampleAngle -
-                    //                                                 FirstSampleAngle) / ((
-                    //                                                       package_Sample_Num - 1) * 1.0));
-                    //                  IntervalSampleAngle_LastPackage = IntervalSampleAngle;
-                    //                } else {
-                    //                  IntervalSampleAngle = IntervalSampleAngle_LastPackage;
-                    //                }
-                    //              } else {
-                    //                IntervalSampleAngle = (float)((LastSampleAngle - FirstSampleAngle) / ((
-                    //                                                package_Sample_Num - 1) * 1.0));
-                    //                IntervalSampleAngle_LastPackage = IntervalSampleAngle;
-                    //              }
-                    //            }
-
                     break;
 
                 case 8:
@@ -905,77 +884,97 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
     }
 
-    if ((package_type & 0x01) == CT_Normal) {
-        (*node).sync_flag = Node_NotSync;
-        memset((*node).debug_info, 0xff, sizeof((*node).debug_info));
+//    if ((package_type & 0x01) == CT_Normal) {
+//        (*node).sync_flag = Node_NotSync;
+//        memset((*node).debug_info, 0xff, sizeof((*node).debug_info));
 
-        if (!has_package_error) {
-            if (package_index < 10) {
-                (*node).debug_info[package_index] = (package_type >> 1);
-                (*node).index = package_index;
-            } else {
-                (*node).index = 0xff;
-            }
+//        if (!has_package_error) {
+//            if (package_index < 10) {
+//                (*node).debug_info[package_index] = (package_type >> 1);
+//                (*node).index = package_index;
+//            } else {
+//                (*node).index = 0xff;
+//            }
 
-            if (package_Sample_Index == 0) {
-                package_index++;
-            }
-        } else {
-            (*node).index = 255;
-            package_index = 0;
-        }
-    } else {
-        (*node).sync_flag = Node_NotSync;
-        (*node).index = 255;
-        package_index = 0;
+//            if (package_Sample_Index == 0) {
+//                package_index++;
+//            }
+//        } else {
+//            (*node).index = 255;
+//            package_index = 0;
+//        }
+//    } else {
+//        (*node).sync_flag = Node_NotSync;
+//        (*node).index = 255;
+//        package_index = 0;
 
-        if (CheckSumResult) {
-            has_package_error = false;
-            (*node).scan_frequence  = scan_frequence;
-        }
-    }
+//        if (CheckSumResult) {
+//            has_package_error = false;
+//            (*node).scan_frequence  = scan_frequence;
+//        }
+//    }
 
     (*node).sync_quality = Node_Default_Quality;
     (*node).stamp = 0;
+    double sampleAngle = 0;
 
     if (CheckSumResult) {
         (*node).distance_q2 =
-                package.packageSample[package_Sample_Index].PakageSampleDistance;
+            package.packageSample[package_Sample_Index].PakageSampleDistance;
         if (m_intensities) {
-            (*node).sync_quality = (uint16_t)package.packageSample[package_Sample_Index].PakageSampleQuality;
+          (*node).sync_quality = (uint16_t)package.packageSample[package_Sample_Index].PakageSampleQuality;
+
         }
 
-        double sampleAngle;
-        angTransform((*node).distance_q2,package_index,&sampleAngle,&(*node).distance_q2);
+        if(node->distance_q2 > 0)
+        {
+             angTransform((*node).distance_q2,package_Sample_Index,&sampleAngle,&(*node).distance_q2);
+        }
 
         if (sampleAngle< 0) {
-            (*node).angle_q6_checkbit = (((uint16_t)(sampleAngle * 64 + 23040)) << LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) +
-                    LIDAR_RESP_MEASUREMENT_CHECKBIT;
+          (*node).angle_q6_checkbit = (((uint16_t)(sampleAngle * 64 + 23040)) << LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) +
+              LIDAR_RESP_MEASUREMENT_CHECKBIT;
         } else {
-            if ((sampleAngle * 64) > 23040) {
-                (*node).angle_q6_checkbit = (((uint16_t)(sampleAngle * 64 - 23040)) << LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) +
-                        LIDAR_RESP_MEASUREMENT_CHECKBIT;
-            } else {
-                (*node).angle_q6_checkbit = (((uint16_t)(sampleAngle * 64)) << LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) +
-                        LIDAR_RESP_MEASUREMENT_CHECKBIT;
+          if ((sampleAngle * 64) > 23040) {
+            (*node).angle_q6_checkbit = (((uint16_t)(sampleAngle * 64 - 23040)) << LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) +
+                LIDAR_RESP_MEASUREMENT_CHECKBIT;
+          } else {
+            (*node).angle_q6_checkbit = (((uint16_t)(sampleAngle * 64)) << LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) +
+                LIDAR_RESP_MEASUREMENT_CHECKBIT;
+          }
+        }
+
+        if(package_type == CT_RingStart){ //CT_RingStart  CT_Normal
+            if((*node).angle_q6_checkbit <= 23041){
+                (*node).distance_q2 = 0;
+                isValidPoint = false;
+            }
+        }else {
+            if((*node).angle_q6_checkbit > 23041){
+                (*node).distance_q2 = 0;
+                isValidPoint = false;
             }
         }
-    } else {
+
+      } else {
         (*node).sync_flag       = Node_NotSync;
         (*node).sync_quality    = Node_Default_Quality;
         (*node).angle_q6_checkbit = LIDAR_RESP_MEASUREMENT_CHECKBIT;
         (*node).distance_q2      = 0;
         (*node).scan_frequence  = 0;
-    }
+      }
 
 
     uint8_t nowPackageNum = package.nowPackageNum;
 
     package_Sample_Index++;
+    (*node).sync_flag = Node_NotSync;
 
     if (package_Sample_Index >= nowPackageNum) {
-        (*node).sync_flag = Node_Sync;
         package_Sample_Index = 0;
+        if ((package_type & 0x01) == CT_RingStart) {
+            (*node).sync_flag = Node_Sync;
+        }
         CheckSumResult = false;
     }
 
@@ -986,55 +985,55 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 void YDlidarDriver::angTransform(uint16_t dist, int n, double *dstTheta, uint16_t *dstDist)
 {
     double pixelU = n, Dist, theta, tempTheta, tempDist, tempX, tempY;
-    if (package_type)
-    {
-        pixelU = 80 - pixelU;
-        if (d_compensateB > 1) {
-            tempTheta = d_compensateK * pixelU - d_compensateB;
-        }
-        else
-        {
-            tempTheta = atan(d_compensateK * pixelU - d_compensateB) * 180 / M_PI;
-        }
-        tempDist = (dist - 1.22) / cos((22.5 - (tempTheta)) * M_PI / 180);
-        tempTheta = tempTheta * M_PI / 180;
-        tempX = cos(22.5 * M_PI / 180) * tempDist * cos(tempTheta) + sin(22.5 * M_PI / 180) * (tempDist *
-                                                                                               sin(tempTheta));
-        tempY = -sin(22.5 * M_PI / 180) * tempDist * cos(tempTheta) + cos(22.5 * M_PI / 180) * (tempDist *
-                                                                                                sin(tempTheta));
-        tempX = tempX + 1.22;
-        tempY = tempY - 5.315;
-        Dist = sqrt(tempX * tempX + tempY * tempY);
-        theta = atan(tempY / tempX) * 180 / M_PI;
-    }
-    else
-    {
-        pixelU = 80 - pixelU;
-        if (d_compensateB > 1)
-        {
-            tempTheta = d_compensateK * pixelU - d_compensateB;
-        }
-        else
-        {
-            tempTheta = atan(d_compensateK * pixelU - d_compensateB) * 180 / M_PI;
-        }
-        tempDist = (dist - 1.22) / cos((22.5 + (tempTheta)) * M_PI / 180);
-        tempTheta = tempTheta * M_PI / 180;
-        tempX = cos(-22.5 * M_PI / 180) * tempDist * cos(tempTheta) + sin(-22.5 * M_PI / 180) * (tempDist *
+      if (package_type)
+      {
+          pixelU = 80 - pixelU;
+          if (d_compensateB > 1) {
+              tempTheta = d_compensateK * pixelU - d_compensateB;
+          }
+          else
+          {
+              tempTheta = atan(d_compensateK * pixelU - d_compensateB) * 180 / M_PI;
+          }
+          tempDist = (dist - Angle_Px) / cos((Angle_PAngle - (tempTheta)) * M_PI / 180);
+          tempTheta = tempTheta * M_PI / 180;
+          tempX = cos(Angle_PAngle * M_PI / 180) * tempDist * cos(tempTheta) + sin(Angle_PAngle * M_PI / 180) * (tempDist *
                                                                                                  sin(tempTheta));
-        tempY = -sin(-22.5 * M_PI / 180) * tempDist * cos(tempTheta) + cos(-22.5 * M_PI / 180) * (tempDist *
+          tempY = -sin(Angle_PAngle * M_PI / 180) * tempDist * cos(tempTheta) + cos(Angle_PAngle * M_PI / 180) * (tempDist *
                                                                                                   sin(tempTheta));
-        tempX = tempX + 1.22;
-        tempY = tempY + 5.315;
-        Dist = sqrt(tempX * tempX + tempY * tempY);
-        theta = atan(tempY / tempX) * 180 / M_PI;
-    }
-    if (theta < 0)
-    {
-        theta += 360;
-    }
-    *dstTheta = theta;
-    *dstDist = Dist;
+          tempX = tempX + Angle_Px;
+          tempY = tempY - Angle_Py; //5.315
+          Dist = sqrt(tempX * tempX + tempY * tempY);
+          theta = atan(tempY / tempX) * 180 / M_PI;
+      }
+      else
+      {
+          pixelU = 80 - pixelU;
+          if (d_compensateB > 1)
+          {
+              tempTheta = d_compensateK * pixelU - d_compensateB;
+          }
+          else
+          {
+              tempTheta = atan(d_compensateK * pixelU - d_compensateB) * 180 / M_PI;
+          }
+          tempDist = (dist - Angle_Px) / cos((Angle_PAngle + (tempTheta)) * M_PI / 180);
+          tempTheta = tempTheta * M_PI / 180;
+          tempX = cos(-Angle_PAngle * M_PI / 180) * tempDist * cos(tempTheta) + sin(-Angle_PAngle * M_PI / 180) * (tempDist *
+                                                                                                   sin(tempTheta));
+          tempY = -sin(-Angle_PAngle * M_PI / 180) * tempDist * cos(tempTheta) + cos(-Angle_PAngle * M_PI / 180) * (tempDist *
+                                                                                                    sin(tempTheta));
+          tempX = tempX + Angle_Px;
+          tempY = tempY + Angle_Py; //5.315
+          Dist = sqrt(tempX * tempX + tempY * tempY);
+          theta = atan(tempY / tempX) * 180 / M_PI;
+      }
+      if (theta < 0)
+      {
+          theta += 360;
+      }
+      *dstTheta = theta;
+      *dstDist = Dist;
 }
 
 result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,
@@ -1058,18 +1057,21 @@ result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,
             return ans;
         }
 
-        nodebuffer[recvNodeCount++] = node;
+       if(isValidPoint){
+          nodebuffer[recvNodeCount++] = node;
+       }
+
+       if(!package_Sample_Index && (package_type & 0x01) == CT_RingStart && !isValidPoint){
+            nodebuffer[recvNodeCount - 1].sync_flag = CT_RingStart;
+        }
+
 
         if (!package_Sample_Index) {
-            if(package_type){
-                nodebuffer[recvNodeCount -1].sync_flag = 0x01;
-            }
             size_t size = _serial->available();
             uint64_t delayTime = 0;
-            size_t PackageSize = (m_intensities ? INTENSITY_NORMAL_PACKAGE_SIZE :
-                                                  NORMAL_PACKAGE_SIZE);
+            size_t PackageSize = NORMAL_PACKAGE_SIZE;
 
-            if (size > PackagePaidBytes && size < PackagePaidBytes * PackageSize) {
+            if (size > PackagePaidBytes) {
                 size_t packageNum = size / PackageSize;
                 size_t Number = size % PackageSize;
                 delayTime = packageNum * m_PointTime * PackageSize / 2;
@@ -1457,9 +1459,9 @@ result_t YDlidarDriver::startScan(bool force, uint32_t timeout) {
                 return ans;
             }
 
-            if (response_header.type != LIDAR_ANS_TYPE_MEASUREMENT) {
-                return RESULT_FAIL;
-            }
+//            if (response_header.type != LIDAR_ANS_TYPE_MEASUREMENT) {
+//                return RESULT_FAIL;
+//            }
 
             if (response_header.size < 5) {
                 return RESULT_FAIL;

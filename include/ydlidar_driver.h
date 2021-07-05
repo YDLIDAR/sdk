@@ -619,6 +619,7 @@ class YDlidarDriver {
   double  d_compensateB;
   uint16_t  u_compensateK;
   uint16_t  u_compensateB;
+  bool isValidPoint;
 
 };
 
