@@ -28,12 +28,12 @@ YDlidarDriver::YDlidarDriver():
   isSupportMotorCtrl = true;
   m_sampling_rate = -1;
   scan_frequence = 0;
-  m_pointTime = 1e9 / 20000;
+  m_pointTime = 1e9 / 10000;
   trans_delay = 0;
   m_packageTime = 0;
 
   //解析参数
-  PackageSampleBytes = 2;
+  PackageSampleBytes = 4;
   package_Sample_Index = 0;
   IntervalSampleAngle = 0.0;
   IntervalSampleAngle_LastPackage = 0.0;
@@ -349,7 +349,6 @@ result_t YDlidarDriver::waitResponseHeader(lidar_ans_header *header,
 
     for (size_t pos = 0; pos < recvSize; ++pos) {
       uint8_t currentByte = recvBuffer[pos];
-
       switch (recvPos) {
         case 0:
           if (currentByte != LIDAR_ANS_SYNC_BYTE1) {
@@ -764,7 +763,8 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
   (*node).dstamp = 0;
 
   if (CheckSumResult) {
-    (*node).distance_q2 = packages.packageSampleDistance[package_Sample_Index];
+    (*node).distance_q2 = packages.packageSample[package_Sample_Index].PakageSampleDistance;
+    (*node).sync_quality = packages.packageSample[package_Sample_Index].PakageSampleQuality;
 
     if ((*node).distance_q2 != 0) {
       if (this->model == YDLIDAR_G4) {
@@ -1137,7 +1137,8 @@ void YDlidarDriver::checkTransTime() {
 
       if (model == YDLIDAR_G4) {
         m_pointTime = 1e9 / 9000;
-      }
+      }else if(model == YDLIDAR_TG50)
+        m_pointTime = 1e9 / 10000;
 
       break;
 

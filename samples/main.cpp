@@ -71,28 +71,29 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
-  int baudrate = 512000;
+  int baudrate = 460800;
 
-  float frequency = 10.0;
+  float frequency = 7.0;
   std::string info = "Please Input the lidar Scan frequency: ";
 
-  while (ydlidar::ok()) {
-    ydlidar::console.show("%s", info.c_str());
-    std::string number;
-    std::cin >> number;
-    frequency = atof(number.c_str());
+//  while (ydlidar::ok()) {
+//    ydlidar::console.show("%s", info.c_str());
+//    std::string number;
+//    std::cin >> number;
+//    frequency = atof(number.c_str());
 
-    if (frequency >= 3 &&  frequency <= 15) {
-      break;
-    }
+//    if (frequency >= 3 &&  frequency <= 15) {
+//      break;
+//    }
 
-    info = "The lidar frequency is wrong, please re-enter: ";
-  }
+//    info = "The lidar frequency is wrong, please re-enter: ";
+//  }
 
-  if (!ydlidar::ok()) {
-    return 0;
-  }
+//  if (!ydlidar::ok()) {
+//    return 0;
+//  }
 
+  frequency = 7;
 
   laser.setSerialPort(port);
   laser.setSerialBaudrate(baudrate);

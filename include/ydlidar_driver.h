@@ -619,7 +619,7 @@ class YDlidarDriver {
   uint32_t    m_packageTime;        ///零位包传送时间
   uint32_t    trans_delay;				///< 串口传输一个byte时间
 
-  node_packages packages;
+  node_package packages;
 
   uint16_t package_Sample_Index;
   float IntervalSampleAngle;

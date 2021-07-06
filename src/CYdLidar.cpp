@@ -31,7 +31,7 @@ CYdLidar::CYdLidar() : lidarPtr(nullptr) {
   m_AbnormalCheckCount = 4;
   m_IgnoreArray.clear();
   nodes = new node_info[YDlidarDriver::MAX_SCAN_NODES];
-  m_pointTime         = 1e9 / 20000;
+  m_pointTime         = 1e9 / 10000;
   m_packageTime       = 0;        ///零位包传送时间
   last_node_time      = getTime();
   model = YDlidarDriver::YDLIDAR_TG30;
@@ -150,8 +150,13 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError) {
         range = static_cast<float>(nodes[i].distance_q2 / 2000.f);
       }
 
-      intensity = static_cast<float>((nodes[i].sync_quality >>
-                                      LIDAR_RESP_MEASUREMENT_QUALITY_SHIFT));
+      if(model == YDlidarDriver::YDLIDAR_TG50){
+          intensity = static_cast<float>((nodes[i].sync_quality >>
+                                          0));
+      }else {
+          intensity = static_cast<float>((nodes[i].sync_quality >>
+                                          LIDAR_RESP_MEASUREMENT_QUALITY_SHIFT));
+      }
       angle = static_cast<float>(((nodes[i].angle_q6_checkbit >>
                                    LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f));
       angle = angles::from_degrees(angle);
@@ -458,7 +463,7 @@ void CYdLidar::checkSampleRate() {
       }
     }
 
-    while (_samp_rate != _rate.rate) {
+    while (_samp_rate != _rate.rate && model != YDlidarDriver::YDLIDAR_TG50) {
       ans = lidarPtr->setSamplingRate(_rate);
       try_count++;
 
@@ -497,6 +502,9 @@ void CYdLidar::checkSampleRate() {
         if (model == YDlidarDriver::YDLIDAR_G4) {
           _samp_rate = 9;
           node_counts = 1440;
+        }else if (model == YDlidarDriver::YDLIDAR_TG50){
+            _samp_rate = 10;
+            node_counts = 1440;
         }
 
         break;
