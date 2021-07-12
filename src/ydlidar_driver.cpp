@@ -1021,6 +1021,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     CheckSumCal ^= LastSampleAngleCal;
 
     if (CheckSumCal != CheckSum) {
+      UpdateDriverError(CheckSumError);
       CheckSumResult = false;
       data_header_error = true;
       (*node).error_package = 1;

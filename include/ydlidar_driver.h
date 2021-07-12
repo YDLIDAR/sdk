@@ -54,6 +54,7 @@ class YDlidarDriver {
     NotBufferError,
     TrembleError,
     LaserFailureError,
+    CheckSumError,
   };
 
   static const char *DescribeError(DriverError err);

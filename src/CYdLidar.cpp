@@ -277,6 +277,10 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan, bool &hardwareError,lidar_er
     scan_msg.config.max_range = m_MaxRange;
     outscan = scan_msg;
 
+    if(lidarPtr){
+       if(lidarPtr->getSystemError() == YDlidarDriver::DriverError::CheckSumError)
+           healthError = CheckSumError;
+    }
     healthError =  convert_ct_packet_to_error(debug.TranIndex_W7F0Health);
 
     //parsing version

@@ -409,6 +409,8 @@ inline const char *getHealthError(lidar_error_t err) {
     case lidar_error_t::SensorError:
       errorString = ("sensor error");
       break;
+   case lidar_error_t::CheckSumError:
+      errorString = ("check sum error");
 
     default:
       // an empty string will be interpreted as "Unknown error"
