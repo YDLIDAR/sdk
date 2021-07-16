@@ -773,7 +773,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
                 case 2:
                     SampleNumlAndCTCal = currentByte;
-                    package_type = (currentByte & 0x01) ? 0 : 1; //让左相机的最后一个点为包尾,默认先右后左，先左后右也行
+                    package_type = (currentByte & 0x01); //让左相机的最后一个点为包尾,默认先右后左，先左后右也行
                     if ((package_type == CT_Normal) || (package_type == CT_RingStart)) {
                         if (package_type == CT_RingStart) {
 
@@ -788,7 +788,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
                 case 3:
                     SampleNumlAndCTCal += (currentByte * 0x100);
-                    package_Sample_Num = currentByte;
+                    package_Sample_Num = 80;// currentByte;
                     break;
 
                 case 4:
@@ -985,7 +985,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 void YDlidarDriver::angTransform(uint16_t dist, int n, double *dstTheta, uint16_t *dstDist)
 {
     double pixelU = n, Dist, theta, tempTheta, tempDist, tempX, tempY;
-      if (package_type)
+      if (!package_type)
       {
           pixelU = 80 - pixelU;
           if (d_compensateB > 1) {
@@ -1057,13 +1057,13 @@ result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,
             return ans;
         }
 
-       if(isValidPoint){
+ //      if(isValidPoint){
           nodebuffer[recvNodeCount++] = node;
-       }
+ //      }
 
-       if(!package_Sample_Index && (package_type & 0x01) == CT_RingStart && !isValidPoint){
-            nodebuffer[recvNodeCount - 1].sync_flag = CT_RingStart;
-        }
+//       if(!package_Sample_Index && (package_type & 0x01) == CT_RingStart && !isValidPoint){
+//            nodebuffer[recvNodeCount - 1].sync_flag = CT_RingStart;
+//        }
 
 
         if (!package_Sample_Index) {
