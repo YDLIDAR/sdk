@@ -108,6 +108,7 @@ int main(int argc, char *argv[]) {
   laser.setSerialBaudrate(230400);
   laser.setIntensities(false);//intensity
   laser.setAutoReconnect(true);//hot plug
+  laser.setAutoReboot(true);  //auto reboot while autoReboot
 
   //unit: Deg
   laser.setMaxAngle(360);

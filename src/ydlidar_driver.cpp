@@ -110,6 +110,7 @@ YDlidarDriver::YDlidarDriver():
   m_intensities       = false;
   isAutoReconnect     = true;
   isAutoconnting      = false;
+  isAutoReboot        = true;
   m_baudrate          = 230400;
   isSupportMotorCtrl  = true;
   scan_node_count     = 0;
@@ -212,7 +213,6 @@ result_t YDlidarDriver::connect(const char *port_path, uint32_t baudrate) {
   serial_port = string(port_path);
   {
     ScopedLocker l(_lock);
-
     if (!_serial) {
       _serial = new serial::Serial(port_path, m_baudrate,
                                    serial::Timeout::simpleTimeout(DEFAULT_TIMEOUT));
@@ -517,6 +517,7 @@ result_t YDlidarDriver::checkAutoConnecting(bool error) {
             }
           }
 
+
           close_serial_event = true;
           isConnected = false;
           _serial->closePort();
@@ -546,10 +547,31 @@ result_t YDlidarDriver::checkAutoConnecting(bool error) {
 
     int connectCount = 0;
 
+    //auto reboot
+    if(isAutoReboot.load()){
+        result_t ans = connect(serial_port.c_str(), m_baudrate);
+
+        if (IS_OK(ans)) {
+            ans = setLidarReboot();
+            if(IS_OK(ans)){
+                fprintf(stdout,"[YDLidar][checkAutoConnecting] auto reboot success\n");
+                fflush(stdout);
+            }else {
+                fprintf(stderr,"[YDLidar][checkAutoConnecting] auto reboot failed! ans:%d\n",ans);
+                fflush(stderr);
+                return  ans;
+            }
+        }
+        delay(500);
+        isConnected = false;
+        _serial->closePort();
+        delete _serial;
+        _serial = NULL;
+    }
+
     while (isAutoReconnect && isscanning()) {
       if (isscanning() && isAutoReconnect) {
         result_t ans = connect(serial_port.c_str(), m_baudrate);
-
         if (IS_OK(ans)) {
           break;
         }
@@ -752,7 +774,6 @@ int YDlidarDriver::cacheScanData() {
       m_reconnectCount = 0;
       block_timeout_count = 0;
     }
-
 
     for (size_t pos = 0; pos < count; ++pos) {
       if (local_buf[pos].sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
@@ -1507,6 +1528,17 @@ void YDlidarDriver::setIntensities(const bool &isintensities) {
 void YDlidarDriver::setAutoReconnect(const bool &enable) {
   isAutoReconnect = enable;
 }
+
+/**
+* @brief 设置雷达异常自动重新启动 \n
+* @param[in] enable    是否开启自动启动:
+*     true	开启
+*	  false 关闭
+*/
+void YDlidarDriver::setAutoReboot(const bool &enable) {
+  isAutoReboot = enable;
+}
+
 
 /**
  * @brief setIgnoreArray
@@ -2514,14 +2546,13 @@ result_t YDlidarDriver::getRobotOffsetZone(offset_angle &angle,
 
 result_t YDlidarDriver::setLidarReboot(uint32_t timeout) {
   result_t  ans;
-
   if (!isConnected) {
     return RESULT_FAIL;
   }
 
   flushSerial();
   delay(20);
-  disableDataGrabbing();
+ // disableDataGrabbing();
   {
     ScopedLocker l(_lock);
 
@@ -2529,9 +2560,8 @@ result_t YDlidarDriver::setLidarReboot(uint32_t timeout) {
       return ans;
 
     }
-
     waitForData(1, timeout);
-    flushSerial();
+  //  flushSerial();
   }
   return RESULT_OK;
 }

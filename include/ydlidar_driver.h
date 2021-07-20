@@ -138,6 +138,14 @@ class YDlidarDriver {
   void setAutoReconnect(const bool &enable);
 
   /**
+  * @brief whether to support auto reboot \n
+  * @param[in] enable    reboot :
+  *   true	support
+  *	  false no support
+  */
+  void setAutoReboot(const bool &enable);
+
+  /**
    * @brief setIgnoreArray
    * set the range of angles that need to be removed.
    * @param ignore_array
@@ -669,6 +677,7 @@ class YDlidarDriver {
   std::atomic<bool>     isScanning;   ///<
   std::atomic<bool>     isAutoReconnect;  ///<
   std::atomic<bool>     isAutoconnting;  ///<
+  std::atomic<bool>     isAutoReboot;  ///<
 
   enum {
     DEFAULT_TIMEOUT = 2000,    /**< default timeout. */

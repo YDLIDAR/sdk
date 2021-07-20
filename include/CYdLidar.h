@@ -25,6 +25,8 @@ class YDLIDAR_API CYdLidar {
                         private) ///< intensity
   PropertyBuilderByName(bool, AutoReconnect,
                         private) ///< whether to support hot swap
+  PropertyBuilderByName(bool, AutoReboot,
+                        private) ///< whether to support auto reboot
   PropertyBuilderByName(bool, GlassNoise,
                         private) ///< whether to close glass noise
   PropertyBuilderByName(bool, SunNoise, private) ///< whether to close sun noise

@@ -17,6 +17,7 @@ CYdLidar::CYdLidar(): lidarPtr(nullptr) {
   m_SerialBaudrate    = 230400;
   m_Intensities       = false;
   m_AutoReconnect     = false;
+  m_AutoReboot        = false;
   m_MaxAngle          = 360.f;
   m_MinAngle          = 0.f;
   m_MaxRange          = 16.0;
@@ -424,6 +425,7 @@ bool  CYdLidar::turnOn() {
   laserFailureTime = getms();
   isScanning = true;
   lidarPtr->setAutoReconnect(m_AutoReconnect);
+  lidarPtr->setAutoReboot(m_AutoReboot);
   printf("[YDLIDAR INFO][%fs] Now YDLIDAR is scanning ......\n",
          (getms() - m_turn_on_time) / 1000.0);
   fflush(stdout);
