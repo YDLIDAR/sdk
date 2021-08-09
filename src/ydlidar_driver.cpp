@@ -69,6 +69,7 @@ YDlidarDriver::YDlidarDriver():
     LastSampleAngleCal  = 0;
     CheckSumResult      = true;
     Valu8Tou16          = 0;
+    package_Sample_Num  = 0;
 
     last_device_byte    = 0x00;
     asyncRecvPos        = 0;
@@ -517,8 +518,6 @@ int YDlidarDriver::cacheScanData() {
                 _dataEvent.set();
                 _lock.unlock();
                 scan_count = 0;
-            }else {
-                local_scan[scan_count++] = local_buf[pos];
             }
 
             if (scan_count == _countof(local_scan)) {
@@ -726,7 +725,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
     uint32_t waitTime   = 0;
     uint8_t  *packageBuffer = (uint8_t *)&package.package_Head;
     isValidPoint  =  true;
-    uint8_t  package_Sample_Num         = 0;
     int  package_recvPos    = 0;
 
     if (package_Sample_Index == 0) {
@@ -944,7 +942,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
           }
         }
 
-        if(package_type == CT_RingStart){ //CT_RingStart  CT_Normal
+        if(package_type == CT_Normal){ //CT_RingStart  CT_Normal
             if((*node).angle_q6_checkbit <= 23041){
                 (*node).distance_q2 = 0;
                 isValidPoint = false;
@@ -965,7 +963,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
       }
 
 
-    uint8_t nowPackageNum = package.nowPackageNum;
+    uint8_t nowPackageNum = package_Sample_Num;
 
     package_Sample_Index++;
     (*node).sync_flag = Node_NotSync;

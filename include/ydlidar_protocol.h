@@ -237,7 +237,7 @@ struct LaserPoint {
     this->intensity = data.intensity;
     return *this;
   }
-};
+}__attribute__((packed));
 
 struct LaserDebug {
   uint8_t     W3F4CusMajor_W4F0CusMinor;
@@ -312,4 +312,4 @@ struct LaserScan {
     return *this;
   }
 
-};
+}__attribute__((packed));

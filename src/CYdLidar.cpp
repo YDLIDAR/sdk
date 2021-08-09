@@ -168,6 +168,11 @@ bool  CYdLidar::doProcessSimple(LaserScan &outscan,
 
   // Fill in scan data:
   if (IS_OK(op_result)) {
+//      for(int i = 0;i< count ;i++){
+//          float angle = static_cast<float>((global_nodes[i].angle_q6_checkbit >>
+//                                      LIDAR_RESP_MEASUREMENT_ANGLE_SHIFT) / 64.0f) + m_AngleOffset;
+//          printf("angle:%f,range:%d,intensity:%u\n",angle,global_nodes[i].distance_q2,global_nodes[i].sync_quality);
+//      }
 //    uint64_t scan_time = m_PointTime * count;
 //    tim_scan_end += m_OffsetTime * 1e9;
 //    tim_scan_end -= global_nodes[0].stamp;
@@ -914,6 +919,7 @@ bool  CYdLidar::checkCOMMs() {
   printf("LiDAR successfully connected\n");
   lidarPtr->setSingleChannel(m_SingleChannel);
   lidarPtr->setLidarType(m_LidarType);
+  lidarPtr->setIntensities(m_Intensity);
 
   return true;
 }

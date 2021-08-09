@@ -552,6 +552,9 @@ class YDLIDAR_API CYdLidar {
   */
   PropertyBuilderByName(int, LidarType, private);
 
+  PropertyBuilderByName(bool, Intensity,
+                          private) ///< 是否有信号质量
+
  public:
   CYdLidar(); //!< Constructor
   virtual ~CYdLidar();  //!< Destructor: turns the laser off.
