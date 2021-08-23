@@ -110,6 +110,7 @@
 #define Angle_Py   5.315
 #define Angle_PAngle   22.5
 
+#define MaximumNumberOfPackages  765
 #define PackageSampleMaxLngth 0x100
 typedef enum {
   CT_Normal = 0,
@@ -143,6 +144,15 @@ struct node_info {
   uint8_t    scan_frequence;//! 特定版本此值才有效,无效值是0
   uint8_t    debug_info[12];
   uint8_t    index;
+} __attribute__((packed)) ;
+
+struct GS2_Multi_Package {
+    int frameNum;
+    int moduleNum;
+    bool left = false;
+    bool right = false;
+    node_info  left_points[80];
+    node_info  right_points[80];
 } __attribute__((packed)) ;
 
 struct PackageNode {
@@ -311,5 +321,6 @@ struct LaserScan {
     this->config = data.config;
     return *this;
   }
+  int  moduleNum;
 
 }__attribute__((packed));

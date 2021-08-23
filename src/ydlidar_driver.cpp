@@ -70,6 +70,10 @@ YDlidarDriver::YDlidarDriver():
     CheckSumResult      = true;
     Valu8Tou16          = 0;
     package_Sample_Num  = 0;
+    moduleNum           = 0;
+    frameNum            = 0;
+    isPrepareToSend     = false;
+    multi_package.resize(MaximumNumberOfPackages);
 
     last_device_byte    = 0x00;
     asyncRecvPos        = 0;
@@ -505,25 +509,35 @@ int YDlidarDriver::cacheScanData() {
         }
 
 
-       // printf("test ans:%d,sync:%d,count:%d\n",ans,local_buf[count - 1].sync_flag,count);
-       // continue;
-        for (size_t pos = 0; pos < count; ++pos) {
-            local_scan[scan_count++] = local_buf[pos];
-            if (local_buf[pos].sync_flag & LIDAR_RESP_MEASUREMENT_SYNCBIT) {
-                _lock.lock();//timeout lock, wait resource copy
-                local_scan[0].stamp = local_buf[pos].stamp;
-                local_scan[0].scan_frequence = 0; //local_buf[pos].scan_frequence;
-                memcpy(scan_node_buf, local_scan, scan_count * sizeof(node_info));
-                scan_node_count = scan_count;
-                _dataEvent.set();
-                _lock.unlock();
-                scan_count = 0;
-            }
+        printf("sync:%d,index:%d,moduleNum:%d \n",package_type,frameNum,moduleNum);
+        fflush(stdout);
 
-            if (scan_count == _countof(local_scan)) {
-                scan_count -= 1;
+        if(!isPrepareToSend){
+            continue;
+        }
+
+        size_t size = multi_package.size();
+        for(size_t i = 0;i < size; i++){
+            if(multi_package[i].frameNum == frameNum && multi_package[i].moduleNum == moduleNum){
+                memcpy(scan_node_buf,multi_package[i].left_points,sizeof (node_info) * 80);
+                memcpy(scan_node_buf + 80, multi_package[i].right_points,sizeof (node_info) * 80);
+                multi_package[i].left = false;
+                multi_package[i].right = false;
+                break;
             }
         }
+
+        _lock.lock();//timeout lock, wait resource copys
+        scan_node_buf[0].stamp = local_buf[count - 1].stamp;
+        scan_node_buf[0].scan_frequence = local_buf[count - 1].scan_frequence;
+        scan_node_buf[0].index = moduleNum;
+        scan_node_count = 160; //一个包固定160个数据
+        printf("send frameNum: %d,moduleNum: %d\n",frameNum,moduleNum);
+        fflush(stdout);
+        _dataEvent.set();
+        _lock.unlock();
+        scan_count = 0;
+        isPrepareToSend = false;
     }
 
     isScanning = false;
@@ -771,7 +785,8 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
 
                 case 2:
                     SampleNumlAndCTCal = currentByte;
-                    package_type = (currentByte & 0x01); //让左相机的最后一个点为包尾,默认先右后左，先左后右也行
+                    package_type = (currentByte & 0x01); //为1代表右相机，为0代表左相机,考虑到延迟的问题
+                    moduleNum = (currentByte >> 1) & 0x07;
                     if ((package_type == CT_Normal) || (package_type == CT_RingStart)) {
                         if (package_type == CT_RingStart) {
 
@@ -787,6 +802,7 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
                 case 3:
                     SampleNumlAndCTCal += (currentByte * 0x100);
                     package_Sample_Num = 80;// currentByte;
+                    frameNum = currentByte;
                     break;
 
                 case 4:
@@ -881,36 +897,6 @@ result_t YDlidarDriver::waitPackage(node_info *node, uint32_t timeout) {
         }
 
     }
-
-//    if ((package_type & 0x01) == CT_Normal) {
-//        (*node).sync_flag = Node_NotSync;
-//        memset((*node).debug_info, 0xff, sizeof((*node).debug_info));
-
-//        if (!has_package_error) {
-//            if (package_index < 10) {
-//                (*node).debug_info[package_index] = (package_type >> 1);
-//                (*node).index = package_index;
-//            } else {
-//                (*node).index = 0xff;
-//            }
-
-//            if (package_Sample_Index == 0) {
-//                package_index++;
-//            }
-//        } else {
-//            (*node).index = 255;
-//            package_index = 0;
-//        }
-//    } else {
-//        (*node).sync_flag = Node_NotSync;
-//        (*node).index = 255;
-//        package_index = 0;
-
-//        if (CheckSumResult) {
-//            has_package_error = false;
-//            (*node).scan_frequence  = scan_frequence;
-//        }
-//    }
 
     (*node).sync_quality = Node_Default_Quality;
     (*node).stamp = 0;
@@ -1034,6 +1020,42 @@ void YDlidarDriver::angTransform(uint16_t dist, int n, double *dstTheta, uint16_
       *dstDist = Dist;
 }
 
+void  YDlidarDriver::addPointsToVec(node_info *nodebuffer, size_t &count){
+    size_t size = multi_package.size();
+    bool isFound = false;
+    for(size_t i =0;i < size; i++){
+        if(multi_package[i].frameNum == frameNum && multi_package[i].moduleNum == moduleNum){
+         //   printf("add points, [sync:%d] [%u] left:%d , right:%d\n",package_type,frameNum,multi_package[i].left,multi_package[i].right);
+         //   fflush(stdout);
+            isFound = true;
+            if(package_type){
+               multi_package[i].right  = true;
+               memcpy(multi_package[i].right_points,nodebuffer,sizeof (node_info) * count);
+
+            } else {
+               multi_package[i].left  = true;
+               memcpy(multi_package[i].left_points,nodebuffer,sizeof (node_info) * count);
+            }
+            if(multi_package[i].left && multi_package[i].right){
+                isPrepareToSend = true;
+            }
+            break;
+        }
+    }
+    if(!isFound){
+        GS2_Multi_Package  package;
+        package.frameNum = frameNum;
+        package.moduleNum = moduleNum;
+        if(package_type){
+           package.right  = true;
+
+        } else {
+           package.left  = true;
+        }
+        multi_package.push_back(package);
+    }
+}
+
 result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,
                                      uint32_t timeout) {
     if (!isConnected) {
@@ -1054,15 +1076,7 @@ result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,
             count = recvNodeCount;
             return ans;
         }
-
- //      if(isValidPoint){
-          nodebuffer[recvNodeCount++] = node;
- //      }
-
-//       if(!package_Sample_Index && (package_type & 0x01) == CT_RingStart && !isValidPoint){
-//            nodebuffer[recvNodeCount - 1].sync_flag = CT_RingStart;
-//        }
-
+        nodebuffer[recvNodeCount++] = node;
 
         if (!package_Sample_Index) {
             size_t size = _serial->available();
@@ -1084,6 +1098,7 @@ result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,
                     size = PackageSize;
                 }
             }
+            addPointsToVec(nodebuffer,recvNodeCount);
 
             nodebuffer[recvNodeCount - 1].stamp = size * trans_delay + delayTime;
             nodebuffer[recvNodeCount - 1].scan_frequence = node.scan_frequence;

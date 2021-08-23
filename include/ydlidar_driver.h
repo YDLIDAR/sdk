@@ -547,6 +547,8 @@ class YDlidarDriver {
    */
   void angTransform(uint16_t dist, int n, double *dstTheta, uint16_t *dstDist);
 
+  void addPointsToVec(node_info *nodebuffer, size_t &count);
+
  public:
   std::atomic<bool>     isConnected;  ///< 串口连接状体
   std::atomic<bool>     isScanning;   ///< 扫图状态
@@ -621,6 +623,12 @@ class YDlidarDriver {
   uint16_t  u_compensateB;
   bool isValidPoint;
   uint8_t  package_Sample_Num;
+
+  uint8_t   frameNum;  //帧序号
+  uint8_t   moduleNum;  //模块编号
+  bool      isPrepareToSend; //是否准备好发送
+
+  std::vector<GS2_Multi_Package>  multi_package;
 
 };
 
