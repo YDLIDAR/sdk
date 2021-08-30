@@ -1025,8 +1025,6 @@ void  YDlidarDriver::addPointsToVec(node_info *nodebuffer, size_t &count){
     bool isFound = false;
     for(size_t i =0;i < size; i++){
         if(multi_package[i].frameNum == frameNum && multi_package[i].moduleNum == moduleNum){
-         //   printf("add points, [sync:%d] [%u] left:%d , right:%d\n",package_type,frameNum,multi_package[i].left,multi_package[i].right);
-         //   fflush(stdout);
             isFound = true;
             if(package_type){
                multi_package[i].right  = true;
@@ -1038,6 +1036,16 @@ void  YDlidarDriver::addPointsToVec(node_info *nodebuffer, size_t &count){
             }
             if(multi_package[i].left && multi_package[i].right){
                 isPrepareToSend = true;
+            }
+            if(frameNum > 0){
+                int lastFrame = frameNum - 1;
+                for(size_t j =0;j < size; j++){
+                    if(multi_package[j].frameNum == lastFrame && multi_package[j].moduleNum == moduleNum){
+                        multi_package[j].right = false;
+                        multi_package[j].left = false;
+                        break;
+                    }
+                }
             }
             break;
         }
@@ -1054,6 +1062,8 @@ void  YDlidarDriver::addPointsToVec(node_info *nodebuffer, size_t &count){
         }
         multi_package.push_back(package);
     }
+    //   printf("add points, [sync:%d] [%u] left:%d , right:%d\n",package_type,frameNum,multi_package[i].left,multi_package[i].right);
+    //   fflush(stdout);
 }
 
 result_t YDlidarDriver::waitScanData(node_info *nodebuffer, size_t &count,

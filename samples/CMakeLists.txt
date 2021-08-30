@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8)
 PROJECT(ydlidar_test)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 add_definitions(-std=c++11) # Use C++11
-
+set(CMAKE_BUILD_TYPE Release)
 #Include directories
 INCLUDE_DIRECTORIES(
      ${CMAKE_SOURCE_DIR}
